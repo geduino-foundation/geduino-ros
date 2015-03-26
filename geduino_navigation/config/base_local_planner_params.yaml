@@ -1,0 +1,43 @@
+# base_local_planner_params.yaml
+#
+# Copyright (C) 2015 Alessandro Francescon
+# 
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+TrajectoryPlannerROS:
+
+  # The maximum forward velocity allowed for the base in meters/sec
+  max_vel_x: 0.1
+  
+  # The minimum forward velocity allowed for the base in meters/sec. 
+  # It is useful to specify this to guarantee that velocity commands sent to a mobile
+  # base are high enough to allow the base to overcome friction.
+  min_vel_x: 0.05
+  
+  # The maximum and minimum rotational velocity allowed for the base in radians/sec
+  max_vel_theta: 0.52
+  min_vel_theta: 0.26
+  
+  # The minimum rotational velocity allowed for the base while performing in-place
+  # rotations in radians/sec
+  min_in_place_vel_theta: 0.26
+  
+  # The x, y and rotational acceleration limit of the robot in meters/sec^2 and radians/sec^2
+  acc_lim_x: 2.5
+  acc_lim_y: 2.5
+  acc_lim_th: 3.2
+
+  # Determines whether velocity commands are generated for a holonomic or non-holonomic 
+  # robot. For holonomic robots, strafing velocity commands may be issued to the base. 
+  # For non-holonomic robots, no strafing velocity commands will be issued.
+  holonomic_robot: false

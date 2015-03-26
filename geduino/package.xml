@@ -1,0 +1,45 @@
+<?xml version="1.0"?>
+
+<!-- 
+ geduino/package.xml
+
+ Copyright (C) 2015 Alessandro Francescon
+ 
+ This program is free software: you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation, either version 3 of the License.
+ 
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+ 
+ You should have received a copy of the GNU General Public License
+ along with this program.  If not, see <http://www.gnu.org/licenses/>.
+-->
+
+<package>
+
+  <name>geduino</name>
+  <version>1.0.0</version>
+  <description>The Geduino ROS meta-package</description>
+  <license>GPL</license>
+
+  <url type="blog">http://geduino.blogspot.it</url>
+
+  <author email="alessandro.francescon@gmail.com">Alessandro Francescon</author>
+  <maintainer email="alessandro.francescon@gmail.com">Alessandro Francescon</maintainer>
+
+  <buildtool_depend>catkin</buildtool_depend>
+  <run_depend>geduino_navigation</run_depend>
+  <run_depend>geduino_teleop</run_depend>
+  <run_depend>geduino_msgs</run_depend>
+  <run_depend>md25_msgs</run_depend>
+  <run_depend>md25</run_depend>
+  <run_depend>mpu9150_msgs</run_depend>
+  
+  <export>
+    <metapackage/>
+  </export>
+
+</package>

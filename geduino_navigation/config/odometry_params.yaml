@@ -1,0 +1,54 @@
+# odometry_params.yaml
+#
+# Copyright (C) 2015 Alessandro Francescon
+# 
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# The subscribed encoders topic name
+encoders_topic: md25/encoders
+
+# The frame attached to robot base, i.e. broadcasted transformation child frame
+base_frame: base_link
+
+# odometry frame, i.e. broadcasted transformation frame
+odom_frame: odom
+
+# The published odometry topic name
+odom_topic: odom
+
+# The subscribed velocity command topic name
+cmd_vel_topic: cmd_vel
+
+# The published speeds command topic name
+cmd_speeds_topic: cmd_speeds
+
+# The main loop frequency in Hz. In order to not loose odometry information
+# this param should be set at value greater than published encoders topic frequency.
+frequency: 20.0
+
+# The encoders sensitivity in LSB / rad. It represent the inverse
+# of wheel shaft rotation angle for unitary encoder increment
+encoderSensitivity1: 0.00872639
+encoderSensitivity2: 0.00872639
+
+# The speeds sensitivity in LSB / (rad/s). It represent the inverse
+# of wheel shaft rotation speed for unitary speed input.
+speedSensitivity1: 12.4620
+speedSensitivity2: 12.4620
+
+# The wheels diameter in m
+wheel_diameter1: 0.1
+wheel_diameter2: 0.1
+
+# The wheel base in m
+wheel_base: 0.2652
