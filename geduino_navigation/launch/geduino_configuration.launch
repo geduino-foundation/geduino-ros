@@ -22,19 +22,19 @@
   <include file="$(find geduino_navigation)/launch/geduino_static_transformation.launch" />
 
   <!-- The serial node -->
-  <node pkg="rosserial_python" type="serial_node.py" name="serial_node" output="screen">
+  <node pkg="rosserial_python" type="serial_node.py" name="serial_node" output="screen" respawn="true">
     <param name="port" value="/dev/ttymxc3" />
     <param name="baud" value="115200" />
   </node>
 
   <!-- The RPLidar node -->
-  <node pkg="rplidar_ros" type="rplidarNode" name="rplidar_node" output="screen">
+  <node pkg="rplidar_ros" type="rplidarNode" name="rplidar_node" output="screen" respawn="true">
     <param name="serial_port" value="/dev/ttymxc4" />
     <param name="frame_id" value="base_laser" />
   </node>
 
   <!-- The MD25 odometry node -->
-  <node pkg="md25" type="odometry_node" name="odometry_node" output="screen">
+  <node pkg="md25" type="odometry_node" name="odometry_node" output="screen" required="true">
     <rosparam file="$(find geduino_navigation)/config/odometry_params.yaml" command="load" />
   </node>    
 

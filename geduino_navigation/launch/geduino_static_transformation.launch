@@ -19,15 +19,15 @@
 <launch>
 
 	<!-- The base_link -> base_left_range transformation broadcaster -->
-        <node pkg="tf" type="static_transform_publisher" name="base_left_range_tf_broadcaster" args="0.097 0.097 0 0.7853 0 0 base_link base_left_range 50" />
+        <node pkg="tf" type="static_transform_publisher" name="base_left_range_tf_node" args="0.097 0.097 0 0.7853 0 0 base_link base_left_range 50" respawn="true"/>
 
 	<!-- The base_link -> base_center_range transformation broadcaster -->
-        <node pkg="tf" type="static_transform_publisher" name="base_center_range_tf_broadcaster" args="0.137 0 0 0 0 0 base_link base_center_range 50" />
+        <node pkg="tf" type="static_transform_publisher" name="base_center_range_tf_node" args="0.137 0 0 0 0 0 base_link base_center_range 50" respawn="true"/>
 
 	<!-- The base_link -> base_right_range transformation broadcaster -->
-        <node pkg="tf" type="static_transform_publisher" name="base_right_range_tf_broadcaster" args="0.097 -0.097 0 -0.7853 0 0 base_link base_right_range 50" />
+        <node pkg="tf" type="static_transform_publisher" name="base_right_range_tf_node" args="0.097 -0.097 0 -0.7853 0 0 base_link base_right_range 50" respawn="true"/>
 
 	<!-- The base_link -> base_laser transformation broadcaster -->
-	<node pkg="tf" type="static_transform_publisher" name="base_laser_tf_broadcaster" args="0.095 -0.026 0 -1.5707 0 0 base_link base_laser 50" />
+	<node pkg="tf" type="static_transform_publisher" name="base_laser_tf_node" args="0.095 -0.026 0 -1.5707 0 0 base_link base_laser 50" respawn="true"/>
 
 </launch>

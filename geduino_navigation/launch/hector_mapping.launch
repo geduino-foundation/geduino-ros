@@ -19,7 +19,7 @@
 <launch>
 
   <!-- The hector mapping  node -->
-  <node pkg="hector_mapping" type="hector_mapping" respawn="false" name="hector_mapping" output="screen">
+  <node pkg="hector_mapping" type="hector_mapping" respawn="false" name="hector_mapping_node" output="screen" required="true">
     <rosparam file="$(find geduino_navigation)/config/hector_mapping_params.yaml" command="load" />  
   </node>
 
