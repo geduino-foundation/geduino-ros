@@ -113,14 +113,12 @@ int main(int argc, char** argv) {
 
       case KEYCODE_L:
 	 puts("turn left...");
-         tangentSpeed = 0;
          angularSpeed = ANGULAR_SPEED;
          modified = true;
          break;
 
       case KEYCODE_R:
 	 puts("turn right...");
-         tangentSpeed = 0;
          angularSpeed = -ANGULAR_SPEED;
          modified = true;
          break;
