@@ -37,6 +37,7 @@
   <run_depend>mpu9150</run_depend>
   <run_depend>rplidar_ros</run_depend>
   <run_depend>gmapping</run_depend>
+  <run_depend>hector_mapping</run_depend>
 
   <export>
   </export>
