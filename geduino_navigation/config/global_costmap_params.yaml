@@ -36,12 +36,3 @@ global_costmap:
   # Whether or not to use a rolling window version of the costmap. 
   # If the static_map parameter is set to true, this parameter must be set to false.
   rolling_window: false
-  
-  # Specifies the delay in transform (tf) data that is tolerable in seconds.
-  # This parameter serves as a safeguard to losing a link in the tf tree while still allowing 
-  # an amount of latency the user is comfortable with to exist in the system. 
-  # For example, a transform being 0.2 seconds out-of-date may be tolerable, but a 
-  # transform being 8 seconds out of date is not. If the tf transform between the coordinate
-  # frames specified by the global_frame and robot_base_frame parameters is transform_tolerance 
-  # seconds older than ros::Time::now(), then the navigation stack will stop the robot.
-  transform_tolerance: 0.2
