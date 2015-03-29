@@ -28,8 +28,8 @@
 #define KEYCODE_D 0x42
 #define KEYCODE_Q 0x71
 
-#define TANGENT_SPEED 0.1
-#define ANGULAR_SPEED 0.52
+double linearXspeed;
+double angularZspeed;
 
 int kfd = 0;
 struct termios cooked, raw;
@@ -51,6 +51,15 @@ int main(int argc, char** argv) {
 
   // Init teleop_key
   ros::init(argc, argv, "teleop_key");
+
+  // Create private ROS node handle
+  ros::NodeHandle privateNodeHandle("~");
+  privateNodeHandle.param("linear_x_speed", linearXspeed, 0.1);
+  privateNodeHandle.param("angular_z_speed", angularZspeed, 0.52);
+
+  // Log
+  ROS_INFO("linear x speed: %g m/s", linearXspeed);
+  ROS_INFO("angular z speed: %g rad/s", angularZspeed);
 
   // Create ROS node handle
   ros::NodeHandle nodeHandle;
@@ -99,27 +108,27 @@ int main(int argc, char** argv) {
 
       case KEYCODE_U:
 	 puts("forward...");
-         tangentSpeed = TANGENT_SPEED;
+         tangentSpeed = linearXspeed;
          angularSpeed = 0;
          modified = true;
          break;
 
       case KEYCODE_D:
 	 puts("back...");
-         tangentSpeed = -TANGENT_SPEED;
+         tangentSpeed = -linearXspeed;
          angularSpeed = 0;
          modified = true;
          break;
 
       case KEYCODE_L:
 	 puts("turn left...");
-         angularSpeed = ANGULAR_SPEED;
+         angularSpeed = angularZspeed;
          modified = true;
          break;
 
       case KEYCODE_R:
 	 puts("turn right...");
-         angularSpeed = -ANGULAR_SPEED;
+         angularSpeed = -angularZspeed;
          modified = true;
          break;
 
