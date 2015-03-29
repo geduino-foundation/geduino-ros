@@ -185,23 +185,26 @@ int main(int argc, char** argv) {
   // Get node handle
   ros::NodeHandle nodeHandle;
 
+  // Get private node handle
+  ros::NodeHandle privateNodeHandle("~");
+
   // Get ros parameters
-  nodeHandle.param<std::string>("odometry_node/encoders_topic", encoderTopic, "md25/encoders");
-  nodeHandle.param<std::string>("odometry_node/base_frame", baseFrame, "base_link");
-  nodeHandle.param<std::string>("odometry_node/odom_frame", odomFrame, "odom");
-  nodeHandle.param<std::string>("odometry_node/odom_topic", odomTopic, "odom");
-  nodeHandle.param<std::string>("odometry_node/cmd_vel_topic", cmdVelTopic, "cmd_vel");
-  nodeHandle.param<std::string>("odometry_node/cmd_speeds_topic", cmdSpeedsTopic, "cmd_speeds");
-  nodeHandle.param("odometry_node/frequency", frequency, 20.0);
+  privateNodeHandle.param<std::string>("odometry_node/encoders_topic", encoderTopic, "md25/encoders");
+  privateNodeHandle.param<std::string>("base_frame", baseFrame, "base_link");
+  privateNodeHandle.param<std::string>("odom_frame", odomFrame, "odom");
+  privateNodeHandle.param<std::string>("odom_topic", odomTopic, "odom");
+  privateNodeHandle.param<std::string>("cmd_vel_topic", cmdVelTopic, "cmd_vel");
+  privateNodeHandle.param<std::string>("cmd_speeds_topic", cmdSpeedsTopic, "cmd_speeds");
+  privateNodeHandle.param("frequency", frequency, 20.0);
 
   // Get odometry parameters
-  nodeHandle.param("odometry_node/encoder_sensitivity1", encoderSensitivity1, 0.00872639);
-  nodeHandle.param("odometry_node/encoder_sensitivity2", encoderSensitivity2, 0.00872639);
-  nodeHandle.param("odometry_node/speed_sensitivity1", speedSensitivity1, 12.4620);
-  nodeHandle.param("odometry_node/speed_sensitivity2", speedSensitivity2, 12.4620);
-  nodeHandle.param("odometry_node/wheel_diameter1", wheelDiameter1, 0.1);
-  nodeHandle.param("odometry_node/wheel_diameter2", wheelDiameter2, 0.1);
-  nodeHandle.param("odometry_node/wheel_base", wheelBase, 0.3);
+  privateNodeHandle.param("encoder_sensitivity1", encoderSensitivity1, 0.00872639);
+  privateNodeHandle.param("encoder_sensitivity2", encoderSensitivity2, 0.00872639);
+  privateNodeHandle.param("speed_sensitivity1", speedSensitivity1, 12.4620);
+  privateNodeHandle.param("speed_sensitivity2", speedSensitivity2, 12.4620);
+  privateNodeHandle.param("wheel_diameter1", wheelDiameter1, 0.1);
+  privateNodeHandle.param("wheel_diameter2", wheelDiameter2, 0.1);
+  privateNodeHandle.param("wheel_base", wheelBase, 0.3);
 
   // Log
   ROS_INFO("subscribed encoders topic: %s", encoderTopic.c_str());
