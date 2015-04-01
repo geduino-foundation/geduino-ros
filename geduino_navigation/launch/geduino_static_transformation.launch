@@ -28,6 +28,6 @@
         <node pkg="tf" type="static_transform_publisher" name="base_right_range_tf_node" args="0.097 -0.097 0 -0.7853 0 0 base_link base_right_range 50" respawn="true"/>
 
 	<!-- The base_link -> base_laser transformation broadcaster -->
-	<node pkg="tf" type="static_transform_publisher" name="base_laser_tf_node" args="0.095 -0.026 0 -1.5707 0 0 base_link base_laser 50" respawn="true"/>
+	<node pkg="tf" type="static_transform_publisher" name="base_laser_tf_node" args="0.095 -0.026 0 1.5707 0 3.1415 base_link base_laser 50" respawn="true"/>
 
 </launch>
