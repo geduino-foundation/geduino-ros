@@ -90,6 +90,9 @@ double wheelBase;
 uint32_t lastEncoder1 = 0;
 uint32_t lastEncoder2 = 0;
 
+// The encoders initialized fÃlag
+bool encodersInitialized = false;
+
 // The odometry position
 double x = 0;
 double y = 0;
@@ -108,6 +111,22 @@ md25_msgs::Speeds cmd_speeds;
 bool speedUpdated;
 
 void encodersCallback(const md25_msgs::StampedEncoders::ConstPtr & encodersMessage) {
+
+  if (!encodersInitialized) {
+
+    // Use encoders values to initialize odometry
+    lastEncoder1 = encodersMessage->encoders.encoder1;
+    lastEncoder2 = encodersMessage->encoders.encoder2;
+
+    // Set encoders initialized to true
+    encodersInitialized = true;
+
+    // Log
+    ROS_INFO("received first encoders values");
+
+    return;
+
+  }
 
   // Calculate delta encoders
   int32_t deltaEncoder1 = encodersMessage->encoders.encoder1 - lastEncoder1;
