@@ -31,7 +31,7 @@ maxUrange: 5.5
 
 # The maximum range of the sensor. If regions with no obstacles within the range of the
 # sensor should appear as free space in the map, set maxUrange < maximum range of the real sensor <= maxRange.
-maxRange: 6
+maxRange: 5.5
 
 # The sigma used by the greedy endpoint matching
 sigma: 0.05
