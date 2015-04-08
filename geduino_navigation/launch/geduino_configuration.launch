@@ -38,4 +38,9 @@
     <rosparam file="$(find geduino_navigation)/config/odometry_params.yaml" command="load" />
   </node>    
 
+  <!-- The MPU9150 imu node -->
+  <node pkg="mpu9150" type="imu_node" name="imu_node" output="screen" respawn="true">
+    <rosparam file="$(find geduino_navigation)/config/imu_params.yaml" command="load" />
+  </node>
+
 </launch>

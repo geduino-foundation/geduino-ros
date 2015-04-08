@@ -40,6 +40,9 @@ uint8 GYRO_FS_1000 = 2
 # The gyro full scale range 2000 degree/sec, sensitivyty 16.4 LSB / (degree/sec)
 uint8 GYRO_FS_2000 = 3
 
+# The orientation quaternion
+geometry_msgs/Quaternion orientation
+
 # The accelerometer full scale range
 uint8 full_scale_accel_range
 
@@ -51,6 +54,3 @@ uint8 full_scale_gyro_range
 
 # Gyroscope data
 mpu9150_msgs/Int16Vector3 gyro
-
-# Magnetometer data
-mpu9150_msgs/Int16Vector3 mag

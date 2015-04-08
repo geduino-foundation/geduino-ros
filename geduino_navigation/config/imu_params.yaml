@@ -1,4 +1,4 @@
-# mpu9150_msgs/CMakeList.txt
+# imu_params.yaml
 #
 # Copyright (C) 2015 Alessandro Francescon
 # 
@@ -14,33 +14,14 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-cmake_minimum_required(VERSION 2.8.3)
+# The subscribed motion topic name
+motion9_topic: mpu9150/motion9
 
-project(mpu9150_msgs)
+# The published imu topic
+imu_topic: imu
 
-find_package(catkin REQUIRED COMPONENTS
-  message_generation
-  roscpp
-  rospy
-  std_msgs
-  geometry_msgs
-)
+# The published magnetic field
+magnetic_field_topic: magnetic_field
 
-add_message_files(
-  FILES
-  Int16Vector3.msg
-  Motion9.msg
-  StampedMotion9.msg
-)
-
-generate_messages(
-  DEPENDENCIES
-  std_msgs
-  geometry_msgs
-)
-
-catkin_package()
-
-include_directories(
-  ${catkin_INCLUDE_DIRS}
-)
+# The mpu9150 frame
+mpu9150_frame: base_imu
