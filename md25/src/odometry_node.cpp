@@ -22,6 +22,11 @@
  This node subscribe encoders topic from MD25 and publish odometry transformation and
  topic to the navigation stack. Furthermore it subscribe velocity command from navigation
  stack and publish speeds command to MD25 node.
+
+ The covariance model used get from work of Linsday KLEEMAN of Monash University (technical
+ report MECSE-95-1-1995).
+ This model assume that variance of travelled space for a wheel is proportial to travelled 
+ space by a constant.
  
  Subscribes:
  - md25/encoders (md25_msgs/StampedEncoders): the encoder values;
@@ -50,14 +55,18 @@
    of wheel shaft rotation angle for unitary encoder increment. (default: 0.00872639,
    valid using EMG30 motor);
  - speedSensitivity1: the speed 1 sensitivity in LSB / (rad/s). It represent the inverse
-   of wheel shaft rotation speed for unitary speed input. (default: 12.4620, valid using 
+   of wheel shaft rotation speed for unitary speed input. (default: 12.4620, valid using
    EMG30 motor);
  - speedSensitivity2: the speed 2 sensitivity in LSB / (rad/s). It represent the inverse
-   of wheel shaft rotation speed for unitary speed input. (default: 12.4620, valid using 
+   of wheel shaft rotation speed for unitary speed input. (default: 12.4620, valid using
    EMG30 motor);
  - wheel_diameter1: the wheel 1 diameter in m (default: 0.1);
  - wheel_diameter2: the wheel 2 diameter in m (default: 0.1);
- - wheel_base: the wheel base in m (default: 0.3).
+ - wheel_base: the wheel base in m (default: 0.3);
+ - cov_K1: the constant of covariance model for wheel 1;
+ - cov_K2: the constant of covariance model for wheel 2;
+ - cov_delta_space_threshold: the space threshold for covariance update;
+ - cov_delta_theta_threshold: the theta threshold for covariance update. 
  */
  
 #include <ros/ros.h>
@@ -67,6 +76,7 @@
 #include <geometry_msgs/Twist.h>
 #include <tf/transform_broadcaster.h>
 #include <math.h>
+#include <odometry.h>
 
 // The ros parameters
 std::string encoderTopic;
@@ -85,30 +95,32 @@ double speedSensitivity2;
 double wheelDiameter1;
 double wheelDiameter2;
 double wheelBase;
+double covK1;
+double covK2;
+double covDeltaSpaceThreshold;
+double covDeltaThetaThreshold;
 
 // The last encoder values
 uint32_t lastEncoder1 = 0;
 uint32_t lastEncoder2 = 0;
 
-// The encoders initialized fÃlag
+// The encoders initialized flag
 bool encodersInitialized = false;
 
-// The odometry position
-double x = 0;
-double y = 0;
-double th = 0;
-
-// The odometry transformation
-geometry_msgs::TransformStamped odometryTransformation;
-
-// The odometry message
-nav_msgs::Odometry odometryMessage;
+// The odometry
+Odometry * odometryPtr;
 
 // The cmd_speeds message
 md25_msgs::Speeds cmd_speeds;
 
 // The speed updated flag
 bool speedUpdated;
+
+// The odometry transformation
+geometry_msgs::TransformStamped odometryTransformation;
+
+// The odometry message
+nav_msgs::Odometry odometryMessage;
 
 void encodersCallback(const md25_msgs::StampedEncoders::ConstPtr & encodersMessage) {
 
@@ -139,38 +151,48 @@ void encodersCallback(const md25_msgs::StampedEncoders::ConstPtr & encodersMessa
     double deltaS1 = deltaEncoder1 * encoderSensitivity1 * wheelDiameter1;
     double deltaS2 = deltaEncoder2 * encoderSensitivity2 * wheelDiameter2;
 
-    // Calculate delta s and delta theta
-    double deltaS = (deltaS1 + deltaS2) / 2;
-    double deltaTh = (deltaS2 - deltaS1) / wheelBase;
-
-    // Calculate middle theta
-    double middleTh = th + deltaTh / 2;
-
-    // Update position
-    x += deltaS * cos(middleTh);
-    y += deltaS * sin(middleTh);
-    th += deltaTh;
+    // Update odometry
+    odometryPtr->update(deltaS1, deltaS2);
 
     // Update encoders
     lastEncoder1 = encodersMessage->encoders.encoder1;
     lastEncoder2 = encodersMessage->encoders.encoder2;
 
+    // Get position
+    tf::Vector3 position;
+    odometryPtr->getPosition(position);
+
+    // Get covariance
+    tf::Matrix3x3 covariance;
+    odometryPtr->getCovariance(covariance);
+
+    // Create odometry quaternion from th
+    geometry_msgs::Quaternion odometryQuaternion = tf::createQuaternionMsgFromYaw(position.z());
+
+    // Update odometry transformation
+    odometryTransformation.transform.translation.x = position.x();
+    odometryTransformation.transform.translation.y = position.y();
+    odometryTransformation.transform.rotation = odometryQuaternion;
+
+    // Update odometry message
+    odometryMessage.pose.pose.position.x = position.x();
+    odometryMessage.pose.pose.position.y = position.y();
+    odometryMessage.pose.covariance[0] = covariance[0].x();
+    odometryMessage.pose.covariance[1] = covariance[0].y();
+    odometryMessage.pose.covariance[5] = covariance[0].z();
+    odometryMessage.pose.covariance[6] = covariance[1].x();
+    odometryMessage.pose.covariance[7] = covariance[1].y();
+    odometryMessage.pose.covariance[11] = covariance[1].z();
+    odometryMessage.pose.covariance[30] = covariance[2].x();
+    odometryMessage.pose.covariance[31] = covariance[2].y();
+    odometryMessage.pose.covariance[35] = covariance[2].z();
+    odometryMessage.pose.pose.orientation = odometryQuaternion;
+
   }
 
-  // Create odometry quaternion from th
-  geometry_msgs::Quaternion odometryQuaternion = tf::createQuaternionMsgFromYaw(th);
-
-  // Update odometry transformation
-  odometryTransformation.header.stamp = encodersMessage->header.stamp;
-  odometryTransformation.transform.translation.x = x;
-  odometryTransformation.transform.translation.y = y;
-  odometryTransformation.transform.rotation = odometryQuaternion;
-
-  // Update odometry message
+  // Update message and transformation header stamp
   odometryMessage.header.stamp = encodersMessage->header.stamp;
-  odometryMessage.pose.pose.position.x = x;
-  odometryMessage.pose.pose.position.y = y;
-  odometryMessage.pose.pose.orientation = odometryQuaternion;
+  odometryTransformation.header.stamp = encodersMessage->header.stamp;
 
 }
 
@@ -224,6 +246,10 @@ int main(int argc, char** argv) {
   privateNodeHandle.param("wheel_diameter1", wheelDiameter1, 0.1);
   privateNodeHandle.param("wheel_diameter2", wheelDiameter2, 0.1);
   privateNodeHandle.param("wheel_base", wheelBase, 0.3);
+  privateNodeHandle.param("cov_k1", covK1, 0.001);
+  privateNodeHandle.param("cov_k2", covK2, 0.001);
+  privateNodeHandle.param("cov_delta_space_threshold", covDeltaSpaceThreshold, 0.005);
+  privateNodeHandle.param("cov_delta_theta_threshold", covDeltaThetaThreshold, 0.009);
 
   // Log
   ROS_INFO("subscribed encoders topic: %s", encoderTopic.c_str());
@@ -239,6 +265,14 @@ int main(int argc, char** argv) {
   ROS_INFO("wheel diameter1: %g m", wheelDiameter1);
   ROS_INFO("wheel diameter2: %g m", wheelDiameter2);
   ROS_INFO("wheel base: %g m", wheelBase);
+  ROS_INFO("covariance constant 1: %g", covK1);
+  ROS_INFO("covariance constant 2: %g", covK2);
+  ROS_INFO("covariance delta space threshold: %g", covDeltaSpaceThreshold);
+  ROS_INFO("covariance delta theta threshold: %g", covDeltaThetaThreshold);
+
+  // Create odometry
+  Odometry odometry(wheelBase, covK1, covK2, covDeltaSpaceThreshold, covDeltaThetaThreshold);
+  odometryPtr = &odometry;
 
   // Create encoders message subscriber
   ros::Subscriber encodersMessageSubscriber = nodeHandle.subscribe(encoderTopic, 20, encodersCallback);
@@ -249,7 +283,7 @@ int main(int argc, char** argv) {
   // The odometry transform broadcaster
   tf::TransformBroadcaster odometryTransformBroadcaster;
 
- // Create cmd_vel message subscriber
+  // Create cmd_vel message subscriber
   ros::Subscriber cmdVelMessageSubscriber = nodeHandle.subscribe(cmdVelTopic, 20, cmdVelCallback);
 
   // Create cmd_speeds message publisher
@@ -291,7 +325,7 @@ int main(int argc, char** argv) {
        cmdSpeedsMessagePublisher.publish(cmd_speeds);
 
      }
-     
+
      // Spin, allow outcoming topic and transformation to be published
      ros::spinOnce();
 
