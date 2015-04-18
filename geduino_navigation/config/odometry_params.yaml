@@ -52,3 +52,15 @@ wheel_diameter2: 0.1
 
 # The wheel base in m
 wheel_base: 0.275
+
+# The constant of covariance model for wheel 1
+covK1: 0.001
+
+# The constant of covariance model for wheel 2
+covK2: 0.001
+
+# The space threshold for covariance update
+cov_delta_space_threshold: 0.005
+
+# The theta threshold for covariance update
+cov_delta_theta_threshold: 0.009
