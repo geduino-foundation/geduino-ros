@@ -117,6 +117,7 @@ int main(int argc, char** argv) {
 
   // Create cmd_speeds message publisher
   ros::Publisher cmdSpeedsMessagePublisher = nodeHandle.advertise<md25_msgs::Speeds>(cmdSpeedsTopic, 20);
+  cmdSpeedsMessagePublisherPtr = & cmdSpeedsMessagePublisher;
 
   // Spin
   ros::spin();
