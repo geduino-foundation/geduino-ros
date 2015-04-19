@@ -59,8 +59,5 @@ covK1: 0.001
 # The constant of covariance model for wheel 2
 covK2: 0.001
 
-# The space threshold for covariance update
-cov_delta_space_threshold: 0.005
-
-# The theta threshold for covariance update
-cov_delta_theta_threshold: 0.009
+# The threshold to distinguish between straight or arc path
+cov_radius_threshold: 10.0
