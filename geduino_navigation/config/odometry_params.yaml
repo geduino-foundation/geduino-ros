@@ -32,10 +32,6 @@ cmd_vel_topic: cmd_vel
 # The published speeds command topic name
 cmd_speeds_topic: cmd_speeds
 
-# The main loop frequency in Hz. In order to not loose odometry information
-# this param should be set at value greater than published encoders topic frequency.
-frequency: 20.0
-
 # The encoders sensitivity in LSB / rad. It represent the inverse
 # of wheel shaft rotation angle for unitary encoder increment
 encoderSensitivity1: 0.00872639
