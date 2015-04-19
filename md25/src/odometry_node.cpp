@@ -158,41 +158,39 @@ void encodersCallback(const md25_msgs::StampedEncoders::ConstPtr & encodersMessa
     lastEncoder1 = encodersMessage->encoders.encoder1;
     lastEncoder2 = encodersMessage->encoders.encoder2;
 
-    // Get position
-    tf::Vector3 position;
-    odometryPtr->getPosition(position);
-
-    // Get covariance
-    tf::Matrix3x3 covariance;
-    odometryPtr->getCovariance(covariance);
-
-    // Create odometry quaternion from th
-    geometry_msgs::Quaternion odometryQuaternion = tf::createQuaternionMsgFromYaw(position.z());
-
-    // Update odometry transformation
-    odometryTransformation.transform.translation.x = position.x();
-    odometryTransformation.transform.translation.y = position.y();
-    odometryTransformation.transform.rotation = odometryQuaternion;
-
-    // Update odometry message
-    odometryMessage.pose.pose.position.x = position.x();
-    odometryMessage.pose.pose.position.y = position.y();
-    odometryMessage.pose.covariance[0] = covariance[0].x();
-    odometryMessage.pose.covariance[1] = covariance[0].y();
-    odometryMessage.pose.covariance[5] = covariance[0].z();
-    odometryMessage.pose.covariance[6] = covariance[1].x();
-    odometryMessage.pose.covariance[7] = covariance[1].y();
-    odometryMessage.pose.covariance[11] = covariance[1].z();
-    odometryMessage.pose.covariance[30] = covariance[2].x();
-    odometryMessage.pose.covariance[31] = covariance[2].y();
-    odometryMessage.pose.covariance[35] = covariance[2].z();
-    odometryMessage.pose.pose.orientation = odometryQuaternion;
-
   }
 
-  // Update message and transformation header stamp
+  // Get position
+  tf::Vector3 position;
+  odometryPtr->getPosition(position);
+
+  // Get covariance
+  tf::Matrix3x3 covariance;
+  odometryPtr->getCovariance(covariance);
+
+  // Create odometry quaternion from th
+  geometry_msgs::Quaternion odometryQuaternion = tf::createQuaternionMsgFromYaw(position.z());
+
+  // Update odometry transformation
   odometryMessage.header.stamp = encodersMessage->header.stamp;
+  odometryTransformation.transform.translation.x = position.x();
+  odometryTransformation.transform.translation.y = position.y();
+  odometryTransformation.transform.rotation = odometryQuaternion;
+
+  // Update odometry message
   odometryTransformation.header.stamp = encodersMessage->header.stamp;
+  odometryMessage.pose.pose.position.x = position.x();
+  odometryMessage.pose.pose.position.y = position.y();
+  odometryMessage.pose.covariance[0] = covariance[0].x();
+  odometryMessage.pose.covariance[1] = covariance[0].y();
+  odometryMessage.pose.covariance[5] = covariance[0].z();
+  odometryMessage.pose.covariance[6] = covariance[1].x();
+  odometryMessage.pose.covariance[7] = covariance[1].y();
+  odometryMessage.pose.covariance[11] = covariance[1].z();
+  odometryMessage.pose.covariance[30] = covariance[2].x();
+  odometryMessage.pose.covariance[31] = covariance[2].y();
+  odometryMessage.pose.covariance[35] = covariance[2].z();
+  odometryMessage.pose.pose.orientation = odometryQuaternion;
 
 }
 
