@@ -27,7 +27,7 @@ find_package(catkin REQUIRED COMPONENTS
 add_message_files(
   FILES
   Encoders.msg
-  StampedEncoders.msg  
+  StampedEncodersWithSpeeds.msg
   Speeds.msg
   StampedSpeeds.msg
   Status.msg

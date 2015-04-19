@@ -18,10 +18,9 @@
  
 /**
  odometry_node is a ROS node implementation used as bridge between ROS navigation stack
- and and an MD25 node that is able to publish encoders data and receive speeds commands.
+ and and an MD25 node that is able to publish encoders.
  This node subscribe encoders topic from MD25 and publish odometry transformation and
- topic to the navigation stack. Furthermore it subscribe velocity command from navigation
- stack and publish speeds command to MD25 node.
+ topic to the navigation stack.
 
  The covariance model used get from work of Linsday KLEEMAN of Monash University (technical
  report MECSE-95-1-1995).
@@ -29,13 +28,11 @@
  space by a constant.
  
  Subscribes:
- - md25/encoders (md25_msgs/StampedEncoders): the encoder values;
- - cmd_vel (geometry_msgs/Twist): the velocity command.
+ - md25/encoders (md25_msgs/StampedEncodersWithSpeeds): the encoder values.
  
  Publish:
  - tf (tf/tfMessage): the odom -> base_link transformation;
- - odom (nav_msgs/Odometry): the odometry topic;
- - cmd_speeds (md25_msgs/Speeds): the speeds command.
+ - odom (nav_msgs/Odometry): the odometry topic.
 
  Parameters:
  - encoders_topic, the subscribed encoders topic name (default: md25/encoders);
@@ -43,8 +40,6 @@
    frame (default: base_link);
  - odom_frame, : odometry frame, i.e. broadcasted transformation frame (default: odom);
  - odom_topic: the published odometry topic name (default: odom);
- - cmd_vel_topic: the subscribed velocity command topic name (default: cmd_vel);
- - cmd_speeds_topic: the published speeds command topic name (default: cmd_speeds);
  - encoderSensitivity1: the encoder 1 sensitivity in LSB / rad. It represent the inverse
    of wheel shaft rotation angle for unitary encoder increment. (default: 0.00872639,
    valid using EMG30 motor);
@@ -66,10 +61,8 @@
  */
  
 #include <ros/ros.h>
-#include <md25_msgs/StampedEncoders.h>
-#include <md25_msgs/Speeds.h>
+#include <md25_msgs/StampedEncodersWithSpeeds.h>
 #include <nav_msgs/Odometry.h>
-#include <geometry_msgs/Twist.h>
 #include <tf/transform_broadcaster.h>
 #include <math.h>
 #include <odometry.h>
@@ -79,8 +72,6 @@ std::string encoderTopic;
 std::string baseFrame;
 std::string odomFrame;
 std::string odomTopic;
-std::string cmdVelTopic;
-std::string cmdSpeedsTopic;
 
 // The odometry parameters
 double encoderSensitivity1;
@@ -104,12 +95,6 @@ bool encodersInitialized = false;
 // The odometry
 Odometry * odometryPtr;
 
-// The pointer to cmd speed message publisher
-ros::Publisher * cmdSpeedsMessagePublisherPtr;
-
-// The cmd_speeds message
-md25_msgs::Speeds cmd_speeds;
-
 // The pointer to odometry message publisher
 ros::Publisher * odometryMessagePublisherPtr;
 
@@ -122,7 +107,7 @@ geometry_msgs::TransformStamped odometryTransformation;
 // The odometry message
 nav_msgs::Odometry odometryMessage;
 
-void encodersCallback(const md25_msgs::StampedEncoders::ConstPtr & encodersMessage) {
+void encodersCallback(const md25_msgs::StampedEncodersWithSpeeds::ConstPtr & encodersMessage) {
 
   if (!encodersInitialized) {
 
@@ -191,34 +176,14 @@ void encodersCallback(const md25_msgs::StampedEncoders::ConstPtr & encodersMessa
   odometryMessage.pose.covariance[31] = covariance[2].y();
   odometryMessage.pose.covariance[35] = covariance[2].z();
   odometryMessage.pose.pose.orientation = odometryQuaternion;
+  odometryMessage.twist.twist.linear.x = (encodersMessage->speeds.speed1 * wheelDiameter1 / speedSensitivity1 + encodersMessage->speeds.speed2 * wheelDiameter2 / speedSensitivity2) / 2;
+  odometryMessage.twist.twist.angular.z = (encodersMessage->speeds.speed1 * wheelDiameter1 / speedSensitivity1 - encodersMessage->speeds.speed2 * wheelDiameter2 / speedSensitivity2) / wheelBase;
 
   // Broadcast odometry transformation
   odometryTransformBroadcasterPtr->sendTransform(odometryTransformation);
 
   // Publish odometry message
   odometryMessagePublisherPtr->publish(odometryMessage);
-
-}
-
-void cmdVelCallback(const geometry_msgs::Twist::ConstPtr & cmdVelMessage) {
-
-  // Calculate cmd_speeds
-  cmd_speeds.speed1 = (cmdVelMessage->linear.x - cmdVelMessage->angular.z * wheelBase / 2) * speedSensitivity1 / wheelDiameter1;
-  cmd_speeds.speed2 = (cmdVelMessage->linear.x + cmdVelMessage->angular.z * wheelBase / 2) * speedSensitivity2 / wheelDiameter2;
-
-  if (cmd_speeds.speed1 == 0 && cmd_speeds.speed2 == 0 && (cmdVelMessage->linear.x != 0 || cmdVelMessage->angular.z != 0)) {
-
-     // Log
-     ROS_WARN("received velocities are too low for current MD25 configuration (%g, &g), check navigation stack setup for minimum speeds", cmdVelMessage->linear.x, cmdVelMessage->angular.z);
-
-  }
-
-  // Calculate actual_vel
-  odometryMessage.twist.twist.linear.x = (cmd_speeds.speed1 * wheelDiameter1 / speedSensitivity1 + cmd_speeds.speed2 * wheelDiameter2 / speedSensitivity2) / 2;
-  odometryMessage.twist.twist.angular.z = (cmd_speeds.speed1 * wheelDiameter1 / speedSensitivity1 - cmd_speeds.speed2 * wheelDiameter2 / speedSensitivity2) / wheelBase;
-
-  // Publish cmd_speeds message
-  cmdSpeedsMessagePublisherPtr->publish(cmd_speeds);
 
 }
 
@@ -238,8 +203,6 @@ int main(int argc, char** argv) {
   privateNodeHandle.param<std::string>("base_frame", baseFrame, "base_link");
   privateNodeHandle.param<std::string>("odom_frame", odomFrame, "odom");
   privateNodeHandle.param<std::string>("odom_topic", odomTopic, "odom");
-  privateNodeHandle.param<std::string>("cmd_vel_topic", cmdVelTopic, "cmd_vel");
-  privateNodeHandle.param<std::string>("cmd_speeds_topic", cmdSpeedsTopic, "cmd_speeds");
 
   // Get odometry parameters
   privateNodeHandle.param("encoder_sensitivity1", encoderSensitivity1, 0.00872639);
@@ -257,8 +220,6 @@ int main(int argc, char** argv) {
   ROS_INFO("subscribed encoders topic: %s", encoderTopic.c_str());
   ROS_INFO("broadcasting transformation %s -> %s", odomFrame.c_str(), baseFrame.c_str());
   ROS_INFO("published odom topic: %s", odomTopic.c_str());
-  ROS_INFO("subscribed cmd_vel topic: %s", cmdVelTopic.c_str());
-  ROS_INFO("published cmd_speeds topic: %s", cmdSpeedsTopic.c_str());
   ROS_INFO("encoder sensitivity1: %g LSB / rad", encoderSensitivity1);
   ROS_INFO("encoder sensitivity2: %g LSB / rad", encoderSensitivity2);
   ROS_INFO("speed sensitivity1: %g LSB / rad", speedSensitivity1);
@@ -284,12 +245,6 @@ int main(int argc, char** argv) {
   // The odometry transform broadcaster
   tf::TransformBroadcaster odometryTransformBroadcaster;
   odometryTransformBroadcasterPtr = & odometryTransformBroadcaster;
-
-  // Create cmd_vel message subscriber
-  ros::Subscriber cmdVelMessageSubscriber = nodeHandle.subscribe(cmdVelTopic, 20, cmdVelCallback);
-
-  // Create cmd_speeds message publisher
-  ros::Publisher cmdSpeedsMessagePublisher = nodeHandle.advertise<md25_msgs::Speeds>(cmdSpeedsTopic, 20);
 
   // Init odometry transformation
   odometryTransformation.header.frame_id = odomFrame;

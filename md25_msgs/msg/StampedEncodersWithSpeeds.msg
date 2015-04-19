@@ -1,4 +1,4 @@
-# StampedEncoders.msg
+# StampedEncodersWithSpeeds.msg
 #
 # Copyright (C) 2015 Alessandro Francescon
 # 
@@ -14,10 +14,13 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-# The stamped MD25 encoders values
+# The stamped MD25 encoders values and current speeds
 
 # The message header
 Header header
 
 # The encoders values
 md25_msgs/Encoders encoders
+
+# The speeds
+md25_msgs/Speeds speeds

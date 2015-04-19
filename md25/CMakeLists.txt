@@ -33,7 +33,11 @@ include_directories(
 )
 
 add_executable(odometry_node src/odometry_node.cpp src/odometry.cpp)
+add_executable(vel2speeds_node src/vel2speeds_node.cpp)
 
 target_link_libraries(odometry_node
+  ${catkin_LIBRARIES}
+)
+target_link_libraries(vel2speeds_node
   ${catkin_LIBRARIES}
 )
