@@ -199,7 +199,7 @@ int main(int argc, char** argv) {
   ros::NodeHandle privateNodeHandle("~");
 
   // Get ros parameters
-  privateNodeHandle.param<std::string>("odometry_node/encoders_topic", encoderTopic, "md25/encoders");
+  privateNodeHandle.param<std::string>("encoders_topic", encoderTopic, "md25/encoders");
   privateNodeHandle.param<std::string>("base_frame", baseFrame, "base_link");
   privateNodeHandle.param<std::string>("odom_frame", odomFrame, "odom");
   privateNodeHandle.param<std::string>("odom_topic", odomTopic, "odom");
