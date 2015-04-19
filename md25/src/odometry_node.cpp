@@ -45,9 +45,6 @@
  - odom_topic: the published odometry topic name (default: odom);
  - cmd_vel_topic: the subscribed velocity command topic name (default: cmd_vel);
  - cmd_speeds_topic: the published speeds command topic name (default: cmd_speeds);
- - frequency: the main loop frequency in Hz. In order to not loose odometry information
-   this param should be set at value greater than published encoders topic frequency.
-   (defauld: 20.0);
  - encoderSensitivity1: the encoder 1 sensitivity in LSB / rad. It represent the inverse
    of wheel shaft rotation angle for unitary encoder increment. (default: 0.00872639,
    valid using EMG30 motor);
@@ -84,7 +81,6 @@ std::string odomFrame;
 std::string odomTopic;
 std::string cmdVelTopic;
 std::string cmdSpeedsTopic;
-double frequency;
 
 // The odometry parameters
 double encoderSensitivity1;
@@ -108,11 +104,17 @@ bool encodersInitialized = false;
 // The odometry
 Odometry * odometryPtr;
 
+// The pointer to cmd speed message publisher
+ros::Publisher * cmdSpeedsMessagePublisherPtr;
+
 // The cmd_speeds message
 md25_msgs::Speeds cmd_speeds;
 
-// The speed updated flag
-bool speedUpdated;
+// The pointer to odometry message publisher
+ros::Publisher * odometryMessagePublisherPtr;
+
+// The pointer tp odometry transform broadcaster
+tf::TransformBroadcaster * odometryTransformBroadcasterPtr;
 
 // The odometry transformation
 geometry_msgs::TransformStamped odometryTransformation;
@@ -190,6 +192,12 @@ void encodersCallback(const md25_msgs::StampedEncoders::ConstPtr & encodersMessa
   odometryMessage.pose.covariance[35] = covariance[2].z();
   odometryMessage.pose.pose.orientation = odometryQuaternion;
 
+  // Broadcast odometry transformation
+  odometryTransformBroadcasterPtr->sendTransform(odometryTransformation);
+
+  // Publish odometry message
+  odometryMessagePublisherPtr->publish(odometryMessage);
+
 }
 
 void cmdVelCallback(const geometry_msgs::Twist::ConstPtr & cmdVelMessage) {
@@ -209,8 +217,8 @@ void cmdVelCallback(const geometry_msgs::Twist::ConstPtr & cmdVelMessage) {
   odometryMessage.twist.twist.linear.x = (cmd_speeds.speed1 * wheelDiameter1 / speedSensitivity1 + cmd_speeds.speed2 * wheelDiameter2 / speedSensitivity2) / 2;
   odometryMessage.twist.twist.angular.z = (cmd_speeds.speed1 * wheelDiameter1 / speedSensitivity1 - cmd_speeds.speed2 * wheelDiameter2 / speedSensitivity2) / wheelBase;
 
-  // Set speed updated
-  speedUpdated = true;
+  // Publish cmd_speeds message
+  cmdSpeedsMessagePublisherPtr->publish(cmd_speeds);
 
 }
 
@@ -232,7 +240,6 @@ int main(int argc, char** argv) {
   privateNodeHandle.param<std::string>("odom_topic", odomTopic, "odom");
   privateNodeHandle.param<std::string>("cmd_vel_topic", cmdVelTopic, "cmd_vel");
   privateNodeHandle.param<std::string>("cmd_speeds_topic", cmdSpeedsTopic, "cmd_speeds");
-  privateNodeHandle.param("frequency", frequency, 20.0);
 
   // Get odometry parameters
   privateNodeHandle.param("encoder_sensitivity1", encoderSensitivity1, 0.00872639);
@@ -252,7 +259,6 @@ int main(int argc, char** argv) {
   ROS_INFO("published odom topic: %s", odomTopic.c_str());
   ROS_INFO("subscribed cmd_vel topic: %s", cmdVelTopic.c_str());
   ROS_INFO("published cmd_speeds topic: %s", cmdSpeedsTopic.c_str());
-  ROS_INFO("update frequency: %g Hz", frequency);
   ROS_INFO("encoder sensitivity1: %g LSB / rad", encoderSensitivity1);
   ROS_INFO("encoder sensitivity2: %g LSB / rad", encoderSensitivity2);
   ROS_INFO("speed sensitivity1: %g LSB / rad", speedSensitivity1);
@@ -273,18 +279,17 @@ int main(int argc, char** argv) {
 
   // Create odometry message publisher
   ros::Publisher odometryMessagePublisher = nodeHandle.advertise<nav_msgs::Odometry>(odomTopic, 20);
+  odometryMessagePublisherPtr = & odometryMessagePublisher;
 
   // The odometry transform broadcaster
   tf::TransformBroadcaster odometryTransformBroadcaster;
+  odometryTransformBroadcasterPtr = & odometryTransformBroadcaster;
 
   // Create cmd_vel message subscriber
   ros::Subscriber cmdVelMessageSubscriber = nodeHandle.subscribe(cmdVelTopic, 20, cmdVelCallback);
 
   // Create cmd_speeds message publisher
   ros::Publisher cmdSpeedsMessagePublisher = nodeHandle.advertise<md25_msgs::Speeds>(cmdSpeedsTopic, 20);
-
-  // Create rate
-  ros::Rate rate(frequency);
 
   // Init odometry transformation
   odometryTransformation.header.frame_id = odomFrame;
@@ -296,34 +301,8 @@ int main(int argc, char** argv) {
   odometryMessage.child_frame_id = baseFrame;
   odometryMessage.pose.pose.position.z = 0.0;
 
-  while (nodeHandle.ok()) {
-
-     // Sleep
-     rate.sleep();
-
-     // Reset speed updated
-     speedUpdated = false;
-
-     // Spin, allow incoming topic to be received
-     ros::spinOnce();
-
-     // Broadcast odometry transformation
-     odometryTransformBroadcaster.sendTransform(odometryTransformation);
-
-     // Publish odometry message
-     odometryMessagePublisher.publish(odometryMessage);
-
-     if (speedUpdated) {
-
-       // Publish cmd_speeds message
-       cmdSpeedsMessagePublisher.publish(cmd_speeds);
-
-     }
-
-     // Spin, allow outcoming topic and transformation to be published
-     ros::spinOnce();
-
-  }
+  // Spin
+  ros::spin();
 
   return 0;
 
