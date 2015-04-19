@@ -65,8 +65,7 @@
  - wheel_base: the wheel base in m (default: 0.3);
  - cov_K1: the constant of covariance model for wheel 1;
  - cov_K2: the constant of covariance model for wheel 2;
- - cov_delta_space_threshold: the space threshold for covariance update;
- - cov_delta_theta_threshold: the theta threshold for covariance update. 
+ - cov_radius_threshold: the radius threshold to distinguish between straight andarc path.
  */
  
 #include <ros/ros.h>
