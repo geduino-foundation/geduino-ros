@@ -1,0 +1,27 @@
+# odometry_common_params.yaml
+#
+# Copyright (C) 2015 Alessandro Francescon
+# 
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# The speeds sensitivity in LSB / (rad/s). It represent the inverse
+# of wheel shaft rotation speed for unitary speed input.
+speedSensitivity1: 12.4620
+speedSensitivity2: 12.4620
+
+# The wheels diameter in m
+wheel_diameter1: 0.1
+wheel_diameter2: 0.1
+
+# The wheel base in m
+wheel_base: 0.275
