@@ -136,7 +136,7 @@ void Odometry::update(tfScalar dl, tfScalar dr) {
    tfScalar dth = (dr - dl) / wb;
 
    // Calculate middle theta
-   tfScalar mdth = pos.x() + 0.5 * dth;
+   tfScalar mdth = pos.z() + 0.5 * dth;
 
    // Calculate dpos
    tf::Vector3 dpos(ds * cos(mdth), ds * sin(mdth), dth);
