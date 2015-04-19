@@ -33,7 +33,7 @@ class Odometry {
    public:
 
       // Create odometry for a DDR with given wheel base and error constants
-      Odometry(tfScalar _wb, tfScalar _kl, tfScalar _kr, tfScalar _dsTres, tfScalar _dthTres) : wb(_wb), kl(_kl), kr(_kr), dsTres(_dsTres), dthTres(_dthTres) {
+      Odometry(tfScalar _wb, tfScalar _kl, tfScalar _kr, tfScalar _rTres) : wb(_wb), kl(_kl), kr(_kr), rTres(_rTres) {
          reset();
       };
 
@@ -57,13 +57,8 @@ class Odometry {
       // The error constants
       tfScalar kl, kr;
 
-      // The threshold value for delta space: when delta space are greater than threshold
-      // position covariance will be update
-      tfScalar dsTres;
-
-      // The threshold value for delta theta: when delta theta are greater than threshold
-      // position covariance will be updated
-      tfScalar dthTres;
+      // The threshold radius. The path will be considered straight if radius is greater than given threshold.
+      tfScalar rTres;
 
       // The position vector in world reference frame
       tf::Vector3 pos;

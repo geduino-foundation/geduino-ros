@@ -97,8 +97,7 @@ double wheelDiameter2;
 double wheelBase;
 double covK1;
 double covK2;
-double covDeltaSpaceThreshold;
-double covDeltaThetaThreshold;
+double covRTres;
 
 // The last encoder values
 uint32_t lastEncoder1 = 0;
@@ -246,8 +245,7 @@ int main(int argc, char** argv) {
   privateNodeHandle.param("wheel_base", wheelBase, 0.3);
   privateNodeHandle.param("cov_k1", covK1, 0.001);
   privateNodeHandle.param("cov_k2", covK2, 0.001);
-  privateNodeHandle.param("cov_delta_space_threshold", covDeltaSpaceThreshold, 0.005);
-  privateNodeHandle.param("cov_delta_theta_threshold", covDeltaThetaThreshold, 0.009);
+  privateNodeHandle.param("cov_radius_threshold", covRTres, 10.0);
 
   // Log
   ROS_INFO("subscribed encoders topic: %s", encoderTopic.c_str());
@@ -265,11 +263,10 @@ int main(int argc, char** argv) {
   ROS_INFO("wheel base: %g m", wheelBase);
   ROS_INFO("covariance constant 1: %g", covK1);
   ROS_INFO("covariance constant 2: %g", covK2);
-  ROS_INFO("covariance delta space threshold: %g", covDeltaSpaceThreshold);
-  ROS_INFO("covariance delta theta threshold: %g", covDeltaThetaThreshold);
+  ROS_INFO("covariance radius threshold: %g m", covRTres);
 
   // Create odometry
-  Odometry odometry(wheelBase, covK1, covK2, covDeltaSpaceThreshold, covDeltaThetaThreshold);
+  Odometry odometry(wheelBase, covK1, covK2, covRTres);
   odometryPtr = &odometry;
 
   // Create encoders message subscriber

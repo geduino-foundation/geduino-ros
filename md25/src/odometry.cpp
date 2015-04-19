@@ -152,18 +152,16 @@ void Odometry::update(tfScalar dl, tfScalar dr) {
       pos.m_floats[2] += TWO_PI;
    }
 
-   // Calculate ds and dth triggers
-   tfScalar dx = lastPosCovUpdate.x() - pos.x();
-   tfScalar dy = lastPosCovUpdate.y() - pos.y();
-   bool dsTriggered = tfSqrt(tfPow(dx, 2) + tfPow(dy, 2)) > dsTres;
-   bool dthTriggered = tfFabs(lastPosCovUpdate.z() - pos.z()) > dthTres;
+   // Get path radius
+   tfScalar r = wb * (dr + dl) / (2 * (dr - dl));
 
-   if (dthTriggered) {
+
+   if (tfFabs(r) < rTres) {
 
       // Update position covariance as constant radius arc path
       arcCov(cov, wb, kl, kr, dl, dr);
 
-   } else if (dsTriggered) {
+   } else {
 
       // Update position covariance as straight path
       lineCov(cov, wb, kl, kr, ds);
