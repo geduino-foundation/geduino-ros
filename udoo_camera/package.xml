@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 
-<!-- 
- geduino/package.xml
+<!--
+ udoo_camera/package.xml
 
  Copyright (C) 2015 Alessandro Francescon
  
@@ -20,9 +20,9 @@
 
 <package>
 
-  <name>geduino</name>
+  <name>udoo_camera</name>
   <version>1.0.0</version>
-  <description>The Geduino ROS meta-package</description>
+  <description>The UDOO Camera package</description>
   <license>GPL</license>
 
   <url type="blog">http://geduino.blogspot.it</url>
@@ -31,16 +31,18 @@
   <maintainer email="alessandro.francescon@gmail.com">Alessandro Francescon</maintainer>
 
   <buildtool_depend>catkin</buildtool_depend>
-  <run_depend>geduino_navigation</run_depend>
-  <run_depend>geduino_teleop</run_depend>
-  <run_depend>geduino_msgs</run_depend>
-  <run_depend>md25_msgs</run_depend>
-  <run_depend>md25</run_depend>
-  <run_depend>mpu9150_msgs</run_depend>
-  <run_depend>udoo_camera</run_depend>
-  
+  <build_depend>roscpp</build_depend>
+  <build_depend>cv_bridge</build_depend>
+  <build_depend>image_transport</build_depend>
+  <build_depend>std_msgs</build_depend>
+  <build_depend>sensor_msgs</build_depend>
+  <run_depend>roscpp</run_depend>
+  <run_depend>cv_bridge</run_depend>
+  <run_depend>image_transport</run_depend>
+  <run_depend>std_msgs</run_depend>
+  <run_depend>sensor_msgs</run_depend>
+
   <export>
-    <metapackage/>
   </export>
 
 </package>
