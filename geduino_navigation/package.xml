@@ -37,6 +37,7 @@
   <run_depend>mpu9150</run_depend>
   <run_depend>rplidar_ros</run_depend>
   <run_depend>gmapping</run_depend>
+  <run_depend>udoo_camera</run_depend>
 
   <export>
   </export>

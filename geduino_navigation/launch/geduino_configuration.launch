@@ -50,4 +50,9 @@
     <rosparam file="$(find geduino_navigation)/config/imu_params.yaml" command="load" />
   </node>
 
+  <!-- The MPU9150 imu node -->
+  <node pkg="udoo_camera" type="camera_node" name="camera_node" output="screen" respawn="true">
+    <rosparam file="$(find geduino_navigation)/config/camera_params.yaml" command="load" />
+  </node>
+
 </launch>
