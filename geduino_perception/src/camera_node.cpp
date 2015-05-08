@@ -25,10 +25,9 @@
 
  √√Parameters
  - device_id, the id of the captured video device (default: 0, means first available);
- - frequency: the capture/publish frequency in Hz (default: 1);
- - image_topic: the published image topic name (default: camera/image);
  - camera_frame: the frame attached to captured camera (default: camera_link). See
-   sensor_msgs/Image for orientation guideline.
+   sensor_msgs/Image for orientation guideline;
+ - fps√, the frames per seconds.
 */
 
 #include <ros/ros.h>
@@ -43,9 +42,8 @@
 
 // The node parameters
 int deviceId;
-double frequency;
-std::string imageTopic;
 std::string cameraFrame;
+double fps;
 
 int main(int argc, char** argv) {
 
@@ -60,21 +58,19 @@ int main(int argc, char** argv) {
 
 	// Get node parameters
 	privateNodeHandle.param("device_id", deviceId, 0);
-	privateNodeHandle.param("frequency", frequency, 1.0);
-	privateNodeHandle.param<std::string>("image_topic", imageTopic, "camera/image");
 	privateNodeHandle.param<std::string>("camera_frame", cameraFrame, "camera_link");
+	privateNodeHandle.param("fps", fps, 10.0);
 
 	// Log
 	ROS_INFO("device id: %d", deviceId);
-	ROS_INFO("frequency [Hz]: %d", frequency);
-	ROS_INFO("publish image topic: %s", imageTopic.c_str());
 	ROS_INFO("camera frame: %s", cameraFrame.c_str());
+	ROS_INFO("frames per second: %g", fps);
 
 	// Create image transport
 	image_transport::ImageTransport imageTransport(nodeHandle);
 
 	// Create image publisher
-	image_transport::Publisher imagePublisher = imageTransport.advertise(imageTopic, 1);
+	image_transport::Publisher imagePublisher = imageTransport.advertise("camera/image", 1);
 
 	// Open video captire
 	cv::VideoCapture videoCapture(deviceId);
@@ -88,14 +84,15 @@ int main(int argc, char** argv) {
 
 	}
 
-	ros::Rate rate(frequency); 
-
 	// The captured image
 	cv::Mat image;
 
+	// Creae rate
+	ros::Rate rate(fps);
+
 	while (ros::ok()) {
 
-		// Sleep
+		// Sleep for rate
 		rate.sleep();
 
 		// Capture image
