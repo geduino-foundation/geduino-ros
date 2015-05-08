@@ -18,12 +18,9 @@
 # The id of the captured video device (default: 0, means first available);
 device_id: 7
 
-# The capture/publish frequency in Hz (default: 1);
-frequency: 1
- 
-# The published image topic name (default: camera/image);
-image_topic: camera/image
-
 # The frame attached to captured camera (default: camera_link). See
 # sensor_msgs/Image for orientation guideline.
 camera_frame: camera_link
+
+# The frames per seconds
+fps: 5
