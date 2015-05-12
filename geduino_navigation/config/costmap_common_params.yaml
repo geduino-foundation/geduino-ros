@@ -40,4 +40,4 @@ laser_scan_sensor: {sensor_frame: base_laser, data_type: LaserScan, topic: scan,
 # transform being 8 seconds out of date is not. If the tf transform between the coordinate
 # frames specified by the global_frame and robot_base_frame parameters is transform_tolerance
 # seconds older than ros::Time::now(), then the navigation stack will stop the robot.
-transform_tolerance: 0.2
+transform_tolerance: 0.3

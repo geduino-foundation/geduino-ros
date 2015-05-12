@@ -38,7 +38,7 @@ local_costmap:
   rolling_window: true
   
   # The width and height in meters and the resolution of the map in meters/cell of the map
-  width: 6.0
-  height: 6.0
+  width: 3.0
+  height: 3.0
   resolution: 0.05
 

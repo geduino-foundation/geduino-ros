@@ -106,7 +106,7 @@ lasamplerange: 0.005
 lasamplestep: 0.005
 
 # How long (in seconds) between transform publications.
-transform_publish_period: 0.05
+transform_publish_period: 0.1
 
 # Threshold on gmapping's occupancy values. Cells with greater occupancy are considered
 # occupied (i.e., set to 100 in the resulting sensor_msgs/LaserScan).
