@@ -37,11 +37,14 @@ class Odometry {
          reset();
       };
 
-      // Update position and covariance for given wheel path increments
-      void update(tfScalar dl, tfScalar dr);
+      // Update position and covariance for given wheel path increments and time
+      void update(tfScalar dl, tfScalar dr, tfScalar time);
 
-      // Get position vector in world reference frame
-      void getPosition(tf::Vector3 & position);
+      // Get linear and angular position vector in world reference frame
+      void getPosition(tf::Vector3 & linear, tf::Vector3 & angular);
+
+      // Get linear and angular velocity in world reference frame
+      void getVelocity(tf::Vector3 & linear, tf::Vector3 & angular);
 
       // Get position covariance matrix in world reference frame
       void getCovariance(tf::Matrix3x3 & covariance);
@@ -60,14 +63,17 @@ class Odometry {
       // The threshold radius. The path will be considered straight if radius is greater than given threshold.
       tfScalar rTres;
 
-      // The position vector in world reference frame
-      tf::Vector3 pos;
+      // The last update time
+      tfScalar lastUpdateTime;
+
+      // The linear and angular position vector in world reference frame
+      tf::Vector3 linPos, angPos;
+
+      // The linear and angular velocity in robot reference frame
+      tf::Vector3 linVel, angVel;
 
       // The position covariance matrix in local robot reference frame
       tf::Matrix3x3 cov;
-
-      // The position used for last covariance update
-      tf::Vector3 lastPosCovUpdate;
 
 };
 

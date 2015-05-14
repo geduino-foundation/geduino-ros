@@ -129,27 +129,29 @@ void arcCov(tf::Matrix3x3 & cov, tfScalar & wb, tfScalar & kl, tfScalar & kr, tf
 
 }
 
-void Odometry::update(tfScalar dl, tfScalar dr) {
+void Odometry::update(tfScalar dl, tfScalar dr, tfScalar time) {
 
    // Calculate ds and dth
    tfScalar ds = 0.5 * (dr + dl);
    tfScalar dth = (dr - dl) / wb;
 
    // Calculate middle theta
-   tfScalar mdth = pos.z() + 0.5 * dth;
+   tfScalar mdth = angPos.z() + 0.5 * dth;
 
-   // Calculate dpos
-   tf::Vector3 dpos(ds * cos(mdth), ds * sin(mdth), dth);
+   // Calculate dlinpos and dangpos
+   tf::Vector3 dlinpos(ds * cos(mdth), ds * sin(mdth), 0);
+   tf::Vector3 dangpos(0, 0, dth);
 
    // Update position
-   pos += dpos;
+   linPos += dlinpos;
+   angPos += dangpos;
 
    // Make sure orientation is between [0, 2PI[
-   while (pos.z() >= TWO_PI) {
-      pos.m_floats[2] -= TWO_PI;
+   while (angPos.z() >= TWO_PI) {
+      angPos.m_floats[2] -= TWO_PI;
    }
-   while (pos.z() < 0) {
-      pos.m_floats[2] += TWO_PI;
+   while (angPos.z() < 0) {
+      angPos.m_floats[2] += TWO_PI;
    }
 
    // Get path radius
@@ -168,30 +170,54 @@ void Odometry::update(tfScalar dl, tfScalar dr) {
 
    }
 
+   if (lastUpdateTime > 0) {
+
+      // Get dwlta time
+      double dt = time - lastUpdateTime;
+
+      // Calculate linear and angular velocity
+      linVel.m_floats[0] = ds / dt;
+      angVel.m_floats[2] = dth / dt;
+
+   }
+
+   // Set last update time
+   lastUpdateTime = time;
 
 }
 
-void Odometry::getPosition(tf::Vector3 & position) {
-   position = pos;
+void Odometry::getPosition(tf::Vector3 & linear, tf::Vector3 & angular) {
+   linear = linPos;
+   angular = angPos;
+}
+
+void Odometry::getVelocity(tf::Vector3 & linear, tf::Vector3 & angular) {
+   linear = linVel;
+   angular = angVel;
 }
 
 void Odometry::getCovariance(tf::Matrix3x3 & covariance) {
 
    // Apply transformation from local robot frame to world reference frame
-   tf::Matrix3x3 t = trans(-pos.z());
+   tf::Matrix3x3 t = trans(-angPos.z());
    covariance = t * cov * t.transpose();
 
 }
 
 void Odometry::reset() {
 
-   // Reset position
-   pos.setValue(0, 0, 0);
+   // Reset last update time
+   lastUpdateTime = 0;
+
+   // Reset linear and angular position
+   linPos.setValue(0, 0, 0);
+   angPos.setValue(0, 0, 0);
+
+   // Reset linear and angular velocity
+   linVel.setValue(0, 0, 0);
+   angVel.setValue(0, 0, 0);
 
    // Reset covariance
    cov.setValue(0, 0, 0, 0, 0, 0, 0, 0 ,0);
-
-   // Reset last position covariance update
-   lastPosCovUpdate.setValue(0, 0, 0);
 
 }

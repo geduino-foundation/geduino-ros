@@ -137,35 +137,44 @@ void encodersCallback(const md25_msgs::StampedEncodersWithSpeeds::ConstPtr & enc
     double deltaS2 = deltaEncoder2 * encoderSensitivity2 * wheelDiameter2;
 
     // Update odometry
-    odometryPtr->update(deltaS1, deltaS2);
+    odometryPtr->update(deltaS1, deltaS2, encodersMessage->header.stamp.toSec());
 
     // Update encoders
     lastEncoder1 = encodersMessage->encoders.encoder1;
     lastEncoder2 = encodersMessage->encoders.encoder2;
 
+  } else {
+
+    // Update odometry time only
+    odometryPtr->update(0, 0, encodersMessage->header.stamp.toSec());
+
   }
 
-  // Get position
-  tf::Vector3 position;
-  odometryPtr->getPosition(position);
+  // Get linear and angular position
+  tf::Vector3 linPos, angPos;
+  odometryPtr->getPosition(linPos, angPos);
+
+  // Get linear and angular velocity
+  tf::Vector3 linVel, angVel;
+  odometryPtr->getVelocity(linVel, angVel);
 
   // Get covariance
   tf::Matrix3x3 covariance;
   odometryPtr->getCovariance(covariance);
 
   // Create odometry quaternion from th
-  geometry_msgs::Quaternion odometryQuaternion = tf::createQuaternionMsgFromYaw(position.z());
+  geometry_msgs::Quaternion odometryQuaternion = tf::createQuaternionMsgFromYaw(angPos.z());
 
   // Update odometry transformation
-  odometryMessage.header.stamp = encodersMessage->header.stamp;
-  odometryTransformation.transform.translation.x = position.x();
-  odometryTransformation.transform.translation.y = position.y();
+  odometryTransformation.header.stamp = encodersMessage->header.stamp;
+  odometryTransformation.transform.translation.x = linPos.x();
+  odometryTransformation.transform.translation.y = linPos.y();
   odometryTransformation.transform.rotation = odometryQuaternion;
 
   // Update odometry message
-  odometryTransformation.header.stamp = encodersMessage->header.stamp;
-  odometryMessage.pose.pose.position.x = position.x();
-  odometryMessage.pose.pose.position.y = position.y();
+  odometryMessage.header.stamp = encodersMessage->header.stamp;
+  odometryMessage.pose.pose.position.x = linPos.x();
+  odometryMessage.pose.pose.position.y = linPos.y();
   odometryMessage.pose.covariance[0] = covariance[0].x();
   odometryMessage.pose.covariance[1] = covariance[0].y();
   odometryMessage.pose.covariance[5] = covariance[0].z();
@@ -176,8 +185,8 @@ void encodersCallback(const md25_msgs::StampedEncodersWithSpeeds::ConstPtr & enc
   odometryMessage.pose.covariance[31] = covariance[2].y();
   odometryMessage.pose.covariance[35] = covariance[2].z();
   odometryMessage.pose.pose.orientation = odometryQuaternion;
-  odometryMessage.twist.twist.linear.x = (encodersMessage->speeds.speed1 * wheelDiameter1 / speedSensitivity1 + encodersMessage->speeds.speed2 * wheelDiameter2 / speedSensitivity2) / 2;
-  odometryMessage.twist.twist.angular.z = (encodersMessage->speeds.speed1 * wheelDiameter1 / speedSensitivity1 - encodersMessage->speeds.speed2 * wheelDiameter2 / speedSensitivity2) / wheelBase;
+  odometryMessage.twist.twist.linear.x = linVel.x();
+  odometryMessage.twist.twist.angular.z = angVel.z();
 
   // Broadcast odometry transformation
   odometryTransformBroadcasterPtr->sendTransform(odometryTransformation);
