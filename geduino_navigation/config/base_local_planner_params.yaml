@@ -26,7 +26,7 @@ TrajectoryPlannerROS:
   
   # The maximum and minimum rotational velocity allowed for the base in radians/sec
   max_vel_theta: 0.52
-  min_vel_theta: 0.26
+  min_vel_theta: -0.52
   
   # The minimum rotational velocity allowed for the base while performing in-place
   # rotations in radians/sec
@@ -34,10 +34,14 @@ TrajectoryPlannerROS:
   
   # The x, y and rotational acceleration limit of the robot in meters/sec^2 and radians/sec^2
   acc_lim_x: 2.5
-  acc_lim_y: 2.5
+  acc_lim_y: 0.0
   acc_lim_th: 3.2
 
   # Determines whether velocity commands are generated for a holonomic or non-holonomic 
   # robot. For holonomic robots, strafing velocity commands may be issued to the base. 
   # For non-holonomic robots, no strafing velocity commands will be issued.
   holonomic_robot: false
+
+  # Wheter the gdist_scale and pdist_scale parameters should assume that goal_distance
+  # and pat_distance are expressed in units of meters or cells
+  meter_scoring: true
