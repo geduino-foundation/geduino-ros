@@ -14,17 +14,11 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-# The subscribed encoders topic name
-encoders_topic: md25/encoders
-
 # The frame attached to robot base, i.e. broadcasted transformation child frame
 base_frame: base_link
 
 # odometry frame, i.e. broadcasted transformation frame
 odom_frame: odom
-
-# The published odometry topic name
-odom_topic: odom
 
 # The encoders sensitivity in LSB / rad. It represent the inverse
 # of wheel shaft rotation angle for unitary encoder increment

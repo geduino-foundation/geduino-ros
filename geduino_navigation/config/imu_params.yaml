@@ -14,14 +14,5 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-# The subscribed motion topic name
-motion9_topic: mpu9150/motion9
-
-# The published imu topic
-imu_topic: imu
-
-# The published magnetic field
-magnetic_field_topic: magnetic_field
-
 # The mpu9150 frame
 mpu9150_frame: base_imu

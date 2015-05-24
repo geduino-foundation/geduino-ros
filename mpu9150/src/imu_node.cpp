@@ -21,8 +21,6 @@
 #include <mpu9150.h>
 
 // The ros parameters
-std::string motion9Topic;
-std::string imuTopic;
 std::string imuFrame;
 
 // The mpu9150
@@ -83,20 +81,16 @@ int main(int argc, char** argv) {
   ros::NodeHandle privateNodeHandle("~");
 
   // Get ros parameters
-  privateNodeHandle.param<std::string>("motion9_topic", motion9Topic, "mpu9150/motion9");
-  privateNodeHandle.param<std::string>("imu_topic", imuTopic, "imu");
   privateNodeHandle.param<std::string>("imu_frame", imuFrame, "base_imu");
 
   // Log
-  ROS_INFO("subscribed motion9 topic: %s", motion9Topic.c_str());
-  ROS_INFO("published imu topic: %s", imuTopic.c_str());
   ROS_INFO("imu frame: %s", imuFrame.c_str());
 
   // Create motion9 message subscriber
-  ros::Subscriber motion9MessageSubscriber = nodeHandle.subscribe(motion9Topic, 20, motion9Callback);
+  ros::Subscriber motion9MessageSubscriber = nodeHandle.subscribe("mpu9150/motion9", 20, motion9Callback);
 
   // Create imu message publisher
-  ros::Publisher _imuMessagePublisher = nodeHandle.advertise<sensor_msgs::Imu>(imuTopic, 20);;
+  ros::Publisher _imuMessagePublisher = nodeHandle.advertise<sensor_msgs::Imu>("imu", 20);;
   imuMessagePublisher = &_imuMessagePublisher;
 
   // Spin

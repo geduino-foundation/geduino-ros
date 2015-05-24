@@ -35,11 +35,9 @@
  - odom (nav_msgs/Odometry): the odometry topic.
 
  Parameters:
- - encoders_topic, the subscribed encoders topic name (default: md25/encoders);
  - base_frame, the frame attached to robot base, i.e. broadcasted transformation child
    frame (default: base_link);
  - odom_frame, : odometry frame, i.e. broadcasted transformation frame (default: odom);
- - odom_topic: the published odometry topic name (default: odom);
  - encoderSensitivity1: the encoder 1 sensitivity in LSB / rad. It represent the inverse
    of wheel shaft rotation angle for unitary encoder increment. (default: 0.00872639,
    valid using EMG30 motor);
@@ -68,10 +66,8 @@
 #include <odometry.h>
 
 // The ros parameters
-std::string encoderTopic;
 std::string baseFrame;
 std::string odomFrame;
-std::string odomTopic;
 
 // The odometry parameters
 double encoderSensitivity1;
@@ -208,10 +204,8 @@ int main(int argc, char** argv) {
   ros::NodeHandle privateNodeHandle("~");
 
   // Get ros parameters
-  privateNodeHandle.param<std::string>("encoders_topic", encoderTopic, "md25/encoders");
   privateNodeHandle.param<std::string>("base_frame", baseFrame, "base_link");
   privateNodeHandle.param<std::string>("odom_frame", odomFrame, "odom");
-  privateNodeHandle.param<std::string>("odom_topic", odomTopic, "odom");
 
   // Get odometry parameters
   privateNodeHandle.param("encoder_sensitivity1", encoderSensitivity1, 0.00872639);
@@ -226,9 +220,7 @@ int main(int argc, char** argv) {
   privateNodeHandle.param("cov_radius_threshold", covRTres, 10.0);
 
   // Log
-  ROS_INFO("subscribed encoders topic: %s", encoderTopic.c_str());
   ROS_INFO("broadcasting transformation %s -> %s", odomFrame.c_str(), baseFrame.c_str());
-  ROS_INFO("published odom topic: %s", odomTopic.c_str());
   ROS_INFO("encoder sensitivity1: %g LSB / rad", encoderSensitivity1);
   ROS_INFO("encoder sensitivity2: %g LSB / rad", encoderSensitivity2);
   ROS_INFO("speed sensitivity1: %g LSB / rad", speedSensitivity1);
@@ -245,10 +237,10 @@ int main(int argc, char** argv) {
   odometryPtr = &odometry;
 
   // Create encoders message subscriber
-  ros::Subscriber encodersMessageSubscriber = nodeHandle.subscribe(encoderTopic, 20, encodersCallback);
+  ros::Subscriber encodersMessageSubscriber = nodeHandle.subscribe("md25/encoders", 20, encodersCallback);
 
   // Create odometry message publisher
-  ros::Publisher odometryMessagePublisher = nodeHandle.advertise<nav_msgs::Odometry>(odomTopic, 20);
+  ros::Publisher odometryMessagePublisher = nodeHandle.advertise<nav_msgs::Odometry>("odom", 20);
   odometryMessagePublisherPtr = & odometryMessagePublisher;
 
   // The odometry transform broadcaster

@@ -25,7 +25,7 @@
  - cmd_vel (geometry_msgs/Twist): the velocity command.
  
  Publish:
- - cmd_speeds (md25_msgs/Speeds): the speeds command.
+ - md25/cmd_speeds (md25_msgs/Speeds): the speeds command.
 
  Parameters:
  - cmd_vel_topic: the subscribed velocity command topic name (default: cmd_vel);
@@ -45,10 +45,6 @@
 #include <md25_msgs/Speeds.h>
 #include <geometry_msgs/Twist.h>
 #include <math.h>
-
-// The ros parameters
-std::string cmdVelTopic;
-std::string cmdSpeedsTopic;
 
 // The odometry parameters
 double speedSensitivity1;
@@ -92,10 +88,6 @@ int main(int argc, char** argv) {
   // Get private node handle
   ros::NodeHandle privateNodeHandle("~");
 
-  // Get ros parameters
-  privateNodeHandle.param<std::string>("cmd_vel_topic", cmdVelTopic, "cmd_vel");
-  privateNodeHandle.param<std::string>("cmd_speeds_topic", cmdSpeedsTopic, "cmd_speeds");
-
   // Get odometry parameters
   privateNodeHandle.param("speed_sensitivity1", speedSensitivity1, 12.4620);
   privateNodeHandle.param("speed_sensitivity2", speedSensitivity2, 12.4620);
@@ -104,8 +96,6 @@ int main(int argc, char** argv) {
   privateNodeHandle.param("wheel_base", wheelBase, 0.3);
 
   // Log
-  ROS_INFO("subscribed cmd_vel topic: %s", cmdVelTopic.c_str());
-  ROS_INFO("published cmd_speeds topic: %s", cmdSpeedsTopic.c_str());
   ROS_INFO("speed sensitivity1: %g LSB / rad", speedSensitivity1);
   ROS_INFO("speed sensitivity2: %g LSB / rad", speedSensitivity2);
   ROS_INFO("wheel diameter1: %g m", wheelDiameter1);
@@ -113,10 +103,10 @@ int main(int argc, char** argv) {
   ROS_INFO("wheel base: %g m", wheelBase);
 
   // Create cmd_vel message subscriber
-  ros::Subscriber cmdVelMessageSubscriber = nodeHandle.subscribe(cmdVelTopic, 20, cmdVelCallback);
+  ros::Subscriber cmdVelMessageSubscriber = nodeHandle.subscribe("cmd_vel", 20, cmdVelCallback);
 
   // Create cmd_speeds message publisher
-  ros::Publisher cmdSpeedsMessagePublisher = nodeHandle.advertise<md25_msgs::Speeds>(cmdSpeedsTopic, 20);
+  ros::Publisher cmdSpeedsMessagePublisher = nodeHandle.advertise<md25_msgs::Speeds>("md25/cmd_speeds", 20);
   cmdSpeedsMessagePublisherPtr = & cmdSpeedsMessagePublisher;
 
   // Spin
