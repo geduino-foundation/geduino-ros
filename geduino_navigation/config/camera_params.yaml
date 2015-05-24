@@ -23,4 +23,4 @@ device_id: 7
 camera_frame: camera_link
 
 # The frames per seconds
-fps: 5
+fps: 2.5

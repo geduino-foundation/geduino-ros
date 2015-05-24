@@ -51,8 +51,8 @@
   </node>
 
   <!-- The camera node node -->
-<!--  <node pkg="geduino_perception" type="camera_node" name="camera_node" output="screen" respawn="true">
+  <node pkg="geduino_perception" type="camera_node" name="camera_node" output="screen" respawn="true">
     <rosparam file="$(find geduino_navigation)/config/camera_params.yaml" command="load" />
-  </node> -->
+  </node>
 
 </launch>
