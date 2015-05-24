@@ -22,10 +22,10 @@
  navigation stack and publish speeds command to MD25 node.
  
  Subscribes:
- - cmd_vel (geometry_msgs/Twist): the velocity command.
+ - /cmd_vel (geometry_msgs/Twist): the velocity command.
  
  Publish:
- - md25/cmd_speeds (md25_msgs/Speeds): the speeds command.
+ - cmd_speeds (md25_msgs/Speeds): the speeds command.
 
  Parameters:
  - cmd_vel_topic: the subscribed velocity command topic name (default: cmd_vel);
@@ -103,10 +103,10 @@ int main(int argc, char** argv) {
   ROS_INFO("wheel base: %g m", wheelBase);
 
   // Create cmd_vel message subscriber
-  ros::Subscriber cmdVelMessageSubscriber = nodeHandle.subscribe("cmd_vel", 20, cmdVelCallback);
+  ros::Subscriber cmdVelMessageSubscriber = nodeHandle.subscribe("/cmd_vel", 20, cmdVelCallback);
 
   // Create cmd_speeds message publisher
-  ros::Publisher cmdSpeedsMessagePublisher = nodeHandle.advertise<md25_msgs::Speeds>("md25/cmd_speeds", 20);
+  ros::Publisher cmdSpeedsMessagePublisher = nodeHandle.advertise<md25_msgs::Speeds>("cmd_speeds", 20);
   cmdSpeedsMessagePublisherPtr = & cmdSpeedsMessagePublisher;
 
   // Spin

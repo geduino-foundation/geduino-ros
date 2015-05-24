@@ -87,10 +87,10 @@ int main(int argc, char** argv) {
   ROS_INFO("imu frame: %s", imuFrame.c_str());
 
   // Create motion9 message subscriber
-  ros::Subscriber motion9MessageSubscriber = nodeHandle.subscribe("mpu9150/motion9", 20, motion9Callback);
+  ros::Subscriber motion9MessageSubscriber = nodeHandle.subscribe("motion9", 20, motion9Callback);
 
   // Create imu message publisher
-  ros::Publisher _imuMessagePublisher = nodeHandle.advertise<sensor_msgs::Imu>("imu", 20);;
+  ros::Publisher _imuMessagePublisher = nodeHandle.advertise<sensor_msgs::Imu>("/imu", 20);;
   imuMessagePublisher = &_imuMessagePublisher;
 
   // Spin

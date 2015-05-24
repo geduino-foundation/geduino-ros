@@ -28,11 +28,11 @@
  space by a constant.
  
  Subscribes:
- - md25/encoders (md25_msgs/StampedEncodersWithSpeeds): the encoder values.
+ - encoders (md25_msgs/StampedEncodersWithSpeeds): the encoder values.
  
  Publish:
  - tf (tf/tfMessage): the odom -> base_link transformation;
- - odom (nav_msgs/Odometry): the odometry topic.
+ - /odom (nav_msgs/Odometry): the odometry topic.
 
  Parameters:
  - base_frame, the frame attached to robot base, i.e. broadcasted transformation child
@@ -237,10 +237,10 @@ int main(int argc, char** argv) {
   odometryPtr = &odometry;
 
   // Create encoders message subscriber
-  ros::Subscriber encodersMessageSubscriber = nodeHandle.subscribe("md25/encoders", 20, encodersCallback);
+  ros::Subscriber encodersMessageSubscriber = nodeHandle.subscribe("encoders", 20, encodersCallback);
 
   // Create odometry message publisher
-  ros::Publisher odometryMessagePublisher = nodeHandle.advertise<nav_msgs::Odometry>("odom", 20);
+  ros::Publisher odometryMessagePublisher = nodeHandle.advertise<nav_msgs::Odometry>("/odom", 20);
   odometryMessagePublisherPtr = & odometryMessagePublisher;
 
   // The odometry transform broadcaster
