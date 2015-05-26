@@ -1,4 +1,4 @@
-# mpu9150_msgs/CMakeList.txt
+# Status.msg
 #
 # Copyright (C) 2015 Alessandro Francescon
 # 
@@ -14,37 +14,13 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-cmake_minimum_required(VERSION 2.8.3)
+# The MPU9150 status
 
-project(mpu9150_msgs)
+# The initialization result
+bool initialized
 
-find_package(catkin REQUIRED COMPONENTS
-  message_generation
-  roscpp
-  rospy
-  std_msgs
-  geometry_msgs
-  geduino_diagnostic_msgs
-)
+# The DMP FIFO overflow counter
+geduino_diagnostic_msgs/Counter fifo_overflows
 
-add_message_files(
-  FILES
-  Int16Vector3.msg
-  Motion9.msg
-  StampedMotion9.msg
-  Status.msg
-  StampedStatus.msg
-)
-
-generate_messages(
-  DEPENDENCIES
-  std_msgs
-  geometry_msgs
-  geduino_diagnostic_msgs
-)
-
-catkin_package()
-
-include_directories(
-  ${catkin_INCLUDE_DIRS}
-)
+# The actual twemperature measured
+float32 temperature
