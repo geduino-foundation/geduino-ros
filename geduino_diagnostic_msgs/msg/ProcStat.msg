@@ -16,7 +16,7 @@
 
 # The Geduino statistic message
 
-# The number of cycles in main loop in which some action was Ãperformed
+# The number of cycles in main loop in which some action was performed
 uint32 used_cycles
 
 # The number of cycles in main loop in which no action was performed
