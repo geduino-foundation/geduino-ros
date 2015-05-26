@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 
 <!-- 
- geduino_msgs/package.xml
+ geduino_diagnostic_msgs/package.xml
 
  Copyright (C) 2015 Alessandro Francescon
  
@@ -20,9 +20,9 @@
 
 <package>
 
-  <name>geduino_msgs</name>
+  <name>geduino_diagnostic_msgs</name>
   <version>1.0.0</version>
-  <description>The Geduino ROS messages package</description>
+  <description>The Geduino ROS diagnostic messages package</description>
   <license>GPL</license>
 
   <url type="blog">http://geduino.blogspot.it</url>

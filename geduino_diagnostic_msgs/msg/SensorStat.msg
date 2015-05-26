@@ -1,4 +1,4 @@
-# geduino_msgs/CMakeList.txt
+# SensorStat.msg
 #
 # Copyright (C) 2015 Alessandro Francescon
 # 
@@ -14,30 +14,13 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-cmake_minimum_required(VERSION 2.8.3)
+# The Geduino sensor stat message
 
-project(geduino_msgs)
+# The left ping measurement failure
+geduino_diagnostic_msgs/Counter left_ping_failures
 
-find_package(catkin REQUIRED COMPONENTS
-  message_generation
-  roscpp
-  rospy
-  std_msgs
-)
+# The center ping measurement failure
+geduino_diagnostic_msgs/Counter center_ping_failures
 
-add_message_files(
-  FILES
-  Power.msg
-  StampedPower.msg
-)
-
-generate_messages(
-  DEPENDENCIES
-  std_msgs
-)
-
-catkin_package()
-
-include_directories(
-  ${catkin_INCLUDE_DIRS}
-)
+# The right ping measurement failure
+geduino_diagnostic_msgs/Counter right_ping_failures

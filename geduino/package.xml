@@ -33,11 +33,12 @@
   <buildtool_depend>catkin</buildtool_depend>
   <run_depend>geduino_navigation</run_depend>
   <run_depend>geduino_teleop</run_depend>
-  <run_depend>geduino_msgs</run_depend>
+  <run_depend>geduino_diagnostic_msgs</run_depend>
+  <run_depend>geduino_perception</run_depend>
+  <run_depend>geduino_perception_msgs</run_depend>
   <run_depend>md25_msgs</run_depend>
   <run_depend>md25</run_depend>
   <run_depend>mpu9150_msgs</run_depend>
-  <run_depend>udoo_camera</run_depend>
   
   <export>
     <metapackage/>

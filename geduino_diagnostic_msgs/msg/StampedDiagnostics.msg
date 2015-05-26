@@ -1,4 +1,4 @@
-# Power.msg
+# StampedDiagnostics.msg
 #
 # Copyright (C) 2015 Alessandro Francescon
 # 
@@ -14,16 +14,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-# The Geduino power message
+# The Geduino stamped diagnostics message
 
-# The ac adapter type
-int8 TYPE_AC_ADAPTER = 0
+# The message header
+Header header
 
-# The four cells LiPo type
-int8 TYPE_LIPO_4S = 1
-
-# The power type
-int8 type
-
-# The power voltage
-float32 voltage
+# The diagnostics
+geduino_diagnostic_msgs/Diagnostics diagnostics
