@@ -22,8 +22,8 @@ int8 TYPE_AC_ADAPTER = 0
 # The four cells LiPo type
 int8 TYPE_LIPO_4S = 1
 
-# The conversion constant from raw_volt to volt 
-float32 RAW_TO_VOLT = 0.0173
+# The conversion constant from raw_volt to millivolt 
+int8 RAW_TO_MILLIVOLT = 17
 
 # The power type
 int8 type
