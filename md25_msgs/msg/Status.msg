@@ -16,12 +16,12 @@
 
 # The MD25 status
 
-# The reading of the voltage of the connected battery
-float32 voltage
+# The reading of the voltage of the connected battery. To get real voltage divide by 10.
+int8 voltage
 
-# The reading of the average current through the motor 1
-float32 current1
+# The reading of the average current through the motor 1. To get real current divide by 10.
+int8 current1
 
-# The reading of the average current through the motor 2
-float32 current2
+# The reading of the average current through the motor 2. To get real current divide by 10.
+int8 current2
 
