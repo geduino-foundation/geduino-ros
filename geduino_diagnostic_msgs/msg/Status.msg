@@ -1,4 +1,4 @@
-# StampedDiagnostics.msg
+# Status.msg
 #
 # Copyright (C) 2015 Alessandro Francescon
 # 
@@ -14,10 +14,13 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-# The Geduino stamped diagnostics message
+# The Geduino status message
 
-# The message header
-Header header
+# The power
+geduino_diagnostic_msgs/Power power
 
-# The diagnostics
-geduino_diagnostic_msgs/Diagnostics diagnostics
+# The main loop process stat
+geduino_diagnostic_msgs/ProcStat proc_stat
+
+# The sensor stat
+geduino_diagnostic_msgs/SensorStat sensor_stat

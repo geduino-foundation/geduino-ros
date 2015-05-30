@@ -28,9 +28,9 @@ find_package(catkin REQUIRED COMPONENTS
 add_message_files(
   FILES
   Counter.msg
-  Diagnostics.msg
+  Status.msg
   Power.msg
-  StampedDiagnostics.msg
+  StampedStatus.msg
   ProcStat.msg
   SensorStat.msg
 )
