@@ -29,4 +29,4 @@ int8 RAW_TO_MILLIVOLT = 17
 int8 type
 
 # The raw voltage
-int8 raw_voltage
+uint16 raw_voltage
