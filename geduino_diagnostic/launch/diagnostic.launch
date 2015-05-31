@@ -1,5 +1,5 @@
 <!-- 
- geduino_slam.launch
+ diagnostic.launch
 
  Copyright (C) 2015 Alessandro Francescon
  
@@ -18,13 +18,9 @@
 
 <launch>
 
-  <!-- The geduino configuration -->
-  <include file="$(find geduino_navigation)/launch/geduino_configuration.launch" />
-
-  <!-- The gmapping -->
-  <include file="$(find geduino_navigation)/launch/gmapping.launch" />
-
-  <!-- The move base -->
-  <include file="$(find geduino_navigation)/launch/move_base.launch" />
+  <!-- The diagnostic node -->
+  <node pkg="geduino_diagnostic" type="geduino_diagnostic_node" name="diagnostic" ns="geduino" output="screen" respawn="true">
+    <rosparam file="$(find geduino_diagnostic)/config/diagnostic_params.yaml" command="load" />
+  </node>
 
 </launch>

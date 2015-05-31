@@ -22,7 +22,7 @@
 
   <name>geduino</name>
   <version>1.0.0</version>
-  <description>The Geduino ROS meta-package</description>
+  <description>The Geduino ROS package</description>
   <license>GPL</license>
 
   <url type="blog">http://geduino.blogspot.it</url>
@@ -31,17 +31,16 @@
   <maintainer email="alessandro.francescon@gmail.com">Alessandro Francescon</maintainer>
 
   <buildtool_depend>catkin</buildtool_depend>
+  <run_depend>geduino_diagnostic</run_depend>
   <run_depend>geduino_navigation</run_depend>
-  <run_depend>geduino_teleop</run_depend>
-  <run_depend>geduino_diagnostic_msgs</run_depend>
   <run_depend>geduino_perception</run_depend>
-  <run_depend>geduino_perception_msgs</run_depend>
-  <run_depend>md25_msgs</run_depend>
   <run_depend>md25</run_depend>
-  <run_depend>mpu9150_msgs</run_depend>
+  <run_depend>mpu9150</run_depend>
+  <run_depend>rplidar_ros</run_depend>
+  <run_depend>rosserial_python</run_depend>
+  <run_depend>tf</run_depend>
   
   <export>
-    <metapackage/>
   </export>
 
 </package>

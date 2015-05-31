@@ -40,7 +40,7 @@
   <run_depend>roscpp</run_depend>
   <run_depend>std_msgs</run_depend>
   <run_depend>diagnostic_msgs</run_depend>
-  <run_depend>tf2</run_depend>
+  <run_depend>tf</run_depend>
 
   <export>
   </export>

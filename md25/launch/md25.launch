@@ -1,0 +1,37 @@
+<!-- 
+ md25.launch
+
+ Copyright (C) 2015 Alessandro Francescon
+ 
+ This program is free software: you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation, either version 3 of the License.
+ 
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+ 
+ You should have received a copy of the GNU General Public License
+ along with this program.  If not, see <http://www.gnu.org/licenses/>.
+-->
+
+<launch>
+
+  <!-- The MD25 odometry node -->
+  <node pkg="md25" type="odometry_node" name="odometry" ns="md25" output="screen" required="true">
+    <rosparam file="$(find md25)/config/odometry_common_params.yaml" command="load" />
+    <rosparam file="$(find md25)/config/odometry_params.yaml" command="load" />
+  </node>    
+
+  <!-- The MD25 vel2cmd node -->
+  <node pkg="md25" type="vel2speeds_node" name="vel2speeds" ns="md25" output="screen" required="true">
+    <rosparam file="$(find md25)/config/odometry_common_params.yaml" command="load" />
+    <rosparam file="$(find md25)/config/vel2speeds_params.yaml" command="load" />
+  </node>    
+
+  <!-- The MD25 diagnostic node -->
+  <node pkg="md25" type="md25_diagnostic_node" name="diagnostic" ns="md25" output="screen" respawn="true">
+  </node>
+
+</launch>

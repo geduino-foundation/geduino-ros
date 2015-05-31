@@ -1,7 +1,5 @@
-<?xml version="1.0"?>
-
 <!-- 
- geduino_navigation/package.xml
+ perception.launch
 
  Copyright (C) 2015 Alessandro Francescon
  
@@ -18,23 +16,14 @@
  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 -->
 
-<package>
+<launch>
 
-  <name>geduino_navigation</name>
-  <version>1.0.0</version>
-  <description>The geduino navigation package</description>
-  <license>GPL</license>
-  
-  <url type="blog">http://geduino.blogspot.it</url> 
-  
-  <author email="alessandro.francescon@gmail.com">Alessandro Francescon</author>
-  <maintainer email="alessandro.francescon@gmail.com">Alessandro Francescon</maintainer>
-  
-  <buildtool_depend>catkin</buildtool_depend>
-  <run_depend>move_base</run_depend>
-  <run_depend>gmapping</run_depend>
+  <!-- The base_link -> base_camera transformation broadcaster -->
+  <node pkg="tf" type="static_transform_publisher" name="base_camera_tf" args="0 0 0 0 0 0 base_link base_camera 100" respawn="true"/>
 
-  <export>
-  </export>
+  <!-- The camera node node -->
+  <node pkg="geduino_perception" type="camera_node" name="camera" output="screen" respawn="true">
+    <rosparam file="$(find geduino_perception)/config/perception_params.yaml" command="load" />
+  </node>
 
-</package>
+</launch>

@@ -1,0 +1,57 @@
+<!-- 
+ configuration.launch
+
+ Copyright (C) 2015 Alessandro Francescon
+ 
+ This program is free software: you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation, either version 3 of the License.
+ 
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+ 
+ You should have received a copy of the GNU General Public License
+ along with this program.  If not, see <http://www.gnu.org/licenses/>.
+-->
+
+<launch>
+
+  <!-- The base_link -> base_left_range transformation broadcaster -->
+  <node pkg="tf" type="static_transform_publisher" name="base_left_range_tf" args="0.097 0.097 0.055 0.7853 0 0 base_link base_left_range 100" respawn="true"/>
+
+  <!-- The base_link -> base_center_range transformation broadcaster -->
+  <node pkg="tf" type="static_transform_publisher" name="base_center_range_tf" args="0.137 0 0.055 0 0 0 base_link base_center_range 100" respawn="true"/>
+
+  <!-- The base_link -> base_right_range transformation broadcaster -->
+  <node pkg="tf" type="static_transform_publisher" name="base_right_range_tf" args="0.097 -0.097 0.055 -0.7853 0 0 base_link base_right_range 100" respawn="true"/>
+
+  <!-- The base_link -> base_laser transformation broadcaster -->
+  <node pkg="tf" type="static_transform_publisher" name="base_laser_tf" args="0.095 -0.026 0.15 1.5707 0 3.1415 base_link base_laser 100" respawn="true"/>
+
+  <!-- The serial node -->
+  <node pkg="rosserial_python" type="serial_node.py" name="serial" output="screen" respawn="true">
+    <param name="port" value="/dev/ttymxc3" />
+    <param name="baud" value="115200" />
+  </node>
+
+  <!-- The RPLidar node -->
+  <node pkg="rplidar_ros" type="rplidarNode" name="rplidar" output="screen" respawn="true">
+    <param name="serial_port" value="/dev/ttymxc4" />
+    <param name="frame_id" value="base_laser" />
+  </node>
+
+  <!-- The MD25 -->
+  <include file="$(find md25)/launch/md25.launch" />
+
+  <!-- The MPU9150 -->
+  <include file="$(find mpu9150)/launch/mpu9150.launch" />
+
+  <!-- The perception-->
+  <include file="$(find geduino_perception)/launch/perception.launch" />
+
+  <!-- The diagnostic -->
+  <include file="$(find geduino_diagnostic)/launch/diagnostic.launch" />
+
+</launch>

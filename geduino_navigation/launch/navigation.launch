@@ -1,5 +1,5 @@
 <!-- 
- move_base.launch
+ navigation.launch
 
  Copyright (C) 2015 Alessandro Francescon
  
@@ -17,6 +17,11 @@
 -->
 
 <launch>
+
+  <!-- The gmapping node -->
+  <node pkg="gmapping" type="slam_gmapping" respawn="false" name="gmapping" required="true" output="screen">
+    <rosparam file="$(find geduino_navigation)/config/gmapping_params.yaml" command="load" />  
+  </node>
 
   <!-- The move base node -->
   <node pkg="move_base" type="move_base" respawn="false" name="move_base" output="screen" required="true">

@@ -1,5 +1,5 @@
 <!-- 
- gmapping.launch
+ mpu9150.launch
 
  Copyright (C) 2015 Alessandro Francescon
  
@@ -18,9 +18,16 @@
 
 <launch>
 
-  <!-- The gmapping node -->
-  <node pkg="gmapping" type="slam_gmapping" respawn="false" name="gmapping" required="true" output="screen">
-    <rosparam file="$(find geduino_navigation)/config/gmapping_params.yaml" command="load" />  
+  <!-- The base_link -> base_imu transformation broadcaster -->
+  <node pkg="tf" type="static_transform_publisher" name="base_imu_tf" args="-0.07 -0.035 0.095 1.5707 0 0 base_link base_imu 100" respawn="true"/>
+
+  <!-- The MPU9150 imu node -->
+  <node pkg="mpu9150" type="imu_node" name="imu" ns="mpu9150" output="screen" respawn="true">
+    <rosparam file="$(find mpu9150)/config/imu_params.yaml" command="load" />
+  </node>
+
+  <!-- The MPU9150 diagnostic node -->
+  <node pkg="mpu9150" type="mpu9150_diagnostic_node" name="diagnostic" ns="mpu9150" output="screen" respawn="true">
   </node>
 
 </launch>

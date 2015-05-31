@@ -1,4 +1,4 @@
-# geduino/CMakeList.txt
+# diagnostic_params.yaml
 #
 # Copyright (C) 2015 Alessandro Francescon
 # 
@@ -14,9 +14,14 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-cmake_minimum_required(VERSION 2.8.3)
+# The warning value for SAMx8 average load, in percent (default: 10.0)
+samx8_load_warning_threshold: 50
 
-project(geduino)
+# The critical value for SAMx8 average load, in millis (default: 50.0)
+samx8_load_critical_threshold: 50.0
 
-find_package(catkin REQUIRED COMPONENTS)
+# The warning value for SAMx8 average delay, in millis (default: 50.0)
+samx8_delay_warning_threshold: 50.0
 
+# The critical value for SAMx8 average delay, in millis (default: 100.0)
+samx8_delay_critical_threshold: 100.0
