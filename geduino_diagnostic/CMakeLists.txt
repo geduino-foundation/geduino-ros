@@ -1,4 +1,4 @@
-# md25/CMakeList.txt
+# geduino_diagnostic/CMakeList.txt
 #
 # Copyright (C) 2015 Alessandro Francescon
 # 
@@ -16,14 +16,12 @@
 
 cmake_minimum_required(VERSION 2.8.3)
 
-project(md25)
+project(geduino_diagnostic)
 
 find_package(catkin REQUIRED COMPONENTS
-  md25_msgs
   roscpp
-  std_msgs
   diagnostic_msgs
-  tf
+  geduino_diagnostic_msgs
 )
 
 catkin_package()
@@ -33,16 +31,8 @@ include_directories(
   src
 )
 
-add_executable(odometry_node src/odometry_node.cpp src/odometry.cpp)
-add_executable(vel2speeds_node src/vel2speeds_node.cpp)
-add_executable(md25_diagnostic_node src/md25_diagnostic_node.cpp)
+add_executable(geduino_diagnostic_node src/geduino_diagnostic_node.cpp)
 
-target_link_libraries(odometry_node
-  ${catkin_LIBRARIES}
-)
-target_link_libraries(vel2speeds_node
-  ${catkin_LIBRARIES}
-)
-target_link_libraries(md25_diagnostic_node
+target_link_libraries(geduino_diagnostic_node
   ${catkin_LIBRARIES}
 )

@@ -24,6 +24,7 @@ find_package(catkin REQUIRED COMPONENTS
   sensor_msgs
   std_msgs
   geometry_msgs
+  diagnostic_msgs
 )
 
 catkin_package()
@@ -34,8 +35,11 @@ include_directories(
 )
 
 add_executable(imu_node src/imu_node.cpp src/mpu9150.cpp)
+add_executable(mpu9150_diagnostic_node src/mpu9150_diagnostic_node.cpp)
 
 target_link_libraries(imu_node
   ${catkin_LIBRARIES}
 )
-
+target_link_libraries(mpu9150_diagnostic_node
+  ${catkin_LIBRARIES}
+)
