@@ -63,7 +63,7 @@ void statusCallback(const geduino_diagnostic_msgs::StampedStatus::ConstPtr & sta
 	// Power diagnostic
 
 	// Calculate power voltage
-	double powerVoltage = 1.0 * geduino_diagnostic_msgs::Power::RAW_TO_MILLIVOLT * statusMessage->status.power.raw_voltage;
+	double powerVoltage = 0.001 * geduino_diagnostic_msgs::Power::RAW_TO_MILLIVOLT * statusMessage->status.power.raw_voltage;
        
 	// Format power voltage
 	char powerVoltageChars[15];
