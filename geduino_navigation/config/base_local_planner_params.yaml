@@ -17,7 +17,7 @@
 TrajectoryPlannerROS:
 
   # The maximum forward velocity allowed for the base in meters/sec
-  max_vel_x: 0.1
+  max_vel_x: 0.25
   
   # The minimum forward velocity allowed for the base in meters/sec. 
   # It is useful to specify this to guarantee that velocity commands sent to a mobile
@@ -45,3 +45,6 @@ TrajectoryPlannerROS:
   # Wheter the gdist_scale and pdist_scale parameters should assume that goal_distance
   # and pat_distance are expressed in units of meters or cells
   meter_scoring: true
+
+  # How far the robot must travel in meters before oscillation flags are reset
+  oscillation_reset_dist: 0.10
