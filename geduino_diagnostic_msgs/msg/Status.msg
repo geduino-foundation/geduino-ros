@@ -21,6 +21,3 @@ geduino_diagnostic_msgs/Power power
 
 # The main loop process stat
 geduino_diagnostic_msgs/ProcStat proc_stat
-
-# The sensor stat
-geduino_diagnostic_msgs/SensorStat sensor_stat
