@@ -1,0 +1,29 @@
+<?xml version="1.0"?>
+<robot name="geduino">
+  <link name="base_link">
+    <!-- The base -->
+    <visual>
+      <geometry>
+        <cylinder length="0.10" radius="0.15"/>
+      </geometry>
+      <origin xyz="0 0 0.06"/>
+      <material name="dark_gray">
+        <color rgba="0.43 0.68 0.69 1"/>
+      </material>       
+   </visual>
+    <!-- The left tire -->
+    <visual>
+      <geometry>
+        <cylinder length="0.026" radius="0.05"/>
+      </geometry>
+      <origin xyz="0 -0.166 0.05" rpy="1.57 0 0"/>
+    </visual>
+    <!-- The rigth tire -->
+    <visual>
+      <geometry>
+        <cylinder length="0.02" radius="0.05"/>
+      </geometry>
+      <origin xyz="0 0.166 0.05" rpy="-1.57 0 0"/>
+    </visual>
+  </link>
+</robot>
