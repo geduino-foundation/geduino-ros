@@ -1,0 +1,432 @@
+/*
+ rplidar_node.cpp
+
+ Copyright (C) 2015 Alessandro Francescon
+ 
+ This program is free software: you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation, either version 3 of the License.
+ 
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+ 
+ You should have received a copy of the GNU General Public License
+ along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+/**
+ rplidar_node publish scan data from RoboPeak RPLidar.
+
+ Publish:
+ - scan (sensor_msgs/LaserScan): the scanned data;
+ - /diagnostics (diagnostic_msgs/DiagnosticArray): the diagnostic information.
+
+ Parameters:
+ - serial_port, the serial port RPLidar is connected to (default: /dev/ttymxc4);
+ - frame_id, the frame laser data are referred (default: base_laser);
+ - gpio_num, the GPIO number the RPLidar motor control is connected to (default: 40).
+ */
+
+#include <ros/ros.h>
+#include <sensor_msgs/LaserScan.h>
+#include <diagnostic_msgs/DiagnosticArray.h>
+#include <std_srvs/Empty.h>
+#include "rplidar.h"
+#include "gpio.h"
+
+#define SERIAL_BAUD_RATE 115200
+
+#define RANGE_MIN 0.15
+#define RANGE_MAX 6.00
+
+#define STATUS_OK diagnostic_msgs::DiagnosticStatus::OK
+#define STATUS_WARN diagnostic_msgs::DiagnosticStatus::WARN
+#define STATUS_ERROR diagnostic_msgs::DiagnosticStatus::ERROR
+#define STATUS_STALE diagnostic_msgs::DiagnosticStatus::STALE
+
+using namespace rp::standalone::rplidar;
+
+// The pouinter to rplidar driver
+RPlidarDriver * rpLidarDriver = NULL;
+
+// The pointer to gpio
+GPIO * gpio = NULL;
+
+// The laser scan publisher pointer
+ros::Publisher * laserScanMessagePublisherPtr;
+
+// The diagnostics message publisher pointer
+ros::Publisher * diagnosticsMessagePublisherPtr;
+
+// Node parameter
+std::string frameId;
+std::string serialPort;
+std::string gpioNum;
+
+void publishLaserScan(rplidar_response_measurement_node_t * nodes, 
+                  size_t nodeCount, ros::Time scanStartTime,
+                  ros::Time scanEndTime) {
+
+	// Create laser scan message
+	sensor_msgs::LaserScan laserScanMessage;
+
+	// Set laser scan message header
+	laserScanMessage.header.stamp = scanStartTime;
+	laserScanMessage.header.frame_id = frameId;
+
+	// Get scan duration
+	ros::Duration scanTime = scanEndTime - scanStartTime;
+
+	// Set scan time
+	laserScanMessage.scan_time = scanTime.toSec();
+	laserScanMessage.time_increment = scanTime.toSec() / nodeCount;
+
+	// Set scan angle
+	laserScanMessage.angle_min = -M_PI;
+	laserScanMessage.angle_max = M_PI;
+	laserScanMessage.angle_increment = (2 * M_PI) / 360;
+
+	// Set scan range limit
+	laserScanMessage.range_min = RANGE_MIN;
+	laserScanMessage.range_max = RANGE_MAX;
+
+	// Resize ranges and intensities
+	laserScanMessage.ranges.resize(360);
+	laserScanMessage.intensities.resize(360);
+
+	for (int nodeIndex = 0; nodeIndex < nodeCount; nodeIndex++) {
+
+		// Get angle
+		float angle = (float) (nodes[nodeIndex].angle_q6_checkbit >> RPLIDAR_RESP_MEASUREMENT_ANGLE_SHIFT) / 64.0f;
+
+		// Get range index
+		int rangeIndex = (int) angle;
+
+		if (nodes[nodeIndex].distance_q2 != 0) {
+
+			// Get distance and intensity
+			float distance = (float) nodes[nodeIndex].distance_q2 / 4.0f / 1000;
+			float syncQuality = (float) (nodes[nodeIndex].sync_quality >> RPLIDAR_RESP_MEASUREMENT_QUALITY_SHIFT);
+
+			// Set ranges and intensities in laser scan message
+			laserScanMessage.ranges[rangeIndex] = distance;
+			laserScanMessage.intensities[rangeIndex] = syncQuality;
+
+		} else {
+
+			// Set ranges and intensities in laser scan message
+			laserScanMessage.ranges[rangeIndex] = std::numeric_limits<float>::infinity();
+			laserScanMessage.intensities[rangeIndex] = 0;
+
+		}
+
+	}
+
+	// Publish laser scan message
+	laserScanMessagePublisherPtr->publish(laserScanMessage);
+
+}
+
+void publishDiagnostics(uint8_t level, std::string message) {
+
+	// Create diagnostics message
+	diagnostic_msgs::DiagnosticArray diagnosticsMessage;
+	diagnosticsMessage.header.stamp = ros::Time::now();
+	diagnosticsMessage.status.resize(1);
+	diagnosticsMessage.status[0].level = level;
+	diagnosticsMessage.status[0].name = "RPLidar";
+	diagnosticsMessage.status[0].message = message.c_str();
+	diagnosticsMessage.status[0].hardware_id = "rplidar";
+	diagnosticsMessage.status[0].values.resize(0);
+
+	// Publish diagnostics message
+	diagnosticsMessagePublisherPtr->publish(diagnosticsMessage);
+
+}
+
+bool checkHealthStatus() {
+
+	rplidar_response_device_health_t health;
+
+	// Get rp lidar health
+	u_result opResult = rpLidarDriver->getHealth(health);
+
+	// Check rp lidar health
+	if (IS_OK(opResult)) {
+
+		// Log
+		ROS_INFO("rp lidar health status: %d", health.status);
+
+		return (health.status == RPLIDAR_STATUS_ERROR);
+
+	} else {
+
+		// Log
+		ROS_ERROR("cannot retrieve rp lidar health status. Operation result: %x", opResult);
+
+		return false;
+
+	}
+
+}
+
+void startScan() {
+
+	if (gpio) {
+
+        	// Start motor
+        	gpio->setValue(VALUE_HIGH);
+
+	} else {
+
+		// Log
+		ROS_ERROR("cannot start scan: gpio was null");
+
+	}
+
+	if (rpLidarDriver) {
+
+		// Start scan
+		rpLidarDriver->startScan();
+
+	} else {
+
+		// Log
+		ROS_ERROR("cannot start scan: rp lidar driver was null");
+
+	}
+
+}
+
+void stopScan() {
+
+	if (rpLidarDriver) {
+
+		// Stop scan
+		rpLidarDriver->stop();
+
+	} else {
+
+		// Log
+		ROS_ERROR("cannot stop scan: rp lidar driver was null");
+
+	}
+
+	if (gpio) {
+
+        	// Stop motor
+        	gpio->setValue(VALUE_LOW);
+
+	} else {
+
+		// Log
+		ROS_ERROR("cannot stop scan: gpio was null");
+
+	}
+
+}
+
+void dispose() {
+
+	if (rpLidarDriver) {
+
+		// Log
+		ROS_INFO("disposing rp lidar driver...");
+
+		// Dispose rp lidar driver
+		RPlidarDriver::DisposeDriver(rpLidarDriver);
+
+	}
+
+	if (gpio) {
+
+		// Log
+		ROS_INFO("unexporting gpio %s ...", gpioNum.c_str());
+
+		// Unexport gpio
+		if (gpio->unexportGPIO() != 0) {
+
+			// Log
+			ROS_ERROR("cannot unexport gpio %s", gpioNum.c_str());
+
+		}
+
+	}
+
+}
+
+int main(int argc, char * argv[]) {
+
+	// Init node handle
+	ros::init(argc, argv, "rplidar_node");
+
+	// Get private node handle
+	ros::NodeHandle privateNodeHandle("~");
+
+	// Get node params
+	privateNodeHandle.param<std::string>("frame_id", frameId, "base_laser");
+	privateNodeHandle.param<std::string>("serial_port", serialPort, "/dev/ttymxc4"); 
+	privateNodeHandle.param<std::string>("gpio_num", gpioNum, "40");
+
+	// Log
+	ROS_INFO("framed id: %s", frameId.c_str());
+	ROS_INFO("serial port: %s", serialPort.c_str());
+	ROS_INFO("gpio number: %s", gpioNum.c_str());
+
+	// Get node handle
+	ros::NodeHandle nodeHandle;
+
+	// Create disgnostics message publisher
+ 	ros::Publisher diagnosticsMessagePublisher = nodeHandle.advertise<diagnostic_msgs::DiagnosticArray>("/diagnostics", 20, true);
+	diagnosticsMessagePublisherPtr = & diagnosticsMessagePublisher;
+
+	// Log
+	ROS_INFO("setting up rp lidar driver...");
+
+	// Create rp lidar driver
+	rpLidarDriver = RPlidarDriver::CreateDriver(RPlidarDriver::DRIVER_TYPE_SERIALPORT);
+
+	// Check if rp lidar driver was created
+	if (!rpLidarDriver) {
+
+		// Log
+		ROS_ERROR("cannot create driver, exiting...");
+
+		// Publish diagnostics
+		publishDiagnostics(STATUS_ERROR, "Cannot create driver");
+
+		return -2;
+
+	}
+
+	// Connect rp lidar driver
+	if (IS_FAIL(rpLidarDriver->connect(serialPort.c_str(), (_u32) SERIAL_BAUD_RATE))) {
+
+		// Log
+		ROS_ERROR("cannot bind serial port %s. Exiting...", serialPort.c_str());
+
+		// Publish diagnostics
+		publishDiagnostics(STATUS_ERROR, "Cannot bind serial port");
+
+		// Dispose resources
+		dispose();
+
+		return -1;
+
+	}
+
+	// Check rp lidar deriver health status
+	if (!checkHealthStatus) {
+
+		// Log
+		ROS_ERROR("rp lidar health status check failed. Exiting...");
+
+			// Publish diagnostics
+		publishDiagnostics(STATUS_ERROR, "Bad health status");
+
+		// Dispose resources
+		dispose();
+
+		return -1;
+
+	}
+
+	// Log
+	ROS_INFO("binding gpio...");
+
+	// Create gpio
+	gpio = new GPIO(gpioNum);
+
+	// Export gpio
+	if (gpio->exportGPIO() != 0) {
+
+		// Log
+		ROS_ERROR("cannot export gpio number: %s. Exiting...", gpioNum.c_str());
+
+		// Publish diagnostics
+		publishDiagnostics(STATUS_ERROR, "Cannot bind GPIO");
+
+		// Dispose resources
+		dispose();
+
+		return -1;
+
+	}
+
+	// Set gpio direction
+	gpio->setDirection(DIRECTION_OUT);
+
+	// Log
+	ROS_INFO("all ready: starting scan...");
+
+	// Publish diagnostics
+	publishDiagnostics(STATUS_OK, "OK");
+
+	// Start scan
+	startScan();
+
+	// Create laser scan message publisher
+ 	ros::Publisher laserScanMessagePublisher = nodeHandle.advertise<sensor_msgs::LaserScan>("scan", 1000);
+	laserScanMessagePublisherPtr = & laserScanMessagePublisher;
+
+	while (ros::ok()) {
+
+		rplidar_response_measurement_node_t nodes[720];
+		size_t nodeCount = 720;
+
+		// Get scan start time
+		ros::Time scanStartTime = ros::Time::now();
+
+		// Grab scan data
+		u_result grabOpResult = rpLidarDriver->grabScanData(nodes, nodeCount);
+
+		// Get scan end time
+		ros::Time scanEndTime = ros::Time::now();
+
+		if (grabOpResult == RESULT_OK) {
+
+			// Ascend scan data
+			u_result ascendOpResult = rpLidarDriver->ascendScanData(nodes, nodeCount);
+
+			if (ascendOpResult == RESULT_OK) {
+
+				// Publish l√aser scan
+				publishLaserScan(nodes, nodeCount, scanStartTime, scanEndTime);
+
+			} else {
+
+				// Log
+				ROS_WARN("cannot ascend scan data. Operation result: %x", grabOpResult);
+
+				// Publish diagnostics
+				publishDiagnostics(STATUS_WARN, "Cannot ascend scan data");
+
+			}
+
+
+		} else {
+
+			// Log
+			ROS_WARN("cannot grab scan data. Operation result: %x", grabOpResult);
+
+			// Publish diagnostics
+			publishDiagnostics(STATUS_WARN, "Cannot grab scan data");
+
+		}
+
+		// Ros spin
+		ros::spinOnce();
+
+	}
+
+	// Stop scan
+	stopScan();
+
+	// Dispose resources
+	dispose();
+
+	return 0;
+
+}
