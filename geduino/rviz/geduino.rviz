@@ -83,33 +83,6 @@ Visualization Manager:
       Use Fixed Frame: true
       Use rainbow: true
       Value: false
-    - Alpha: 0.5
-      Buffer Length: 1
-      Class: rviz/Range
-      Color: 255; 255; 255
-      Enabled: false
-      Name: Range
-      Queue Size: 100
-      Topic: /center_range
-      Value: false
-    - Alpha: 0.5
-      Buffer Length: 1
-      Class: rviz/Range
-      Color: 255; 255; 255
-      Enabled: false
-      Name: Range
-      Queue Size: 100
-      Topic: /left_range
-      Value: false
-    - Alpha: 0.5
-      Buffer Length: 1
-      Class: rviz/Range
-      Color: 255; 255; 255
-      Enabled: false
-      Name: Range
-      Queue Size: 100
-      Topic: /right_range
-      Value: false
     - Alpha: 1
       Buffer Length: 1
       Class: rviz/Path
