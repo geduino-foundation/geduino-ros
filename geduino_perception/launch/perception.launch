@@ -18,9 +18,6 @@
 
 <launch>
 
-  <!-- The base_link -> base_camera transformation broadcaster -->
-  <node pkg="tf" type="static_transform_publisher" name="base_camera_tf" args="0 0 0 0 0 0 base_link base_camera 100" respawn="true"/>
-
   <!-- The camera node node -->
   <node pkg="geduino_perception" type="camera_node" name="camera" output="screen" respawn="true">
     <rosparam file="$(find geduino_perception)/config/perception_params.yaml" command="load" />

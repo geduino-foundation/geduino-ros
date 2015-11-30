@@ -21,8 +21,8 @@
   <!-- The Geduino description -->
   <param name="robot_description" textfile="$(find geduino)/urdf/geduino.urdf" />
 
-  <!-- The base_link -> base_laser transformation broadcaster -->
-  <node pkg="tf" type="static_transform_publisher" name="base_laser_tf" args="0.095 -0.026 0.15 1.5707 0 3.1415 base_link base_laser 100" respawn="true"/>
+  <!-- The robot state publisher -->
+  <node pkg="robot_state_publisher" type="robot_state_publisher" name="robot_state"/>
 
   <!-- The serial node -->
   <node pkg="rosserial_python" type="serial_node.py" name="serial" output="screen" respawn="true">

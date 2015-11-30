@@ -39,6 +39,7 @@
   <run_depend>rplidar</run_depend>
   <run_depend>rosserial_python</run_depend>
   <run_depend>tf</run_depend>
+  <run_depend>robot_state_publisher</run_depend>
   
   <export>
   </export>
