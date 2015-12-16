@@ -54,6 +54,9 @@ RPlidarDriver * rpLidarDriver = NULL;
 // The pointer to gpio
 GPIO * gpio = NULL;
 
+// The rpÃp lidar device info pointer
+_rplidar_response_device_info_t * rpLidarDeviceInfoPtr = NULL;
+
 // The laser scan publisher pointer
 ros::Publisher * laserScanMessagePublisherPtr;
 
@@ -139,7 +142,37 @@ void publishDiagnostics(uint8_t level, std::string message) {
 	diagnosticsMessage.status[0].name = "RPLidar";
 	diagnosticsMessage.status[0].message = message.c_str();
 	diagnosticsMessage.status[0].hardware_id = "rplidar";
-	diagnosticsMessage.status[0].values.resize(0);
+
+	if (rpLidarDeviceInfoPtr) {
+
+		// Get values as char array
+		char modelChars[1];
+		sprintf(modelChars, "%x", rpLidarDeviceInfoPtr->model);
+		char firmwareVersionChars[3];
+		sprintf(firmwareVersionChars, "%u.%u", (uint8_t) rpLidarDeviceInfoPtr->firmware_version >> 8, (uint8_t) rpLidarDeviceInfoPtr->firmware_version);
+		char hardwareVersionChars[1];
+		sprintf(hardwareVersionChars, "%x", rpLidarDeviceInfoPtr->hardware_version);
+		char serialNumberChars[32];
+		for (uint8_t index = 0; index < 16; index++) {
+			sprintf(&serialNumberChars[index * 2], "%x", rpLidarDeviceInfoPtr->serialnum[15 - index]);
+		}
+
+		diagnosticsMessage.status[0].values.resize(4);
+		diagnosticsMessage.status[0].values[0].key = "Model";
+		diagnosticsMessage.status[0].values[0].value = modelChars;
+		diagnosticsMessage.status[0].values[1].key = "Firmware version";
+		diagnosticsMessage.status[0].values[1].value = firmwareVersionChars;
+		diagnosticsMessage.status[0].values[2].key = "Hardware version";
+		diagnosticsMessage.status[0].values[2].value = hardwareVersionChars;
+		diagnosticsMessage.status[0].values[3].key = "Serial number";
+		diagnosticsMessage.status[0].values[3].value = serialNumberChars;
+
+	} else {
+
+		// No values
+		diagnosticsMessage.status[0].values.resize(0);
+
+	}
 
 	// Publish diagnostics message
 	diagnosticsMessagePublisherPtr->publish(diagnosticsMessage);
@@ -330,6 +363,22 @@ int main(int argc, char * argv[]) {
 		dispose();
 
 		return -1;
+
+	}
+
+
+	_rplidar_response_device_info_t rpLidarDeviceInfo;
+
+	// Get rp lidar device info
+	if (IS_OK(rpLidarDriver->getDeviceInfo(rpLidarDeviceInfo))) {
+
+		// Set pointer to rp lidar device info
+		rpLidarDeviceInfoPtr = & rpLidarDeviceInfo;
+
+	} else {
+
+		// Log
+		ROS_ERROR("cannot get rp lidar device info");
 
 	}
 
