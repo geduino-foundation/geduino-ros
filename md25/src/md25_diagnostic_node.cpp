@@ -41,7 +41,9 @@ void statusCallback(const md25_msgs::StampedStatus::ConstPtr & statusMessage) {
 	double motor1Current = 0.1 * statusMessage->status.current1;
 	double motor2Current = 0.1 * statusMessage->status.current2;
 
-	// Format real motor voltage and current
+	// Format version, real motor voltage and current
+	char versionChars[10];
+	sprintf(versionChars, "V %u", statusMessage->status.version);
 	char motorVoltageChars[10];
 	sprintf(motorVoltageChars, "%g V", motorVoltage);
 	char motor1CurrentChars[10];
@@ -57,13 +59,15 @@ void statusCallback(const md25_msgs::StampedStatus::ConstPtr & statusMessage) {
 	diagnosticsMessage.status[0].name = "MD25";
 	diagnosticsMessage.status[0].message = (statusMessage->status.reachable) ? "OK" : "Unreachable";
 	diagnosticsMessage.status[0].hardware_id = "md25";
-	diagnosticsMessage.status[0].values.resize(3);
-	diagnosticsMessage.status[0].values[0].key = "Motor voltage";
-	diagnosticsMessage.status[0].values[0].value = motorVoltageChars;
-	diagnosticsMessage.status[0].values[1].key = "Motor 1 current";
-	diagnosticsMessage.status[0].values[1].value = motor1CurrentChars;
-	diagnosticsMessage.status[0].values[2].key = "Motor 2 current";
-	diagnosticsMessage.status[0].values[2].value = motor2CurrentChars;
+	diagnosticsMessage.status[0].values.resize(4);
+	diagnosticsMessage.status[0].values[0].key = "SW Version";
+	diagnosticsMessage.status[0].values[0].value = versionChars;
+	diagnosticsMessage.status[0].values[1].key = "Motor voltage";
+	diagnosticsMessage.status[0].values[1].value = motorVoltageChars;
+	diagnosticsMessage.status[0].values[2].key = "Motor 1 current";
+	diagnosticsMessage.status[0].values[2].value = motor1CurrentChars;
+	diagnosticsMessage.status[0].values[3].key = "Motor 2 current";
+	diagnosticsMessage.status[0].values[3].value = motor2CurrentChars;
 
 	// Publish diagnostics message
 	diagnosticsMessagePublisherPtr->publish(diagnosticsMessage);

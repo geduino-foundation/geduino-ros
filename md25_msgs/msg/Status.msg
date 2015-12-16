@@ -19,6 +19,9 @@
 # The reachable status of MD25
 bool reachable
 
+# The MD25 software version
+uint8 version
+
 # The reading of the voltage of the connected battery. To get real voltage divide by 10.
 uint8 voltage
 
