@@ -58,7 +58,7 @@ void statusCallback(const geduino_diagnostic_msgs::StampedStatus::ConstPtr & sta
 	// Create diagnostics message
 	diagnostic_msgs::DiagnosticArray diagnosticsMessage;
 	diagnosticsMessage.header.stamp = statusMessage->header.stamp;	
-	diagnosticsMessage.status.resize(2);
+	diagnosticsMessage.status.resize(5);
 
 	// Power diagnostic
 
@@ -102,6 +102,7 @@ void statusCallback(const geduino_diagnostic_msgs::StampedStatus::ConstPtr & sta
 	// Calculate average load and delays
         double averageLoad = 100 * statusMessage->status.proc_stat.used_cycles / statusMessage->status.proc_stat.idle_cycles;
 	double encodersMotion9AverageDelay = 0.1 * statusMessage->status.proc_stat.encoders_motion9_delay.sum / statusMessage->status.proc_stat.encoders_motion9_delay.counter;
+	double rangeAverageDelay = 0.1 * statusMessage->status.proc_stat.range_delay.sum / statusMessage->status.proc_stat.range_delay.counter;
 	double diagnosticAverageDelay = 0.1 * statusMessage->status.proc_stat.diagnostic_delay.sum / statusMessage->status.proc_stat.diagnostic_delay.counter;
 
 	// Format average load and delays
@@ -109,11 +110,14 @@ void statusCallback(const geduino_diagnostic_msgs::StampedStatus::ConstPtr & sta
 	sprintf(averageLoadChars, "%.2f %%", averageLoad);
 	char encodersMotion9AverageDelayChars[15];
 	sprintf(encodersMotion9AverageDelayChars, "%.2f millis", encodersMotion9AverageDelay);
+	char rangeAverageDelayChars[15];
+	sprintf(rangeAverageDelayChars, "%.2f millis", rangeAverageDelay);
 	char diagnosticAverageDelayChars[15];
 	sprintf(diagnosticAverageDelayChars, "%.2f millis", diagnosticAverageDelay);
 
 	if (averageLoad > samx8LoadCriticalThreshold ||
 		encodersMotion9AverageDelay > samx8DelayCriticalThreshold ||
+		rangeAverageDelay > samx8DelayCriticalThreshold || 
 		diagnosticAverageDelay > samx8DelayCriticalThreshold) {
 
 		// Status ERROR, message LOAD or DELAY CRITICAL
@@ -122,6 +126,7 @@ void statusCallback(const geduino_diagnostic_msgs::StampedStatus::ConstPtr & sta
 
 	} else if (averageLoad > samx8LoadWarningThreshold ||
 		encodersMotion9AverageDelay > samx8DelayWarningThreshold ||
+		rangeAverageDelay > samx8DelayWarningThreshold || 
 		diagnosticAverageDelay > samx8DelayWarningThreshold) {
 
 		// Status WARN, message LOAD or DELAY WARNING
@@ -138,13 +143,123 @@ void statusCallback(const geduino_diagnostic_msgs::StampedStatus::ConstPtr & sta
 
 	diagnosticsMessage.status[1].name = "SAMx8";
 	diagnosticsMessage.status[1].hardware_id = "samx8";
-	diagnosticsMessage.status[1].values.resize(3);
+	diagnosticsMessage.status[1].values.resize(4);
 	diagnosticsMessage.status[1].values[0].key = "Average load";
 	diagnosticsMessage.status[1].values[0].value = averageLoadChars;
 	diagnosticsMessage.status[1].values[1].key = "Encoders and Motion9 average delay";
 	diagnosticsMessage.status[1].values[1].value = encodersMotion9AverageDelayChars;
-	diagnosticsMessage.status[1].values[2].key = "Diagnostic average delay";
-	diagnosticsMessage.status[1].values[2].value = diagnosticAverageDelayChars;
+	diagnosticsMessage.status[1].values[2].key = "Range average delay";
+	diagnosticsMessage.status[1].values[2].value = rangeAverageDelayChars;
+	diagnosticsMessage.status[1].values[3].key = "Diagnostic average delay";
+	diagnosticsMessage.status[1].values[3].value = diagnosticAverageDelayChars;
+
+	// Left PING diagnostic
+
+	// Format failures sum and counter
+	char leftPingFailuresSumChars[15];
+	sprintf(leftPingFailuresSumChars, "%u", statusMessage->status.sensor_stat.left_ping_failures.sum);
+	char leftPingFailuresCounterChars[15];
+	sprintf(leftPingFailuresCounterChars, "%u", statusMessage->status.sensor_stat.left_ping_failures.counter);
+
+	if (statusMessage->status.sensor_stat.left_ping_failures.sum == statusMessage->status.sensor_stat.left_ping_failures.counter) {
+
+		// Status ERROR, message ALL FAILED
+		diagnosticsMessage.status[2].level = diagnostic_msgs::DiagnosticStatus::ERROR;
+		diagnosticsMessage.status[2].message = "All measurements failed";
+
+	} else if (statusMessage->status.sensor_stat.left_ping_failures.sum > 0) {
+
+		// Status WARN, message ALL FAILED
+		diagnosticsMessage.status[2].level = diagnostic_msgs::DiagnosticStatus::WARN;
+		diagnosticsMessage.status[2].message = "Some measurements failed";
+
+	} else {
+
+		// Status OK, message OK
+		diagnosticsMessage.status[2].level = diagnostic_msgs::DiagnosticStatus::OK;
+		diagnosticsMessage.status[2].message = "OK";
+
+	}
+
+	diagnosticsMessage.status[2].name = "Left PING";
+	diagnosticsMessage.status[2].hardware_id = "left_ping";
+	diagnosticsMessage.status[2].values.resize(2);
+	diagnosticsMessage.status[2].values[0].key = "Measurement failures";
+	diagnosticsMessage.status[2].values[0].value = leftPingFailuresSumChars;
+	diagnosticsMessage.status[2].values[1].key = "Measurement";
+	diagnosticsMessage.status[2].values[1].value = leftPingFailuresCounterChars;
+
+	// Center PING diagnostic
+
+	// Format failures sum and counter
+	char centerPingFailuresSumChars[15];
+	sprintf(centerPingFailuresSumChars, "%u", statusMessage->status.sensor_stat.center_ping_failures.sum);
+	char centerPingFailuresCounterChars[15];
+	sprintf(centerPingFailuresCounterChars, "%u", statusMessage->status.sensor_stat.center_ping_failures.counter);
+
+	if (statusMessage->status.sensor_stat.center_ping_failures.sum == statusMessage->status.sensor_stat.center_ping_failures.counter) {
+
+		// Status ERROR, message ALL FAILED
+		diagnosticsMessage.status[3].level = diagnostic_msgs::DiagnosticStatus::ERROR;
+		diagnosticsMessage.status[3].message = "All measurements failed";
+
+	} else if (statusMessage->status.sensor_stat.left_ping_failures.sum > 0) {
+
+		// Status WARN, message ALL FAILED
+		diagnosticsMessage.status[3].level = diagnostic_msgs::DiagnosticStatus::WARN;
+		diagnosticsMessage.status[3].message = "Some measurements failed";
+
+	} else {
+
+		// Status OK, message OK
+		diagnosticsMessage.status[3].level = diagnostic_msgs::DiagnosticStatus::OK;
+		diagnosticsMessage.status[3].message = "OK";
+
+	}
+
+	diagnosticsMessage.status[3].name = "Center PING";
+	diagnosticsMessage.status[3].hardware_id = "center_ping";
+	diagnosticsMessage.status[3].values.resize(2);
+	diagnosticsMessage.status[3].values[0].key = "Measurement failures";
+	diagnosticsMessage.status[3].values[0].value = centerPingFailuresSumChars;
+	diagnosticsMessage.status[3].values[1].key = "Measurement";
+	diagnosticsMessage.status[3].values[1].value = centerPingFailuresCounterChars;
+
+	// Right PING diagnostic
+
+	// Format failures sum and counter
+	char rightPingFailuresSumChars[15];
+	sprintf(rightPingFailuresSumChars, "%u", statusMessage->status.sensor_stat.right_ping_failures.sum);
+	char rightPingFailuresCounterChars[15];
+	sprintf(rightPingFailuresCounterChars, "%u", statusMessage->status.sensor_stat.right_ping_failures.counter);
+
+	if (statusMessage->status.sensor_stat.right_ping_failures.sum == statusMessage->status.sensor_stat.right_ping_failures.counter) {
+
+		// Status ERROR, message ALL FAILED
+		diagnosticsMessage.status[4].level = diagnostic_msgs::DiagnosticStatus::ERROR;
+		diagnosticsMessage.status[4].message = "All measurements failed";
+
+	} else if (statusMessage->status.sensor_stat.left_ping_failures.sum > 0) {
+
+		// Status WARN, message ALL FAILED
+		diagnosticsMessage.status[4].level = diagnostic_msgs::DiagnosticStatus::WARN;
+		diagnosticsMessage.status[4].message = "Some measurements failed";
+
+	} else {
+
+		// Status OK, message OK
+		diagnosticsMessage.status[4].level = diagnostic_msgs::DiagnosticStatus::OK;
+		diagnosticsMessage.status[4].message = "OK";
+
+	}
+
+	diagnosticsMessage.status[4].name = "Right PING";
+	diagnosticsMessage.status[4].hardware_id = "right_ping";
+	diagnosticsMessage.status[4].values.resize(2);
+	diagnosticsMessage.status[4].values[0].key = "Measurement failures";
+	diagnosticsMessage.status[4].values[0].value = centerPingFailuresSumChars;
+	diagnosticsMessage.status[4].values[1].key = "Measurement";
+	diagnosticsMessage.status[4].values[1].value = centerPingFailuresCounterChars;
 
 	// Publish diagnostics message
 	diagnosticsMessagePublisherPtr->publish(diagnosticsMessage);

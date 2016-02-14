@@ -32,6 +32,7 @@ add_message_files(
   Power.msg
   StampedStatus.msg
   ProcStat.msg
+  SensorStat.msg
 )
 
 generate_messages(

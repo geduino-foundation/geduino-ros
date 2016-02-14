@@ -1,4 +1,4 @@
-# Status.msg
+# SensorStat.msg
 #
 # Copyright (C) 2015 Alessandro Francescon
 # 
@@ -14,13 +14,13 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-# The Geduino status message
+# The Geduino sensor stat message
 
-# The power
-geduino_diagnostic_msgs/Power power
+# The left ping measurement failure
+geduino_diagnostic_msgs/Counter left_ping_failures
 
-# The main loop process stat
-geduino_diagnostic_msgs/ProcStat proc_stat
+# The center ping measurement failure
+geduino_diagnostic_msgs/Counter center_ping_failures
 
-# The sensor stat
-geduino_diagnostic_msgs/SensorStat sensor_stat
+# The right ping measurement failure
+geduino_diagnostic_msgs/Counter right_ping_failures

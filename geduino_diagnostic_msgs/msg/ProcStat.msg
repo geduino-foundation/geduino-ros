@@ -25,6 +25,9 @@ uint32 idle_cycles
 # The delay in perform encoders and motion9 calculation
 geduino_diagnostic_msgs/Counter encoders_motion9_delay
 
+# The delay in perform range calculation
+geduino_diagnostic_msgs/Counter range_delay
+
 # The delay in perform diagnostic calculation
 geduino_diagnostic_msgs/Counter diagnostic_delay
 
