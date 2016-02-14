@@ -87,6 +87,7 @@ void statusCallback(const geduino_diagnostic_msgs::StampedStatus::ConstPtr & sta
 		diagnosticsMessage.status[0].level = diagnostic_msgs::DiagnosticStatus::OK;
 		diagnosticsMessage.status[0].message = "OK";
 
+
 	}
 
 	diagnosticsMessage.status[0].name = "Power";
@@ -99,21 +100,30 @@ void statusCallback(const geduino_diagnostic_msgs::StampedStatus::ConstPtr & sta
 
 	// SAMx8 diagnostic
 
-	// Calculate average load and delays
+	// Calculate average load, delays and duration
         double averageLoad = 100 * statusMessage->status.proc_stat.used_cycles / statusMessage->status.proc_stat.idle_cycles;
 	double encodersMotion9AverageDelay = 0.1 * statusMessage->status.proc_stat.encoders_motion9_delay.sum / statusMessage->status.proc_stat.encoders_motion9_delay.counter;
+	double encodersMotion9AverageDuration = 1.0 * statusMessage->status.proc_stat.encoders_motion9_duration.sum / statusMessage->status.proc_stat.encoders_motion9_duration.counter;
 	double rangeAverageDelay = 0.1 * statusMessage->status.proc_stat.range_delay.sum / statusMessage->status.proc_stat.range_delay.counter;
+	double rangeAverageDuration = 1.0 * statusMessage->status.proc_stat.range_duration.sum / statusMessage->status.proc_stat.range_duration.counter;
 	double diagnosticAverageDelay = 0.1 * statusMessage->status.proc_stat.diagnostic_delay.sum / statusMessage->status.proc_stat.diagnostic_delay.counter;
+	double diagnosticAverageDuration = 1.0 * statusMessage->status.proc_stat.diagnostic_duration.sum / statusMessage->status.proc_stat.diagnostic_duration.counter;
 
-	// Format average load and delays
+	// Format average load, delays and duration
 	char averageLoadChars[15];
 	sprintf(averageLoadChars, "%.2f %%", averageLoad);
 	char encodersMotion9AverageDelayChars[15];
 	sprintf(encodersMotion9AverageDelayChars, "%.2f millis", encodersMotion9AverageDelay);
+	char encodersMotion9AverageDurationChars[15];
+	sprintf(encodersMotion9AverageDurationChars, "%.2f millis", encodersMotion9AverageDuration);
 	char rangeAverageDelayChars[15];
 	sprintf(rangeAverageDelayChars, "%.2f millis", rangeAverageDelay);
+	char rangeAverageDurationChars[15];
+	sprintf(rangeAverageDurationChars, "%.2f millis", rangeAverageDuration);
 	char diagnosticAverageDelayChars[15];
 	sprintf(diagnosticAverageDelayChars, "%.2f millis", diagnosticAverageDelay);
+	char diagnosticAverageDurationChars[15];
+	sprintf(diagnosticAverageDurationChars, "%.2f millis", diagnosticAverageDuration);
 
 	if (averageLoad > samx8LoadCriticalThreshold ||
 		encodersMotion9AverageDelay > samx8DelayCriticalThreshold ||
@@ -143,15 +153,21 @@ void statusCallback(const geduino_diagnostic_msgs::StampedStatus::ConstPtr & sta
 
 	diagnosticsMessage.status[1].name = "SAMx8";
 	diagnosticsMessage.status[1].hardware_id = "samx8";
-	diagnosticsMessage.status[1].values.resize(4);
+	diagnosticsMessage.status[1].values.resize(7);
 	diagnosticsMessage.status[1].values[0].key = "Average load";
 	diagnosticsMessage.status[1].values[0].value = averageLoadChars;
 	diagnosticsMessage.status[1].values[1].key = "Encoders and Motion9 average delay";
 	diagnosticsMessage.status[1].values[1].value = encodersMotion9AverageDelayChars;
-	diagnosticsMessage.status[1].values[2].key = "Range average delay";
-	diagnosticsMessage.status[1].values[2].value = rangeAverageDelayChars;
-	diagnosticsMessage.status[1].values[3].key = "Diagnostic average delay";
-	diagnosticsMessage.status[1].values[3].value = diagnosticAverageDelayChars;
+	diagnosticsMessage.status[1].values[2].key = "Encoders and Motion9 average duration";
+	diagnosticsMessage.status[1].values[2].value = encodersMotion9AverageDurationChars;
+	diagnosticsMessage.status[1].values[3].key = "Range average delay";
+	diagnosticsMessage.status[1].values[3].value = rangeAverageDelayChars;
+	diagnosticsMessage.status[1].values[4].key = "Range average duration";
+	diagnosticsMessage.status[1].values[4].value = rangeAverageDurationChars;
+	diagnosticsMessage.status[1].values[5].key = "Diagnostic average delay";
+	diagnosticsMessage.status[1].values[5].value = diagnosticAverageDelayChars;
+	diagnosticsMessage.status[1].values[6].key = "Diagnostic average duration";
+	diagnosticsMessage.status[1].values[6].value = diagnosticAverageDurationChars;
 
 	// Left PING diagnostic
 

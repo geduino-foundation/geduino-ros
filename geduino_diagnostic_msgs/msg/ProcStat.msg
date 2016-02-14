@@ -22,13 +22,16 @@ uint32 used_cycles
 # The number of cycles in main loop in which no action was performed
 uint32 idle_cycles
 
-# The delay in perform encoders and motion9 calculation
+# The delay and duration in perform encoders and motion9 calculation
 geduino_diagnostic_msgs/Counter encoders_motion9_delay
+geduino_diagnostic_msgs/Counter encoders_motion9_duration
 
-# The delay in perform range calculation
+# The delay and duration in perform range calculation
 geduino_diagnostic_msgs/Counter range_delay
+geduino_diagnostic_msgs/Counter range_duration
 
-# The delay in perform diagnostic calculation
+# The delay and duration in perform diagnostic calculation
 geduino_diagnostic_msgs/Counter diagnostic_delay
+geduino_diagnostic_msgs/Counter diagnostic_duration
 
 
