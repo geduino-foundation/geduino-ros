@@ -102,11 +102,11 @@ void statusCallback(const geduino_diagnostic_msgs::StampedStatus::ConstPtr & sta
 
 	// Calculate average load, delays and duration
         double averageLoad = 100 * statusMessage->status.proc_stat.used_cycles / statusMessage->status.proc_stat.idle_cycles;
-	double encodersMotion9AverageDelay = 0.1 * statusMessage->status.proc_stat.encoders_motion9_delay.sum / statusMessage->status.proc_stat.encoders_motion9_delay.counter;
+	double encodersMotion9AverageDelay = 1.0 * statusMessage->status.proc_stat.encoders_motion9_delay.sum / statusMessage->status.proc_stat.encoders_motion9_delay.counter;
 	double encodersMotion9AverageDuration = 1.0 * statusMessage->status.proc_stat.encoders_motion9_duration.sum / statusMessage->status.proc_stat.encoders_motion9_duration.counter;
-	double rangeAverageDelay = 0.1 * statusMessage->status.proc_stat.range_delay.sum / statusMessage->status.proc_stat.range_delay.counter;
+	double rangeAverageDelay = 1.0 * statusMessage->status.proc_stat.range_delay.sum / statusMessage->status.proc_stat.range_delay.counter;
 	double rangeAverageDuration = 1.0 * statusMessage->status.proc_stat.range_duration.sum / statusMessage->status.proc_stat.range_duration.counter;
-	double diagnosticAverageDelay = 0.1 * statusMessage->status.proc_stat.diagnostic_delay.sum / statusMessage->status.proc_stat.diagnostic_delay.counter;
+	double diagnosticAverageDelay = 1.0 * statusMessage->status.proc_stat.diagnostic_delay.sum / statusMessage->status.proc_stat.diagnostic_delay.counter;
 	double diagnosticAverageDuration = 1.0 * statusMessage->status.proc_stat.diagnostic_duration.sum / statusMessage->status.proc_stat.diagnostic_duration.counter;
 
 	// Format average load, delays and duration
