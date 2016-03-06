@@ -1,4 +1,4 @@
-# odometry_common_params.yaml
+# md25_params.yaml
 #
 # Copyright (C) 2015 Alessandro Francescon
 # 
@@ -14,6 +14,28 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+# The serial port, the baudrate and timeout (in millis)
+port: /dev/ttymxc2
+baudrate: 38400
+timeout: 250
+
+# The frame attached to robot base, i.e. broadcasted transformation child frame
+base_frame: base_link
+
+# odometry frame, i.e. broadcasted transformation frame
+odom_frame: odom
+
+# The odometry update frequency in Hz
+odometryFrequency: 10
+
+# The diagnostics update frequency in Hz. It must be less or equals to odometryFrequency
+diagnosticsFrequency: 1
+
+# The encoders sensitivity in LSB / rad. It represent the inverse
+# of wheel shaft rotation angle for unitary encoder increment
+encoderSensitivity1: 0.00872639
+encoderSensitivity2: 0.00872639
+
 # The speeds sensitivity in LSB / (rad/s). It represent the inverse
 # of wheel shaft rotation speed for unitary speed input.
 speedSensitivity1: 12.4620
@@ -25,3 +47,12 @@ wheel_diameter2: 0.1
 
 # The wheel base in m
 wheel_base: 0.275
+
+# The constant of covariance model for wheel 1
+covK1: 0.001
+
+# The constant of covariance model for wheel 2
+covK2: 0.001
+
+# The threshold to distinguish between straight or arc path
+cov_radius_threshold: 10.0

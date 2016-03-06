@@ -19,19 +19,8 @@
 <launch>
 
   <!-- The MD25 odometry node -->
-  <node pkg="md25" type="odometry_node" name="odometry" ns="md25" output="screen" required="true">
-    <rosparam file="$(find md25)/config/odometry_common_params.yaml" command="load" />
-    <rosparam file="$(find md25)/config/odometry_params.yaml" command="load" />
+  <node pkg="md25" type="md25_node" name="md25" ns="md25" output="screen" required="true">
+    <rosparam file="$(find md25)/config/md25_params.yaml" command="load" />
   </node>    
-
-  <!-- The MD25 vel2cmd node -->
-  <node pkg="md25" type="vel2speeds_node" name="vel2speeds" ns="md25" output="screen" required="true">
-    <rosparam file="$(find md25)/config/odometry_common_params.yaml" command="load" />
-    <rosparam file="$(find md25)/config/vel2speeds_params.yaml" command="load" />
-  </node>    
-
-  <!-- The MD25 diagnostic node -->
-  <node pkg="md25" type="md25_diagnostic_node" name="diagnostic" ns="md25" output="screen" respawn="true">
-  </node>
 
 </launch>

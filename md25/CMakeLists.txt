@@ -19,11 +19,11 @@ cmake_minimum_required(VERSION 2.8.3)
 project(md25)
 
 find_package(catkin REQUIRED COMPONENTS
-  md25_msgs
   roscpp
   std_msgs
   diagnostic_msgs
   tf
+  serial
 )
 
 catkin_package()
@@ -33,16 +33,8 @@ include_directories(
   src
 )
 
-add_executable(odometry_node src/odometry_node.cpp src/odometry.cpp)
-add_executable(vel2speeds_node src/vel2speeds_node.cpp)
-add_executable(md25_diagnostic_node src/md25_diagnostic_node.cpp)
+add_executable(md25_node src/md25_node.cpp src/odometry.cpp src/md25.cpp)
 
-target_link_libraries(odometry_node
-  ${catkin_LIBRARIES}
-)
-target_link_libraries(vel2speeds_node
-  ${catkin_LIBRARIES}
-)
-target_link_libraries(md25_diagnostic_node
+target_link_libraries(md25_node
   ${catkin_LIBRARIES}
 )
