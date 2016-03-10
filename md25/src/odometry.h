@@ -24,6 +24,8 @@
 #include <tf/LinearMath/Matrix3x3.h>
 #include <tf/LinearMath/Vector3.h>
 
+#define HISTORY_SIZE 3
+
 /*
  Implaments odometry for a differential drive robot. Position covariance model
  is provided by Lindsay KLEEMAN from Monash University, Technical Report MECSE-95-1-1995.
@@ -68,6 +70,10 @@ class Odometry {
 
       // The linear and angular position vector in world reference frame
       tf::Vector3 linPos, angPos;
+
+      // The history index and arrays
+      char historyIndex;
+      tfScalar dsHistory[HISTORY_SIZE], dthHistory[HISTORY_SIZE], dtHistory[HISTORY_SIZE];
 
       // The linear and angular velocity in robot reference frame
       tf::Vector3 linVel, angVel;

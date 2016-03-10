@@ -172,12 +172,44 @@ void Odometry::update(tfScalar dl, tfScalar dr, tfScalar time) {
 
    if (lastUpdateTime > 0) {
 
-      // Get dwlta time
-      double dt = time - lastUpdateTime;
+      // Add deltas to history
+      dsHistory[historyIndex] = ds;
+      dthHistory[historyIndex] = dth;
+      dtHistory[historyIndex] = time - lastUpdateTime;
 
-      // Calculate linear and angular velocity
-      linVel.m_floats[0] = ds / dt;
-      angVel.m_floats[2] = dth / dt;
+      tfScalar dsSum = 0;
+      tfScalar dthSum = 0;
+      tfScalar dtSum = 0;
+
+      for (char index = 0; index < HISTORY_SIZE; index++) {
+
+         dsSum += dsHistory[index];
+         dthSum += dthHistory[index];
+         dtSum += dtHistory[index];
+
+      }
+
+      if (dtSum > 0) {
+
+         // Calculate linear and angular velocity
+         linVel.m_floats[0] = dsSum / dtSum;
+         angVel.m_floats[2] = dthSum / dtSum;
+
+      } else {
+
+         // Set linear and angular velocity to zero (avoid by zero division)
+         linVel.m_floats[0] = 0;
+         angVel.m_floats[2] = 0;
+
+      }
+
+      // Increase history index
+      if (++historyIndex >= HISTORY_SIZE) {
+
+         // Reset history index
+         historyIndex = 0;
+
+      }
 
    }
 
@@ -212,6 +244,17 @@ void Odometry::reset() {
    // Reset linear and angular position
    linPos.setValue(0, 0, 0);
    angPos.setValue(0, 0, 0);
+
+   // Reset history
+   historyIndex = 0;
+
+   for (char index = 0; index < HISTORY_SIZE; index++) {
+
+       dsHistory[index] = 0;
+       dthHistory[index] = 0;
+       dtHistory[index] = 0;
+
+   }
 
    // Reset linear and angular velocity
    linVel.setValue(0, 0, 0);
