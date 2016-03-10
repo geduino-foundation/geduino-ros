@@ -19,7 +19,7 @@
 <launch>
 
   <!-- The MD25 odometry node -->
-  <node pkg="md25" type="md25_node" name="md25" ns="md25" output="screen" required="true">
+  <node pkg="md25" type="md25_node" name="md25" output="screen" required="true">
     <rosparam file="$(find md25)/config/md25_params.yaml" command="load" />
   </node>    
 
