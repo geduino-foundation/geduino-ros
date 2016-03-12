@@ -35,7 +35,7 @@ TrajectoryPlannerROS:
   # The x, y and rotational acceleration limit of the robot in meters/sec^2 and radians/sec^2
   acc_lim_x: 2.5
   acc_lim_y: 0.0
-  acc_lim_th: 3.2
+  acc_lim_theta: 3.2
 
   # Determines whether velocity commands are generated for a holonomic or non-holonomic 
   # robot. For holonomic robots, strafing velocity commands may be issued to the base. 
