@@ -28,7 +28,9 @@
  - i2c_bus, the I2C bus the MPU9150 is attached to (default: 0);
  - frequency, the DMP algoritm and IMU message publish rate in Hz. It must be between
    2 and 50  (default: 10);
-- imu_frame, the frame of the MPU9150 (default: base_imu);
+ - diagnostics_frequency: the diagnostics update frequency in Hz. It must be less or equals than
+   frequency (default: 1);
+ - imu_frame, the frame of the MPU9150 (default: base_imu);
 */
 
 #include <ros/ros.h>
@@ -44,6 +46,7 @@
 // The ros parameters
 int i2cBus;
 int frequency;
+int diagnosticsFrequency;
 std::string imuFrame;
 
 // The imu message publisher
@@ -82,6 +85,7 @@ int main(int argc, char** argv) {
 	// Get ros parameters
 	privateNodeHandle.param("i2c_bus", i2cBus, 0);
 	privateNodeHandle.param("frequency", frequency, 10);
+	privateNodeHandle.param("diagnostics_frequency", diagnosticsFrequency, 10);
 	privateNodeHandle.param<std::string>("imu_frame", imuFrame, "base_imu");
 
 	// Log
@@ -127,6 +131,10 @@ int main(int argc, char** argv) {
 	// Define rate
 	ros::Rate rate(frequency);
 
+	// Define diagnostics duration
+	ros::Duration diagnosticsDuration(1 / diagnosticsFrequency);
+	ros::Time lastDiagnosticsUpdateTime = ros::Time::now();
+
 	while (ros::ok()) {
 
 		dmpFifoData_t dmpFifoData;
@@ -143,9 +151,12 @@ int main(int argc, char** argv) {
 
 			} else {
 
+				// Get now
+				ros::Time now = ros::Time::now();
+
 				// Create imu message
 				sensor_msgs::Imu imuMessage;
-				imuMessage.header.stamp = ros::Time::now();;
+				imuMessage.header.stamp = now;
 				imuMessage.header.frame_id = imuFrame;
 
 				// Compute angular velocity
@@ -166,6 +177,16 @@ int main(int argc, char** argv) {
 
 				// Publish imu message
 				imuMessagePublisher->publish(imuMessage);
+
+				if (now - lastDiagnosticsUpdateTime > diagnosticsDuration) {
+
+					// Publish diagnostics
+					publishDiagnostics(STATUS_OK, "OK");
+
+					// Reset last diagnostics update time
+					lastDiagnosticsUpdateTime = now;
+
+				}
 
 			}
 
