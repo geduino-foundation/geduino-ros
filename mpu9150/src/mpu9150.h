@@ -1,5 +1,5 @@
 /*
- MPU9150.h
+ mpu9150.h
 
  Copyright (C) 2015 Alessandro Francescon
  
@@ -16,44 +16,50 @@
  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#ifndef _INVMPU9150_H_
+#define _INVMPU9150_H_
 
-#ifndef _MPU9150_H_
-#define _MPU9150_H_
+#define MPU9150_OK							0
+#define MPU9150_ERROR							-1
+#define MPU9150_INIT_MPU_INIT_ERROR					-2
+#define MPU9150_INIT_MPU_SET_SENSORS_ERROR				-3
+#define MPU9150_INIT_MPU_SET_GYRO_FSR_ERROR				-4
+#define MPU9150_INIT_MPU_SET_ACCEL_FSR_ERROR				-5
+#define MPU9150_INIT_MPU_CONFIGURE_FIFO_ERROR				-6
+#define MPU9150_INIT_MPU_SET_SAMPLE_RATE_ERROR				-7
+#define MPU9150_INIT_DMP_LOAD_MOTION_DRIVER_FIRMWARE_ERROR		-8
+#define MPU9150_INIT_DMP_SET_ORIENTATION_ERROR				-9
+#define MPU9150_INIT_DMP_ENABLE_FEATURES_ERROR				-10
+#define MPU9150_INIT_DMP_SET_FIFO_RATE_ERROR				-11
+#define MPU9150_INIT_DMP_SET_STATE_ERROR				-12
 
-#include <stdint.h>
-#include <math.h>
-#include <types.h>
-#include <vector>
+// The DMP fifo data struct
+typedef struct {
+	float gyro[3];
+	float accel[3];
+	float quat[4];
+} dmpFifoData_t;
 
-// The gravity acceleration in m/s~2
-#define G 9.80665
+class INVMPU9150 {
 
-// The accel, gyro and mag sensitivity scale factor
-#define ACCEL_SSF(fs) (16348.0 / (fs + 1) / G)
-#define GYRO_SSF(fs) (131.0 / (fs + 1) * 180 / M_PI)
+	public:
 
-class MPU9150 {
+		// Create a new INVMPU9150
+		INVMPU9150();
 
-   public:
+		// Init the INVMPU9150 at given I2C bus and upload DMP driver to work with given frequency.
+		// It return MPU9150_OF if init process succes, a different code otherwise.
+		int init(int i2cBus, int frequency);
 
-      // Create an MPU9150
-      MPU9150();
+		// Dispose the INVMPU9150.
+		// It return MPU9150_OF if dispose process succes, a different code otherwise.
+		int dispose();
 
-      /*
-       * Convert acceleration from LSB to m/s^2 based on given MPU9150 full scale range setup
-       * accelLSBPtr the pointer to acceleration in LSB
-       * accelM2SPtr the pointer to acceleration in m/s^2
-       * accelFS the accel full scale range
-       */
-      void accelLSB2MS2(int16_vector3 * accelLSBPtr, double_vector3 * accelMS2Ptr, uint8_t accelFS);
+		// Return 1 if DMP data in available on FIFO. Other value otherwise.
+		int dmpFifoDataReady();
 
-      /*
-       * Convert gyro angular velocity from LSB to rad/s based on given MPU9150 full scale range setup
-       * gyroLSBPtr the pointer to angular velocity in LSB
-       * gyroRSPtr the pointer to angular speed in rad/s
-       * the gyro full scale range
-       */
-      void gyroLSB2RS(int16_vector3 * gyroLSBPtr, double_vector3 * gyroRSPtr, uint8_t gyroFS);
+		// Read DMP data from FIFO and return MPU9150_OK if the operation success. Return other value otherwise.
+		int dmpReadFifoData(dmpFifoData_t * dmpFifoData);
 
 };
 

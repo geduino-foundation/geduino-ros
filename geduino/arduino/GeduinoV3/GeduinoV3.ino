@@ -22,11 +22,7 @@
 #include <md25_msgs/StampedEncodersWithSpeeds.h>
 #include <md25_msgs/Speeds.h>
 #include <md25_msgs/StampedStatus.h>
-#include <mpu9150_msgs/StampedMotion9.h>
-#include <mpu9150_msgs/StampedStatus.h>
 #include <geduino_diagnostic_msgs/StampedStatus.h>
-#include <I2Cdev.h>
-#include <MPU6050_6Axis_MotionApps20.h>
 #include "PING.h"
 #include "Rate.h"
 #include "Counter.h"
@@ -51,30 +47,11 @@
 #define CENTRAL_PING_PIN 24
 #define RIGHT_PING_PIN 28
 #define BATTERY_VOLT_PIN A11
-#define MPU6050_INTERRUPT_PIN 22
 
 // The PING))) sensors
 PING leftPing(LEFT_PING_PIN);
 PING centralPing(CENTRAL_PING_PIN);
 PING rightPing(RIGHT_PING_PIN);
-
-// The MPU6050
-MPU6050 mpu6050;
-
-// The MPU6050 expected DMP packet size
-uint16_t mpu6050dmpPacketSize;
-
-// The MPU6050 DMP FIFO buffer
-uint8_t mpu6050dmpFifoBuffer[64];
-
-// The MPU6050 DMP initializiation result
-bool mpu6050dmpInitialized = true;
-
-// The MPU9150 FIFO overflow counter
-Counter mpu9150FifoOverflowCounter;
-
-// The motion9 publisher rate
-Rate motion9PublisherRate(10);
 
 // The range publisher rate
 Rate rangePublisherRate(10);
@@ -88,10 +65,6 @@ Loop mainLoop;
 // The ROS node handle
 ros::NodeHandle nodeHandle;
 
-// The motion9 message and its publisher
-mpu9150_msgs::StampedMotion9 motion9Message;
-ros::Publisher motion9MessagePublisher("mpu9150/motion9", &motion9Message);
-
 // The range messages and their publishers
 sensor_msgs::Range leftRangeMessage;
 ros::Publisher leftRangeMessagePublisher("left_range", &leftRangeMessage);
@@ -99,10 +72,6 @@ sensor_msgs::Range centerRangeMessage;
 ros::Publisher centerRangeMessagePublisher("center_range", &centerRangeMessage);
 sensor_msgs::Range rightRangeMessage;
 ros::Publisher rightRangeMessagePublisher("right_range", &rightRangeMessage);
-
-// The mpu9050 status message and its publisher
-mpu9150_msgs::StampedStatus mpu9150StatusMessage;
-ros::Publisher mpu9150StatusMessagePublisher("mpu9150/status", &mpu9150StatusMessage);
 
 // The geduino status message and its publisher
 geduino_diagnostic_msgs::StampedStatus geduinoStatusMessage;
@@ -141,9 +110,6 @@ void setup() {
   // Set up ROS
   setupROS();
 
-  // Setup MPU6050
-  setupMPU6050();
-
   // Debug
   nodeHandle.loginfo("geduino is ready!");
 
@@ -159,11 +125,6 @@ void setupROS() {
 
   // Debug
   nodeHandle.logdebug("intialize messages...");
-
-  // Init motion9 message
-  motion9Message.header.frame_id = "0";
-  motion9Message.motion9.full_scale_accel_range = motion9Message.motion9.ACCEL_FS_4; // Should be ACCEL_FS_2 but using the current offset result in ACCEL_FS_4 used instead
-  motion9Message.motion9.full_scale_gyro_range = motion9Message.motion9.GYRO_FS_2000;
 
   // Init range messages
   leftRangeMessage.radiation_type = sensor_msgs::Range::ULTRASOUND;
@@ -189,69 +150,10 @@ void setupROS() {
   nodeHandle.logdebug("advertise node handle for publishers...");
 
   // Advertise node handle for publishers
-  nodeHandle.advertise(motion9MessagePublisher);
   nodeHandle.advertise(leftRangeMessagePublisher);
   nodeHandle.advertise(centerRangeMessagePublisher);
   nodeHandle.advertise(rightRangeMessagePublisher);
-  nodeHandle.advertise(mpu9150StatusMessagePublisher);
   nodeHandle.advertise(geduinoStatusMessagePublisher);
-
-}
-
-void setupMPU6050() {
-
-  // Join I2C bus
-  Wire.begin();
-
-  // Debug
-  nodeHandle.logdebug("initializing MPU6050...");
-
-  // Initialize MPU6050
-  mpu6050.initialize();
-
-  // Test connection
-  mpu6050dmpInitialized = mpu6050dmpInitialized && mpu6050.testConnection();
-
-  if (mpu6050dmpInitialized) {
-
-    // Initialize DMP
-    mpu6050dmpInitialized = mpu6050dmpInitialized && (mpu6050.dmpInitialize() == 0);
-
-    if (mpu6050dmpInitialized) {
-
-      // Set accel and gyro offset
-      mpu6050.setXAccelOffset(1014);
-      mpu6050.setYAccelOffset(-454);
-      mpu6050.setZAccelOffset(269);
-      mpu6050.setXGyroOffset(91);
-      mpu6050.setYGyroOffset(64);
-      mpu6050.setZGyroOffset(-1);
-
-      // Enable temperature sensor
-      mpu6050.setTempSensorEnabled(true);
-
-      // Enabling DMP
-      mpu6050.setDMPEnabled(true);
-
-      // Get DMP packet size
-      mpu6050dmpPacketSize = mpu6050.dmpGetFIFOPacketSize();
-
-      // Debug
-      nodeHandle.logdebug("MPU6050 and DMP initialized");
-
-    } else {
-
-      // Debug
-      nodeHandle.logerror("DMP initialization failed");
-
-    }
-
-  } else {
-
-    // Debug
-    nodeHandle.logerror("MPU6050 connection failed");
-
-  }
 
 }
 
@@ -260,22 +162,6 @@ void setupMPU6050() {
  */
 
 void loop() {
-  
-  if (motion9PublisherRate.ellapsed()) {
-
-    // Start duration
-    motion9PublisherRate.start();
-    
-    // Publish motion9
-    publishMotion9();
-    
-    // End duration
-    motion9PublisherRate.end();
-
-    // Used cycle
-    mainLoop.cycleUsed();
-    
-  }
 
   if (rangePublisherRate.ellapsed()) {
 
@@ -308,13 +194,6 @@ void loop() {
     mainLoop.cycleUsed();
 
   }
-
-  if (mpu6050dmpInitialized) {
-
-    // Read MPU6050 DMP FIFO
-    readMPU6050dmpFifo();
-
-  }
   
   // Cycle performed
   mainLoop.cyclePerformed();
@@ -324,47 +203,6 @@ void loop() {
 /****************************************************************************************
  * Publishing methods
  */
-
-void publishMotion9() {
-
-  // Get ROS current time
-  ros::Time now = nodeHandle.now();
-
-  if (mpu6050dmpInitialized) {
-
-    // Set header stamp
-    motion9Message.header.stamp = now;
-
-    Quaternion orientation;
-    VectorInt16 acceleration;
-    VectorInt16 angularVelocity;
-
-    // Get orientation, acceleration and angular velocity
-    mpu6050.dmpGetQuaternion(&orientation, mpu6050dmpFifoBuffer);
-    mpu6050.dmpGetAccel(&acceleration, mpu6050dmpFifoBuffer);
-    mpu6050.dmpGetGyro(&angularVelocity, mpu6050dmpFifoBuffer);
-
-    // Set orientation, acceleration and angular velocity
-    motion9Message.motion9.orientation.x = orientation.x;
-    motion9Message.motion9.orientation.y = orientation.y;
-    motion9Message.motion9.orientation.z = orientation.z;
-    motion9Message.motion9.orientation.w = orientation.w;
-    motion9Message.motion9.accel.x = acceleration.x;
-    motion9Message.motion9.accel.y = acceleration.y;
-    motion9Message.motion9.accel.z = acceleration.z;
-    motion9Message.motion9.gyro.x = angularVelocity.x;
-    motion9Message.motion9.gyro.y = angularVelocity.y;
-    motion9Message.motion9.gyro.z = angularVelocity.z;
-
-    // Publish motion9 message
-    motion9MessagePublisher.publish(&motion9Message);
-
-  }
-
-  // Spin once
-  nodeHandle.spinOnce();
-
-}
 
 void publishRange() {
 
@@ -401,17 +239,6 @@ void publishDiagnostic() {
 
   // Get ROS current time
   ros::Time now = nodeHandle.now();
-
-  // Read temperature, mpu9150 initialized and fifo overflow counters
-  mpu9150StatusMessage.status.initialized = mpu6050dmpInitialized;
-  mpu9150FifoOverflowCounter.getCounters(&mpu9150StatusMessage.status.fifo_overflows.sum, &mpu9150StatusMessage.status.fifo_overflows.counter);
-  readTemperature(&mpu9150StatusMessage.status.temperature);
-  
-  // Set stamp
-  mpu9150StatusMessage.header.stamp = now;
-
-  // Publish mpu9150 status message
-  mpu9150StatusMessagePublisher.publish(&mpu9150StatusMessage);
   
   // Read battery volt
   readBatteryVolt(&geduinoStatusMessage.status.power.raw_voltage);
@@ -420,12 +247,10 @@ void publishDiagnostic() {
   mainLoop.getUsedCounter().getCounters(&geduinoStatusMessage.status.proc_stat.used_cycles, &geduinoStatusMessage.status.proc_stat.idle_cycles);
   
   // Get rate's delay
-  motion9PublisherRate.getDelayCounter().getCounters(&geduinoStatusMessage.status.proc_stat.encoders_motion9_delay.sum, &geduinoStatusMessage.status.proc_stat.encoders_motion9_delay.counter);
   rangePublisherRate.getDelayCounter().getCounters(&geduinoStatusMessage.status.proc_stat.range_delay.sum, &geduinoStatusMessage.status.proc_stat.range_delay.counter);
   diagnosticPublisherRate.getDelayCounter().getCounters(&geduinoStatusMessage.status.proc_stat.diagnostic_delay.sum, &geduinoStatusMessage.status.proc_stat.diagnostic_delay.counter);
   
   // Get rate's duration
-  motion9PublisherRate.getDurationCounter().getCounters(&geduinoStatusMessage.status.proc_stat.encoders_motion9_duration.sum, &geduinoStatusMessage.status.proc_stat.encoders_motion9_duration.counter);
   rangePublisherRate.getDurationCounter().getCounters(&geduinoStatusMessage.status.proc_stat.range_duration.sum, &geduinoStatusMessage.status.proc_stat.range_duration.counter);
   diagnosticPublisherRate.getDurationCounter().getCounters(&geduinoStatusMessage.status.proc_stat.diagnostic_duration.sum, &geduinoStatusMessage.status.proc_stat.diagnostic_duration.counter);
   
@@ -449,52 +274,10 @@ void publishDiagnostic() {
  * Other methods
  */
 
-void readMPU6050dmpFifo() {
-
-  // Get MPU6050 DMP fifo count
-  uint16_t mpu6050dmpFifoCount = mpu6050.getFIFOCount();
-
-  if (mpu6050dmpFifoCount >= mpu6050dmpPacketSize) {
-
-    // Get MPU6050 DMP interrupt status
-    uint8_t mpu6050dmpInterruptStatus = mpu6050.getIntStatus();
-
-    // Check for overflow
-    if (mpu6050dmpInterruptStatus & 0x10 || mpu6050dmpFifoCount == 1024) {
-
-      // Debug
-      nodeHandle.logwarn("MPU6050 DMP FIFO overflow!");
-
-      // Reset DMP fifo
-      mpu6050.resetFIFO();
-      
-      // Increase fifo overflow counter by one
-      mpu9150FifoOverflowCounter.increase(1);
-
-    } else if (mpu6050dmpInterruptStatus & 0x02) {
-
-      // Wait for correct available data length, should be a VERY short wait
-      while (mpu6050.getFIFOCount() < mpu6050dmpPacketSize);
-
-      // Read a packet from MPU6050 DMP FIFO
-      mpu6050.getFIFOBytes(mpu6050dmpFifoBuffer, mpu6050dmpPacketSize);
-      
-      // Increase fifo overflow counter by zero, i.e. no overflow
-      mpu9150FifoOverflowCounter.increase(0);
-
-    }
-
-  }
-
-}
-
 void readTemperature(float * temperature) {
 
   // Read temperature value
-  float temperatureValue = mpu6050.getTemperature() / 340.0 + 36.53;
-
-  // Set pointers
-  *temperature = temperatureValue;
+  *temperature = 30;
 
 }
 

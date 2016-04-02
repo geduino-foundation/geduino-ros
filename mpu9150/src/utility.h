@@ -1,5 +1,5 @@
-<!-- 
- mpu9150.launch
+/*
+ utility.h
 
  Copyright (C) 2015 Alessandro Francescon
  
@@ -14,13 +14,13 @@
  
  You should have received a copy of the GNU General Public License
  along with this program.  If not, see <http://www.gnu.org/licenses/>.
--->
+ */
 
-<launch>
+#ifndef _UTILITY_H_
+#define _UTILITY_H_
 
-  <!-- The MPU9150 node -->
-  <node pkg="mpu9150" type="mpu9150_node" name="imu" output="screen" respawn="true">
-    <rosparam file="$(find mpu9150)/config/mpu9150_params.yaml" command="load" />
-  </node>
+unsigned short inv_row_2_scale(const signed char *row);
 
-</launch>
+unsigned short inv_orientation_matrix_to_scalar(const signed char *mtx);
+
+#endif

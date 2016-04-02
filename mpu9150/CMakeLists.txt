@@ -17,13 +17,24 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(mpu9150)
 
+add_definitions(-DEMPL_TARGET_LINUX)
+add_definitions(-DMPU9150)
+add_definitions(-DAK8975_SECONDARY)
+
+set(EMPL_PATH "./src/eMPL/")
+set(GLUE_PATH "./src/glue/")
+
+FILE(GLOB EMPL_SRC 
+  "${EMPL_PATH}/*.c"
+)
+FILE(GLOB GLUE_SRC 
+  "${GLUE_PATH}/*.c"
+)
+
 find_package(catkin REQUIRED COMPONENTS
-  mpu9150_msgs
   roscpp
   rospy
   sensor_msgs
-  std_msgs
-  geometry_msgs
   diagnostic_msgs
 )
 
@@ -31,15 +42,13 @@ catkin_package()
 
 include_directories(
   ${catkin_INCLUDE_DIRS}
+  ${EMPL_PATH}
+  ${GLUE_PATH}
   src
 )
 
-add_executable(imu_node src/imu_node.cpp src/mpu9150.cpp)
-add_executable(mpu9150_diagnostic_node src/mpu9150_diagnostic_node.cpp)
+add_executable(mpu9150_node src/mpu9150_node.cpp src/mpu9150.cpp src/utility.c ${EMPL_SRC} ${GLUE_SRC})
 
-target_link_libraries(imu_node
-  ${catkin_LIBRARIES}
-)
-target_link_libraries(mpu9150_diagnostic_node
+target_link_libraries(mpu9150_node
   ${catkin_LIBRARIES}
 )
