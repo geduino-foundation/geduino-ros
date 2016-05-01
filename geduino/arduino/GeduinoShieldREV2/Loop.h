@@ -1,7 +1,7 @@
-<!-- 
- diagnostic.launch
-
- Copyright (C) 2015 Alessandro Francescon
+/*
+ Loop.h
+ 
+ Copyright (C) 2014 Alessandro Francescon
  
  This program is free software: you can redistribute it and/or modify
  it under the terms of the GNU General Public License as published by
@@ -14,13 +14,37 @@
  
  You should have received a copy of the GNU General Public License
  along with this program.  If not, see <http://www.gnu.org/licenses/>.
--->
+ */
+ 
+#ifndef _LOOP_H_
+#define _LOOP_H_
 
-<launch>
+#include <ctype.h>
+#include <Arduino.h>
+#include "Rate.h"
 
-  <!-- The diagnostic node -->
-  <node pkg="geduino_diagnostic" type="geduino_diagnostic_node" name="diagnostic" ns="geduino" output="screen" respawn="true">
-    <rosparam file="$(find geduino_diagnostic)/config/diagnostic_params.yaml" command="load" />
-  </node>
+class Loop {
 
-</launch>
+public:
+
+  // Create new loop
+  Loop();
+  
+  // Mark current cycle as used
+  void cycleUsed();
+  
+  // Mark current cycle as performed
+  void cyclePerformed();
+  
+  // Get counter of used cycles
+  Counter& getUsedCounter();
+
+private:
+
+  bool used;
+
+  Counter usedCycles;
+
+};
+
+#endif

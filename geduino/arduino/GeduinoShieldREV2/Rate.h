@@ -1,5 +1,6 @@
 /*
  Rate.h
+ 
  Copyright (C) 2014 Alessandro Francescon
  
  This program is free software: you can redistribute it and/or modify

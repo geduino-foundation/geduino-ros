@@ -1,6 +1,7 @@
 /*
- Counter.h
- Copyright (C) 2014 Alessandro Francescon
+ TMP36.h
+ 
+ Copyright (C) 2016 Alessandro Francescon
  
  This program is free software: you can redistribute it and/or modify
  it under the terms of the GNU General Public License as published by
@@ -14,32 +15,28 @@
  You should have received a copy of the GNU General Public License
  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
- 
-#ifndef _COUNTER_H_
-#define _COUNTER_H_
 
-#include <ctype.h>
-#include <Arduino.h>
+#ifndef _TMP36_H_
+#define _TMP36_H_
 
-class Counter {
+class TMP36 {
 
 public:
 
-  // Create new counter
-  Counter();
+  // Create new TMP36 sensor attached to given pin
+  TMP36(const unsigned int _pin) : pin(_pin) {
+  };
   
-  // Increase counter sum by given number: invoking this method
-  // will trigger increase of counter by one.
-  void increase(unsigned long num);
-  
-  // Get counter sun and count and reset them
-  void getCounters(unsigned long * _sum, unsigned long  * _counter);
+  // Get temperature in [K]
+  void getTemperature(float * temperature);
 
 private:
 
-  unsigned long sum;
-  unsigned long counter;
+  // The pin wich TMP36 is connected to
+  unsigned int pin;
 
 };
 
 #endif
+
+

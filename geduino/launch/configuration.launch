@@ -24,17 +24,17 @@
   <!-- The robot state publisher -->
   <node pkg="robot_state_publisher" type="robot_state_publisher" name="robot_state"/>
 
-  <!-- The serial node -->
-  <node pkg="rosserial_python" type="serial_node.py" name="arduino" output="screen" respawn="true">
-    <param name="port" value="/dev/ttymxc3" />
-    <param name="baud" value="115200" />
-  </node>
-
   <!-- The RPLidar node -->
   <node pkg="rplidar" type="rplidar_node" name="rplidar" output="screen" respawn="true">
     <param name="serial_port" value="/dev/ttymxc4" />
     <param name="frame_id" value="base_laser" />
     <param name="gpio_num" value="40" /> 
+ </node>
+
+  <!-- The Shield node -->
+  <node pkg="rosserial_python" type="serial_node.py" name="shield" output="screen" respawn="true">
+    <param name="port" value="/dev/ttymxc3" />
+    <param name="baud" value="115200" />
  </node>
 
   <!-- The MD25 -->
@@ -45,8 +45,5 @@
 
   <!-- The perception-->
   <include file="$(find geduino_perception)/launch/perception.launch" />
-
-  <!-- The diagnostic -->
-  <include file="$(find geduino_diagnostic)/launch/diagnostic.launch" />
 
 </launch>

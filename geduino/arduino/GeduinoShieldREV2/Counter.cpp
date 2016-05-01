@@ -1,5 +1,6 @@
 /*
  Counter.cpp
+ 
  Copyright (C) 2014 Alessandro Francescon
 
  This program is free software: you can redistribute it and/or modify
@@ -42,10 +43,21 @@ void Counter::getCounters(unsigned long * _sum, unsigned long  * _counter) {
   *_sum = sum;
   *_counter = counter;
 
-  // Reset counters
+  // Reset counter
   sum = 0;
   counter = 0;
 
+}
+
+void Counter::getAverage(float * average) {
+  
+  // Get average
+  *average = 1.0 * sum / counter;
+  
+  // Reset counters
+  sum = 0;
+  counter = 0;
+  
 }
 
 

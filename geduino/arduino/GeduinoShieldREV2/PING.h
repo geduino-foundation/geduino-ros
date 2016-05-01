@@ -3,7 +3,6 @@
  Implementation based on technical specification available at:
  http://www.parallax.com/
  
- 
  Copyright (C) 2013 Alessandro Francescon
  
  This program is free software: you can redistribute it and/or modify
@@ -24,36 +23,32 @@
 
 #include "Counter.h"
 
-#define MOUNTING_GAP 0.002
-#define DEFAULT_PIN 7
-
 class PING {
 
 public:
 
-  // Create new PING sensor attached to given pin
-  PING(const unsigned int pin);
+  // Create new PING))) sensor attached to given pin and mounting gap
+  PING(const unsigned int _pin, float _mountingGap) : pin(_pin), mountingGap(_mountingGap) {
+  };
 
-  // Get distance measure in m. Measure is corrected for given temperature (in Celsius degree).
-  // If wrong measure is detected (for ex. no pulse duration from PING))) ) it will return -1.
-  // The measure is corrected to take count of the mounting gap.
-  const float measure(const float temperature);
+  // Start a measure on this PING))) sensor. This method measure the distance from PING)))
+  // sensor in m. The temperature is used to calibrate sound speed.
+  // Return -1 if measurement fails, 0 if success.
+  int measure(float temperature, float * measurement);
 
   // Get the failure counter
   Counter& getFailureCounter();
 
 private:
- 
+
+  // The failure counter
   Counter failures;
 
-  // The ping wich PING))) is connected to
+  // The pin wich PING))) is connected to
   unsigned int pin;
-
-  // Start new measure and return the measure pulse duration in microseconds
-  const unsigned long measure_duration();
-
-  // Convert duration to m with temperature correction
-  const float duration_to_m(const unsigned long duration, const float temperature);
+  
+  // The PING))) mounting gap in [m]
+  float mountingGap;
 
 };
 
