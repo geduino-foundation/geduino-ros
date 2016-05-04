@@ -189,10 +189,36 @@ bool checkHealthStatus() {
 	// Check rp lidar health
 	if (IS_OK(opResult)) {
 
-		// Log
-		ROS_INFO("rp lidar health status: %d", health.status);
+		// Check health status
+		if (health.status == RPLIDAR_STATUS_OK) {
 
-		return (health.status == RPLIDAR_STATUS_ERROR);
+			// Log
+			ROS_INFO("rp lidar health status ok");
+
+			return true;
+
+		} else if (health.status == RPLIDAR_STATUS_WARNING) {
+
+			// Log
+			ROS_WARN("rp lidar health status is warning: continue anyway but it must be checked...");
+
+			return true;
+
+		} else if (health.status == RPLIDAR_STATUS_ERROR) {
+
+			// Log
+			ROS_ERROR("rp lidar health status error");
+
+			return false;
+
+		} else {
+
+			// Log
+			ROS_ERROR("rp lidar health status unknown: %d", health.status);
+
+			return false;
+
+		}
 
 	} else {
 
@@ -300,7 +326,7 @@ int main(int argc, char * argv[]) {
 
 	// Get node params
 	privateNodeHandle.param<std::string>("frame_id", frameId, "base_laser");
-	privateNodeHandle.param<std::string>("serial_port", serialPort, "/dev/ttymxc4"); 
+	privateNodeHandle.param<std::string>("serial_port", serialPort, "/dev/ttymxc4");
 	privateNodeHandle.param<std::string>("gpio_num", gpioNum, "40");
 
 	// Log
@@ -325,7 +351,7 @@ int main(int argc, char * argv[]) {
 	if (!rpLidarDriver) {
 
 		// Log
-		ROS_ERROR("cannot create driver, exiting...");
+		ROS_ERROR("cannot create driver. Exiting...");
 
 		// Publish diagnostics
 		publishDiagnostics(STATUS_ERROR, "Cannot create driver");
@@ -351,7 +377,7 @@ int main(int argc, char * argv[]) {
 	}
 
 	// Check rp lidar deriver health status
-	if (!checkHealthStatus) {
+	if (!checkHealthStatus()) {
 
 		// Log
 		ROS_ERROR("rp lidar health status check failed. Exiting...");
@@ -441,13 +467,13 @@ int main(int argc, char * argv[]) {
 
 			if (ascendOpResult == RESULT_OK) {
 
-				// Publish l√aser scan
+				// Publish laser scan
 				publishLaserScan(nodes, nodeCount, scanStartTime, scanEndTime);
 
 			} else {
 
 				// Log
-				ROS_WARN("cannot ascend scan data. Operation result: %x", grabOpResult);
+				ROS_WARN("cannot ascend scan data. Operation result: %x", ascendOpResult);
 
 				// Publish diagnostics
 				publishDiagnostics(STATUS_WARN, "Cannot ascend scan data");
