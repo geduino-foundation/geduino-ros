@@ -2,40 +2,40 @@
  * Copyright (c) 2014, RoboPeak
  * All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without 
+ * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
  *
- * 1. Redistributions of source code must retain the above copyright notice, 
+ * 1. Redistributions of source code must retain the above copyright notice,
  *    this list of conditions and the following disclaimer.
  *
- * 2. Redistributions in binary form must reproduce the above copyright notice, 
- *    this list of conditions and the following disclaimer in the documentation 
+ * 2. Redistributions in binary form must reproduce the above copyright notice,
+ *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
  *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" 
- * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, 
- * THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR 
- * PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR 
- * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, 
- * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, 
- * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; 
- * OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
- * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR 
- * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, 
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
+ * THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR
+ * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
+ * OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+ * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+ * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
  * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
 /*
  *  RoboPeak LIDAR System
- *  Serial Device Driver for Linux
+ *  Serial Device Driver for MacOS
  *
  *  Copyright 2009 - 2014 RoboPeak Team
  *  http://www.robopeak.com
- * 
+ *
  */
 
-#include "arch/linux/arch_linux.h"
-#include "arch/linux/net_serial.h"
+#include "arch/macOS/arch_macOS.h"
+#include "arch/macOS/net_serial.h"
 #include <termios.h>
 #include <sys/select.h>
 
@@ -79,7 +79,7 @@ bool raw_serial::open(const char * portname, uint32_t baudrate, uint32_t flags)
 
     struct termios options, oldopt;
     tcgetattr(serial_fd, &oldopt);
-    bzero(&options,sizeof(struct termios));
+	bzero(&options,sizeof(struct termios));
 
     _u32 termbaud = getTermBaudBitmap(baudrate);
 
@@ -89,15 +89,15 @@ bool raw_serial::open(const char * portname, uint32_t baudrate, uint32_t flags)
     }
     cfsetispeed(&options, termbaud);
     cfsetospeed(&options, termbaud);
-    
-    // enable rx and tx
-    options.c_cflag |= (CLOCAL | CREAD);
+	
+	// enable rx and tx
+	options.c_cflag |= (CLOCAL | CREAD);
 
 
     options.c_cflag &= ~PARENB; //no checkbit
-    options.c_cflag &= ~CSTOPB; //1bit stop bit
+	options.c_cflag &= ~CSTOPB; //1bit stop bit
 
-    options.c_cflag &= ~CSIZE;
+	options.c_cflag &= ~CSIZE;
     options.c_cflag |= CS8; /* Select 8 data bits */
 
 #ifdef CNEW_RTSCTS
@@ -112,21 +112,23 @@ bool raw_serial::open(const char * portname, uint32_t baudrate, uint32_t flags)
     options.c_oflag &= ~OPOST;
     
     tcflush(serial_fd,TCIFLUSH); 
-
+/*
     if (fcntl(serial_fd, F_SETFL, FNDELAY))
     {
         close();
         return false;
     }
+*/
     if (tcsetattr(serial_fd, TCSANOW, &options))
     {
         close();
         return false;
     }
-
+    
     //Clear the DTR bit to let the motor spin
     uint32_t controll = TIOCM_DTR;
     ioctl(serial_fd, TIOCMBIC, &controll);
+    
     
     _is_serial_opened = true;
     return true;
@@ -141,7 +143,7 @@ void raw_serial::close()
     _is_serial_opened = false;
 }
 
-int raw_serial::senddata(const unsigned char * data, size_t size)
+int raw_serial::senddata(const unsigned char * data, _word_size_t size)
 {
 // FIXME: non-block io should be used
     if (!isOpened()) return 0;
@@ -164,7 +166,8 @@ int raw_serial::senddata(const unsigned char * data, size_t size)
 }
 
 
-int raw_serial::recvdata(unsigned char * data, size_t size)
+
+int raw_serial::recvdata(unsigned char * data, _word_size_t size)
 {
     if (!isOpened()) return 0;
     
@@ -181,13 +184,13 @@ void raw_serial::flush( _u32 flags)
     tcflush(serial_fd,TCIFLUSH); 
 }
 
-int raw_serial::waitforsent(_u32 timeout, size_t * returned_size)
+int raw_serial::waitforsent(_u32 timeout, _word_size_t * returned_size)
 {
     if (returned_size) *returned_size = required_tx_cnt;
     return 0;
 }
 
-int raw_serial::waitforrecv(_u32 timeout, size_t * returned_size)
+int raw_serial::waitforrecv(_u32 timeout, _word_size_t * returned_size)
 {
     if (!isOpened() ) return -1;
    
@@ -195,12 +198,12 @@ int raw_serial::waitforrecv(_u32 timeout, size_t * returned_size)
     return 0;
 }
 
-int raw_serial::waitfordata(size_t data_count, _u32 timeout, size_t * returned_size)
+int raw_serial::waitfordata(_word_size_t data_count, _u32 timeout, _word_size_t * returned_size)
 {
-    size_t length = 0;
-    if (returned_size==NULL) returned_size=(size_t *)&length;
+    _word_size_t length = 0;
+    if (returned_size==NULL) returned_size=(_word_size_t *)&length;
     *returned_size = 0;
-
+    
     int max_fd;
     fd_set input_set;
     struct timeval timeout_val;
@@ -249,7 +252,7 @@ int raw_serial::waitfordata(size_t data_count, _u32 timeout, size_t * returned_s
             {
                 return 0;
             }
-            else 
+            else
             {
                 int remain_timeout = timeout_val.tv_sec*1000000 + timeout_val.tv_usec;
                 int expect_remain_time = (data_count - *returned_size)*1000000*8/_baudrate;
@@ -259,7 +262,6 @@ int raw_serial::waitfordata(size_t data_count, _u32 timeout, size_t * returned_s
         }
         
     }
-
     return ANS_DEV_ERR;
 }
 
@@ -275,7 +277,7 @@ size_t raw_serial::rxqueue_count()
 
 void raw_serial::_init()
 {
-    serial_fd = 0;  
+    serial_fd = 0;
     _portName[0] = 0;
     required_tx_cnt = required_rx_cnt = 0;
 }
@@ -284,8 +286,9 @@ void raw_serial::_init()
 
 _u32 raw_serial::getTermBaudBitmap(_u32 baud)
 {
-#define BAUD_CONV( _baud_) case _baud_:  return B##_baud_ 
-switch (baud) {
+#define BAUD_CONV(_baud_) case _baud_:  return _baud_
+    switch (baud)
+    {
         BAUD_CONV(1200);
         BAUD_CONV(1800);
         BAUD_CONV(2400);
@@ -311,20 +314,22 @@ switch (baud) {
     }
     return -1;
 }
-
+    
 }}} //end rp::arch::net
+
+
 
 //begin rp::hal
 namespace rp{ namespace hal{
-
-serial_rxtx * serial_rxtx::CreateRxTx()
-{
-    return new rp::arch::net::raw_serial();
-}
-
-void serial_rxtx::ReleaseRxTx(serial_rxtx *rxtx)
-{
-    delete rxtx;
-}
-
+    
+    serial_rxtx * serial_rxtx::CreateRxTx()
+    {
+        return new rp::arch::net::raw_serial();
+    }
+    
+    void serial_rxtx::ReleaseRxTx(serial_rxtx *rxtx)
+    {
+        delete rxtx;
+    }
+    
 }} //end rp::hal

@@ -33,6 +33,11 @@
  *  http://www.robopeak.com
  * 
  */
+/*
+ *  Copyright 2014 - 2016 Shanghai Slamtec Co., Ltd.
+ *  http://www.slamtec.com
+ * 
+ */
 
 #include "sdkcommon.h"
 #include "net_serial.h"
@@ -230,8 +235,9 @@ int raw_serial::waitfordata(size_t data_count, _u32 timeout, size_t * returned_s
     COMSTAT  stat;
     DWORD error;
     DWORD msk,length;
-	size_t dummy_length;
-    if (returned_size==NULL) returned_size=&dummy_length;
+    size_t dummy_length;
+
+    if (returned_size==NULL) returned_size=(size_t *)&dummy_length;
 
     
     if ( isOpened()) {

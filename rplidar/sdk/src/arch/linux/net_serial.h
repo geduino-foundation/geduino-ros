@@ -27,7 +27,7 @@
  */
 /*
  *  RoboPeak LIDAR System
- *  Serial Device Driver for Win32
+ *  Serial Device Driver for Linux
  *
  *  Copyright 2009 - 2014 RoboPeak Team
  *  http://www.robopeak.com
@@ -65,9 +65,6 @@ public:
 
     virtual size_t rxqueue_count();
 
-	virtual void setDTR();
-	virtual void clearDTR();
-	
     _u32 getTermBaudBitmap(_u32 baud);
 protected:
     bool open(const char * portname, uint32_t baudrate, uint32_t flags = NULL);

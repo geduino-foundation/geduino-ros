@@ -33,9 +33,16 @@
  *  http://www.robopeak.com
  * 
  */
+/*
+ *  Copyright 2014 - 2016 Shanghai Slamtec Co., Ltd.
+ *  http://www.slamtec.com
+ * 
+ */
 
 #if defined(_WIN32)
 #include "arch\win32\arch_win32.h"
+#elif defined(_MACOS)
+#include "arch/macOS/arch_macOS.h"
 #elif defined(__GNUC__)
 #include "arch/linux/arch_linux.h"
 #else

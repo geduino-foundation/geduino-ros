@@ -33,6 +33,11 @@
  *  http://www.robopeak.com
  * 
  */
+/*
+ *  Copyright 2014 - 2016 Shanghai Slamtec Co., Ltd.
+ *  http://www.slamtec.com
+ * 
+ */
 
 #pragma once
 
@@ -67,8 +72,6 @@ public:
 
     virtual size_t rxqueue_count();
 
-	virtual void setDTR(){};
-	virtual void clearDTR(){};
 
 protected:
     bool open(const char * portname, _u32 baudrate, _u32 flags);

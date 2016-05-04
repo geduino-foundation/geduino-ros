@@ -33,6 +33,11 @@
  *  http://www.robopeak.com
  * 
  */
+/*
+ *  Copyright 2014 - 2016 Shanghai Slamtec Co., Ltd.
+ *  http://www.slamtec.com
+ * 
+ */
 
 #pragma once
 namespace rp{ namespace hal{ 
@@ -73,13 +78,20 @@ public:
         }
 
 #else
+#ifdef _MACOS
+        if (timeout !=0 ) {
+            if (pthread_mutex_lock(&_lock) == 0) return LOCK_OK;
+        }
+#else
         if (timeout == 0xFFFFFFFF){
             if (pthread_mutex_lock(&_lock) == 0) return LOCK_OK;
         }
+#endif
         else if (timeout == 0)
         {
             if (pthread_mutex_trylock(&_lock) == 0) return LOCK_OK;
         }
+#ifndef _MACOS
         else
         {
             timespec wait_time;
@@ -102,6 +114,7 @@ public:
                 return LOCK_TIMEOUT;
             }
         }
+#endif
 #endif
 
         return LOCK_FAILED;
