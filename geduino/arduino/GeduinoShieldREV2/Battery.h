@@ -19,6 +19,9 @@
 #ifndef _BATTERY_H_
 #define _BATTERY_H_
 
+// The size of volts history
+#define VOLTS_HISTORY_SIZE                    3
+
 class Battery {
 
 public:
@@ -27,15 +30,21 @@ public:
   // The conversion parameter are used to convert raw voltage to battery voltage with formula:
   // Vbatt = Vraw * paramA + paramB.
   Battery(const unsigned int _pin, float _paramA, float _paramB) : pin(_pin), paramA(_paramA), paramB(_paramB) {
+    voltsHistoryIndex = -1;
   };
    
-  // Get volts in [V]
+  // Get volts in [V]. Every reading of volts are stored and the returned value is the
+  // average of last readings.
   void getVolts(float * volts);
 
 private:
 
   // The pin wich the battery is connected to
   unsigned int pin;
+  
+  // The last readings
+  float voltsHistory[VOLTS_HISTORY_SIZE];
+  int voltsHistoryIndex;
 
   // The linear parameters for conversion
   float paramA;
