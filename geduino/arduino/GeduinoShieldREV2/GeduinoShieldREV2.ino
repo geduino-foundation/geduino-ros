@@ -50,8 +50,8 @@
 #define PING_MOUNTING_GAP                     0.02        // [m]
 
 // The battery parameters
-#define BATTERY_PARAM_A                       1
-#define BATTERY_PARAM_B                       0
+#define BATTERY_PARAM_A                       2.805
+#define BATTERY_PARAM_B                       10.232
 
 // The battery threshold levels
 #define BATTERY_WARNING_VOLTS                 13.6        // [V]
@@ -360,7 +360,7 @@ void getPingDiagnosticStatus(PING * ping, diagnostic_msgs::DiagnosticStatus * di
   
   // Set ping diagnostic values
   String(failures, DEC).toCharArray(diagnosticStatus->values[0].value, 16);
-  String(failures, DEC).toCharArray(diagnosticStatus->values[1].value, 16);
+  String(measurement, DEC).toCharArray(diagnosticStatus->values[1].value, 16);
 
   // Set ping diagnostic level and message
   if (failures == 0) {
