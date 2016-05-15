@@ -54,7 +54,7 @@ RPlidarDriver * rpLidarDriver = NULL;
 // The pointer to gpio
 GPIO * gpio = NULL;
 
-// The rpÃp lidar device info pointer
+// The rp lidar device info pointer
 _rplidar_response_device_info_t * rpLidarDeviceInfoPtr = NULL;
 
 // The laser scan publisher pointer
@@ -106,6 +106,11 @@ void publishLaserScan(rplidar_response_measurement_node_t * nodes,
 
 		// Get range index
 		int rangeIndex = (int) angle;
+
+		// Normalize index in [0, 360[ range
+		while (rangeIndex >= 360) {
+			rangeIndex -= 360;
+		}
 
 		if (nodes[nodeIndex].distance_q2 != 0) {
 
@@ -249,6 +254,12 @@ void startScan() {
 
 		// Start scan
 		rpLidarDriver->startScan();
+
+		// Log
+		ROS_INFO("waiting for rp lidar motor to stabilize...");
+
+		// Sleep for 1 sec to leave time motor speed to stabilize
+		usleep(1000 * 1000);
 
 	} else {
 
