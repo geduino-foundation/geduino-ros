@@ -22,7 +22,37 @@
   <param name="robot_description" textfile="$(find geduino)/urdf/geduino.urdf" />
 
   <!-- The robot state publisher -->
-  <node pkg="robot_state_publisher" type="robot_state_publisher" name="robot_state"/>
+  <node pkg="robot_state_publisher" type="robot_state_publisher" name="robot_state" />
+
+  <!-- The ekf localization node -->
+  <node pkg="robot_localization" type="ekf_localization_node" respawn="false" name="ekf" output="screen" >
+    <remap from="odometry/filtered" to="odom_filtered" />
+    <param name="frequency" value="10" />
+    <param name="two_d_mode" value="true" />
+    <param name="odom_frame" value="odom" />
+    <param name="base_link_frame" value="base_link" />
+    <param name="world_frame" value="odom" />
+    <param name="imu0" value="/imu"/>
+    <param name="odom0" value="/odom"/>
+    <param name="imu0_differential" value="true" />
+    <param name="odom0_differential" value="false" />
+    <!--                           X,     Y,     Z,
+                                   Roll,  Pitch, Yaw,
+                                   Vx,    Vy,    Vz,
+                                   Vroll, Vpitch,Vyaw,
+                                   Ax,    Ay,    Az 
+    -->
+    <rosparam param="imu0_config">[false, false, false,
+                                   false, false, true,
+                                   false, false, false,
+                                   false, false, true,
+                                   false, false, false]</rosparam>
+    <rosparam param="odom0_config">[true, true, false,
+                                    false, false, true,
+                                    true, true, false,
+                                    false, false, true,
+                                    false, false, false]</rosparam>
+  </node>
 
   <!-- The RPLidar node -->
   <node pkg="rplidar" type="rplidar_node" name="rplidar" output="screen" respawn="true">
