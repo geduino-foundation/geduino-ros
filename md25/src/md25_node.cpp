@@ -29,7 +29,6 @@
  - /cmd_vel (geometry_msgs/Twist): the velocity command.
 
  Publish:
- - tf (tf/tfMessage): the odom -> base_link transformation;
  - /odom (nav_msgs/Odometry): the odometry topic;
  - /diagnostics (diagnostic_msgs/DiagnosticArray): the diagnostic information.
 
@@ -40,19 +39,19 @@
  - base_frame, the frame attached to robot base, i.e. broadcasted transformation child
    frame (default: base_link);
  - odom_frame, : odometry frame, i.e. broadcasted transformation frame (default: odom);
- - odometryFrequency, the odometry update frequency in Hz (default: 10);
- - diagnosticFrequency, the diagnostic ypdate frequency in Hz. It must be less or equals than
-   odometryFrequency (default: 1);
- - encoderSensitivity1: the encoder 1 sensitivity in LSB / rad. It represent the inverse
+ - odometry_frequency, the odometry update frequency in Hz (default: 10);
+ - diagnostic_frequency, the diagnostic ypdate frequency in Hz. It must be less or equals than
+   odometry_frequency (default: 1);
+ - encoder_sensitivity1: the encoder 1 sensitivity in LSB / rad. It represent the inverse
    of wheel shaft rotation angle for unitary encoder increment. (default: 0.00872639,
    valid using EMG30 motor);
- - encoderSensitivity2: the encoder 2 sensitivity in LSB / rad. It represent the inverse
+ - encoder_sensitivity2: the encoder 2 sensitivity in LSB / rad. It represent the inverse
    of wheel shaft rotation angle for unitary encoder increment. (default: 0.00872639,
    valid using EMG30 motor);
- - speedSensitivity1: the speed 1 sensitivity in LSB / (rad/s). It represent the inverse
+ - speed_sensitivity1: the speed 1 sensitivity in LSB / (rad/s). It represent the inverse
    of wheel shaft rotation speed for unitary speed input. (default: 12.4620, valid using
    EMG30 motor);
- - speedSensitivity2: the speed 2 sensitivity in LSB / (rad/s). It represent the inverse
+ - speed_sensitivity2: the speed 2 sensitivity in LSB / (rad/s). It represent the inverse
    of wheel shaft rotation speed for unitary speed input. (default: 12.4620, valid using
    EMG30 motor);
  - wheel_diameter1: the wheel 1 diameter in m (default: 0.1);
@@ -61,6 +60,7 @@
  - cov_K1: the constant of covariance model for wheel 1;
  - cov_K2: the constant of covariance model for wheel 2;
  - cov_radius_threshold: the radius threshold to distinguish between straight andarc path.
+ - yaw_speed_variance: the variance of yaw speed (default: 0.06)
  */
 
 #include <ros/ros.h>
@@ -98,6 +98,7 @@ double wheelBase;
 double covK1;
 double covK2;
 double covRTres;
+double yawSpeedVariance;
 
 // The last encoder values
 uint32_t lastEncoder1 = 0;
@@ -115,14 +116,8 @@ Odometry * odometryPtr;
 // The pointer to odometry message publisher
 ros::Publisher * odometryMessagePublisherPtr;
 
-// The pointer tp odometry transform broadcaster
-tf::TransformBroadcaster * odometryTransformBroadcasterPtr;
-
 // The diagnostics message publisher pointer
 ros::Publisher * diagnosticsMessagePublisherPtr;
-
-// The odometry transformation
-geometry_msgs::TransformStamped odometryTransformation;
 
 // The odometry message
 nav_msgs::Odometry odometryMessage;
@@ -284,12 +279,6 @@ void updateOdometry() {
 	// Create odometry quaternion from th
 	geometry_msgs::Quaternion odometryQuaternion = tf::createQuaternionMsgFromYaw(angPos.z());
 
-	// Update odometry transformation
-	odometryTransformation.header.stamp = now;
-	odometryTransformation.transform.translation.x = linPos.x();
-	odometryTransformation.transform.translation.y = linPos.y();
-	odometryTransformation.transform.rotation = odometryQuaternion;
-
 	// Update odometry message
 	odometryMessage.header.stamp = now;
 	odometryMessage.pose.pose.position.x = linPos.x();
@@ -306,9 +295,6 @@ void updateOdometry() {
 	odometryMessage.pose.pose.orientation = odometryQuaternion;
 	odometryMessage.twist.twist.linear.x = linVel.x();
 	odometryMessage.twist.twist.angular.z = angVel.z();
-
-	// Broadcast odometry transformation
-	odometryTransformBroadcasterPtr->sendTransform(odometryTransformation);
 
 	// Publish odometry message
 	odometryMessagePublisherPtr->publish(odometryMessage);
@@ -348,6 +334,7 @@ int main(int argc, char** argv) {
 	privateNodeHandle.param("cov_k1", covK1, 0.001);
 	privateNodeHandle.param("cov_k2", covK2, 0.001);
 	privateNodeHandle.param("cov_radius_threshold", covRTres, 10.0);
+	privateNodeHandle.param("yaw_speed_variance", yawSpeedVariance, 0.06);
 
 	// Log
 	ROS_INFO("broadcasting transformation %s -> %s", odomFrame.c_str(), baseFrame.c_str());
@@ -363,6 +350,7 @@ int main(int argc, char** argv) {
 	ROS_INFO("covariance constant 1: %g", covK1);
 	ROS_INFO("covariance constant 2: %g", covK2);
 	ROS_INFO("covariance radius threshold: %g m", covRTres);
+	ROS_INFO("yaw speed variance: %g", yawSpeedVariance);
 
 	// Create odometry
 	Odometry odometry(wheelBase, covK1, covK2, covRTres);
@@ -376,19 +364,11 @@ int main(int argc, char** argv) {
 	ros::Publisher diagnosticsMessagePublisher = nodeHandle.advertise<diagnostic_msgs::DiagnosticArray>("/diagnostics", 20, true);
 	diagnosticsMessagePublisherPtr = & diagnosticsMessagePublisher;
 
-	// The odometry transform broadcaster
-	tf::TransformBroadcaster odometryTransformBroadcaster;
-	odometryTransformBroadcasterPtr = & odometryTransformBroadcaster;
-
-	// Init odometry transformation
-	odometryTransformation.header.frame_id = odomFrame;
-	odometryTransformation.child_frame_id = baseFrame;
-	odometryTransformation.transform.translation.z = 0.0;
-
 	// Init odometry message
 	odometryMessage.header.frame_id = odomFrame;
 	odometryMessage.child_frame_id = baseFrame;
 	odometryMessage.pose.pose.position.z = 0.0;
+	odometryMessage.twist.covariance[35] = pow(yawSpeedVariance, 2);
 
 	// Create cmd_vel message subscriber
 	ros::Subscriber cmdVelMessageSubscriber = nodeHandle.subscribe("/cmd_vel", 20, cmdVelCallback);

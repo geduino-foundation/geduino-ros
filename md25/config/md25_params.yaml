@@ -56,3 +56,6 @@ covK2: 0.001
 
 # The threshold to distinguish between straight or arc path
 cov_radius_threshold: 10.0
+
+# The variance of yaw speed
+yaw_speed_variance: 0.06
