@@ -23,8 +23,8 @@
 #define MPU9150_ERROR							-1
 #define MPU9150_INIT_MPU_INIT_ERROR					-2
 #define MPU9150_INIT_MPU_SET_SENSORS_ERROR				-3
-#define MPU9150_INIT_MPU_SET_GYRO_FSR_ERROR				-4
-#define MPU9150_INIT_MPU_SET_ACCEL_FSR_ERROR				-5
+#define MPU9150_INIT_MPU_GET_GYRO_FSR_ERROR				-4
+#define MPU9150_INIT_MPU_GET_ACCEL_FSR_ERROR				-5
 #define MPU9150_INIT_MPU_CONFIGURE_FIFO_ERROR				-6
 #define MPU9150_INIT_MPU_SET_SAMPLE_RATE_ERROR				-7
 #define MPU9150_INIT_DMP_LOAD_MOTION_DRIVER_FIRMWARE_ERROR		-8
@@ -60,6 +60,14 @@ class INVMPU9150 {
 
 		// Read DMP data from FIFO and return MPU9150_OK if the operation success. Return other value otherwise.
 		int dmpReadFifoData(dmpFifoData_t * dmpFifoData);
+
+	private:
+
+		// The gyro sensitivity factor
+		float gyroSsf;
+
+		// The accel sensitivity factor
+		unsigned short accelSsf;
 
 };
 

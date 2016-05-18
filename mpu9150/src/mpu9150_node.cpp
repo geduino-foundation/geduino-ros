@@ -163,17 +163,24 @@ int main(int argc, char** argv) {
 				imuMessage.angular_velocity.x = dmpFifoData.gyro[0];
 				imuMessage.angular_velocity.y = dmpFifoData.gyro[1];
 				imuMessage.angular_velocity.z = dmpFifoData.gyro[2];
+				imuMessage.angular_velocity_covariance[0] = 0.0009;
+				imuMessage.angular_velocity_covariance[4] = 0.0009;
+				imuMessage.angular_velocity_covariance[8] = 0.0009;
 
 				// Set linear acceleration
 				imuMessage.linear_acceleration.x = dmpFifoData.accel[0];
 				imuMessage.linear_acceleration.y = dmpFifoData.accel[1];
 				imuMessage.linear_acceleration.z = dmpFifoData.accel[2];
+				imuMessage.linear_acceleration_covariance[0] = 0.0009;
+				imuMessage.linear_acceleration_covariance[4] = 0.0009;
+				imuMessage.linear_acceleration_covariance[8] = 0.0009;
 
 				// Get orientation
-				imuMessage.orientation.x = dmpFifoData.quat[0];
-				imuMessage.orientation.y = dmpFifoData.quat[1];
-				imuMessage.orientation.z = dmpFifoData.quat[2];
-				imuMessage.orientation.w = dmpFifoData.quat[3];
+				imuMessage.orientation.x = dmpFifoData.quat[1];
+				imuMessage.orientation.y = dmpFifoData.quat[2];
+				imuMessage.orientation.z = dmpFifoData.quat[3];
+				imuMessage.orientation.w = dmpFifoData.quat[0];
+				imuMessage.orientation_covariance[0] = -1;
 
 				// Publish imu message
 				imuMessagePublisher->publish(imuMessage);
