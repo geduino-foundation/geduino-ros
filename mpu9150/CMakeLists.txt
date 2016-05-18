@@ -48,7 +48,11 @@ include_directories(
 )
 
 add_executable(mpu9150_node src/mpu9150_node.cpp src/mpu9150.cpp src/utility.c ${EMPL_SRC} ${GLUE_SRC})
+add_executable(imu_quaternion_to_euler_node src/imu_quaternion_to_euler_node.cpp)
 
 target_link_libraries(mpu9150_node
+  ${catkin_LIBRARIES}
+)
+target_link_libraries(imu_quaternion_to_euler_node
   ${catkin_LIBRARIES}
 )
