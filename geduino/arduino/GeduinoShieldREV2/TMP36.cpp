@@ -23,9 +23,14 @@
 #define ANALOG_REFERENCE 3.3
 #define ANALOG_RESOLUTION 1024
 
+#define TMP36_ERROR 1
+
 void TMP36::getTemperature(float * temperature) {
 
-  // Get temperature in dK
-  * temperature = analogRead(pin) * ANALOG_REFERENCE * 100 / ANALOG_RESOLUTION + 223.15;
+  // Get temperature in [C]
+  float raw = analogRead(pin) * ANALOG_REFERENCE * 100 / ANALOG_RESOLUTION - 50;
+
+  // Filter
+  filter.filter(raw, temperature);
 
 }
