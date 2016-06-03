@@ -19,6 +19,8 @@
 #ifndef _TMP36_H_
 #define _TMP36_H_
 
+#include "MedianFilter.h"
+
 class TMP36 {
 
 public:
@@ -27,7 +29,7 @@ public:
   TMP36(const unsigned int _pin) : pin(_pin) {
   };
   
-  // Get temperature in [K]
+  // Get temperature in [C]
   void getTemperature(float * temperature);
 
 private:
@@ -35,6 +37,9 @@ private:
   // The pin wich TMP36 is connected to
   unsigned int pin;
 
+  // The median filter
+  MedianFilter filter;
+  
 };
 
 #endif

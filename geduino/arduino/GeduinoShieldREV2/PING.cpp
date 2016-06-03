@@ -48,7 +48,7 @@ int PING::measure(float temperature, float * measurement) {
     failures.increase(0);
     
     // Calculate sound speed
-    float soundSpeed = 167.41 + 0.06 * temperature;
+    float soundSpeed = 331.3 + 0.6 * temperature;
     
     // Transform duration to measurement in [m]
     *measurement = max(0, (duration * soundSpeed / 1000000 - mountingGap) / 2);

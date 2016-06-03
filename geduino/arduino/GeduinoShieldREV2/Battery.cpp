@@ -25,34 +25,10 @@
 
 void Battery::getVolts(float * volts) {
   
-  if (voltsHistoryIndex == -1) {
-    
-    // Get all measurement needed to full the history
-    for (int index = 0; index < VOLTS_HISTORY_SIZE; index++) {
-    
-      // Get volts in [V]
-      voltsHistory[index] = analogRead(pin) * ANALOG_REFERENCE / ANALOG_RESOLUTION * paramA + paramB;
-    
-      // Wait before next reading
-      delay(100);
-    
-    }
-    
-  } else {
+  // Get raw volts in [V]
+  float raw = analogRead(pin) * ANALOG_REFERENCE / ANALOG_RESOLUTION * paramA + paramB;
   
-    // Get volts in [V]
-    voltsHistory[voltsHistoryIndex++] = analogRead(pin) * ANALOG_REFERENCE / ANALOG_RESOLUTION * paramA + paramB;
+  // Filter
+  filter.filter(raw, volts);  
   
-  }
-  
-  if (voltsHistoryIndex > VOLTS_HISTORY_SIZE) {
-    
-    // Reset volts history index
-    voltsHistoryIndex = 0;
-    
-  }
-  
-  // Get volts as average value of last readings
-  * volts = (voltsHistory[0] + voltsHistory[1] + voltsHistory[2]) / 3;
-
 }

@@ -32,7 +32,7 @@ public:
   };
 
   // Start a measure on this PING))) sensor. This method measure the distance from PING)))
-  // sensor in m. The temperature is used to calibrate sound speed.
+  // sensor in m. The temperature, in [C], is used to calibrate sound speed.
   // Return -1 if measurement fails, 0 if success.
   int measure(float temperature, float * measurement);
 

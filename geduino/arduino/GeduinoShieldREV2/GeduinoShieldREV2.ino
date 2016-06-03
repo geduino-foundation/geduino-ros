@@ -19,6 +19,7 @@
 
 #include <ros.h>
 #include <sensor_msgs/Range.h>
+#include <sensor_msgs/Temperature.h>
 #include <std_msgs/Float32.h>
 #include <diagnostic_msgs/DiagnosticArray.h>
 #include "PString.h"
@@ -32,6 +33,9 @@
 /****************************************************************************************
  * Begin configuration
  */
+ 
+// Enable/disable serial debug
+//#define SERIAL_DEBUG
 
 // The ROS serial baud rare
 #define ROS_SERIAL_BAUD_RATE                  115200
@@ -62,13 +66,13 @@
 #define SAMX8_CRITICAL_LOAD                   50          // [%]
 
 // The range publisher frequency
-#define RANGE_PUBLISHER_FREQUENCY             2          // [Hz]
+#define RANGE_PUBLISHER_FREQUENCY             10          // [Hz]
 
 // The battery state publisher frequency
-#define BATTERY_STATE_PUBLISHER_FREQUENCY     0.1           // [Hz]
+#define BATTERY_STATE_PUBLISHER_FREQUENCY     1           // [Hz]
 
 // The diagnostics publisher frequency
-#define DIAGNOSTICS_PUBLISHER_FREQUENCY       0.1           // [Hz]
+#define DIAGNOSTICS_PUBLISHER_FREQUENCY       1          // [Hz]
 
 /****************************************************************************************
  * End configuration
@@ -108,6 +112,10 @@ ros::Publisher centerRangeMessagePublisher("center_range", & centerRangeMessage)
 sensor_msgs::Range rightRangeMessage;
 ros::Publisher rightRangeMessagePublisher("right_range", & rightRangeMessage);
 
+// The temperature message and its publisher
+sensor_msgs::Temperature temperatureMessage;
+ros::Publisher temperatureMessagePublisher("temperature", & temperatureMessage);
+
 // The battery state message and its publisher
 std_msgs::Float32 batteryStateMessage;
 ros::Publisher batteryStateMessagePublisher("battery_state", & batteryStateMessage);
@@ -142,6 +150,8 @@ void setup() {
   pinMode(48, INPUT);
   pinMode(49, INPUT);
 
+#ifndef SERIAL_DEBUG
+
   // Set baud rate
   nodeHandle.getHardware()->setBaud(ROS_SERIAL_BAUD_RATE);
   
@@ -150,6 +160,16 @@ void setup() {
   
   // Debug
   nodeHandle.logdebug("intializing messages...");
+  
+#else
+
+  // Begin debug serial
+  Serial.begin(ROS_SERIAL_BAUD_RATE);
+  
+  // Debug
+  Serial.println("setup completed: starting loop...");
+  
+#endif
   
   // Init range messages
   leftRangeMessage.radiation_type = sensor_msgs::Range::ULTRASOUND;
@@ -167,6 +187,10 @@ void setup() {
   rightRangeMessage.field_of_view = PING_FIELD_OF_VIEW;
   rightRangeMessage.min_range = PING_MIN_RANGE;
   rightRangeMessage.max_range = PING_MAX_RANGE;
+  
+  // Init temperature message
+  temperatureMessage.header.frame_id = "base_temperature";
+  temperatureMessage.variance = 0.0016;
   
   // Init diagnostics message
   diagnosticsMessage.header.frame_id = "";
@@ -230,6 +254,8 @@ void setup() {
   diagnosticsMessage.status[4].values[5].value = (char *) malloc(16);
   diagnosticsMessage.status[4].values[6].key = "Diagnostics main duration";
   diagnosticsMessage.status[4].values[6].value = (char *) malloc(16);
+  
+#ifndef SERIAL_DEBUG
 
   // Debug
   nodeHandle.logdebug("advertise node handle for publishers...");
@@ -238,11 +264,14 @@ void setup() {
   nodeHandle.advertise(leftRangeMessagePublisher);
   nodeHandle.advertise(centerRangeMessagePublisher);
   nodeHandle.advertise(rightRangeMessagePublisher);
+  nodeHandle.advertise(temperatureMessagePublisher);
   nodeHandle.advertise(batteryStateMessagePublisher);
   nodeHandle.advertise(diagnosticsMessagePublisher);
   
   // Debug
   nodeHandle.loginfo("initialization complete");
+
+#endif
 
 }
 
@@ -306,7 +335,14 @@ void loop() {
 }
 
 void publishRange() {
+
+#ifdef SERIAL_DEBUG
+
+  // Debug
+  Serial.println("Publish range...");
   
+#endif
+
   // Get temperature
   float temperature;
   tmp36.getTemperature(& temperature);
@@ -319,7 +355,7 @@ void publishRange() {
   leftPing.measure(temperature, & leftPingMeasurement);
   centralPing.measure(temperature, & centralPingMeasurement);
   rightPing.measure(temperature, & rightPingMeasurement);
-
+  
   // Update range messages
   leftRangeMessage.range = leftPingMeasurement;
   leftRangeMessage.header.stamp = now;
@@ -328,27 +364,70 @@ void publishRange() {
   rightRangeMessage.range = rightPingMeasurement;
   rightRangeMessage.header.stamp = now;
   
+  // Update temperature messages
+  temperatureMessage.header.stamp = now;
+  temperatureMessage.temperature = temperature;
+
+#ifndef SERIAL_DEBUG
+
   // Publish range messages
   leftRangeMessagePublisher.publish(& leftRangeMessage);
   centerRangeMessagePublisher.publish(& centerRangeMessage);
   rightRangeMessagePublisher.publish(& rightRangeMessage);
   
+  // Publish temperature message
+  temperatureMessagePublisher.publish(& temperatureMessage);
+  
   // Spin once
   nodeHandle.spinOnce();
+
+#else
+
+  // Debug
+  Serial.print("Temperature [C]: ");
+  Serial.print(temperature);
+  Serial.print(" Left [m]: ");
+  Serial.print(leftPingMeasurement);
+  Serial.print(" Central [m]: ");
+  Serial.print(centralPingMeasurement);
+  Serial.print(" Right [m]: ");
+  Serial.println(rightPingMeasurement);
+
+#endif
 
 }
 
 void publishBatteryState() {
+
+#ifdef SERIAL_DEBUG
+
+  // Debug
+  Serial.println("Publish battery state...");
   
+#endif
+
   // Get battery volts
   float volts;
-  battery.getVolts(& batteryStateMessage.data);
+  battery.getVolts(& volts);
+  
+#ifndef SERIAL_DEBUG
+
+  // Update battery state message
+  batteryStateMessage.data = volts;
   
   // Publish battery state message
   batteryStateMessagePublisher.publish(& batteryStateMessage);
   
   // Spin once
   nodeHandle.spinOnce();
+  
+#else
+
+  // Debug
+  Serial.print("Battery Voltage [V]: ");
+  Serial.println(volts);
+  
+#endif
 
 }
 
@@ -384,6 +463,13 @@ void getPingDiagnosticStatus(PING * ping, diagnostic_msgs::DiagnosticStatus * di
 
 void publishDiagnostics() {
   
+#ifdef SERIAL_DEBUG
+
+  // Debug
+  Serial.println("Publish diagnostics...");
+  
+#endif
+
   // Get ROS current time
   ros::Time now = nodeHandle.now();
   
@@ -474,11 +560,20 @@ void publishDiagnostics() {
   
   }
   
+#ifndef SERIAL_DEBUG
+  
   // Publish diagnostics message
   diagnosticsMessagePublisher.publish(& diagnosticsMessage);
   
   // Spin once
   nodeHandle.spinOnce();
+  
+#else
+
+  // Debug
+  Serial.println("diagnostics published");
+
+#endif
   
 }
 
