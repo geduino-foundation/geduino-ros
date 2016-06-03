@@ -16,6 +16,11 @@
 
 global_costmap:
 
+  # The costmap layers dictionary
+  plugins:
+    - {name: static_layer, type: "costmap_2d::StaticLayer"}
+    - {name: inflation_layer, type: "costmap_2d::InflationLayer"}
+
   # The global frame for the costmap to operate in
   global_frame: /map
   

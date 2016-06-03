@@ -28,10 +28,15 @@ robot_radius: 0.15
 # paths that stay 0.55 meters or more away from obstacles as having equal obstacle cost
 inflation_radius: 0.55
 
-# A list of observation source names separated by spaces.
-# This defines each of the <source_name> namespaces defined below.
-observation_sources: laser_scan_sensor
-laser_scan_sensor: {sensor_frame: base_laser, data_type: LaserScan, topic: scan, marking: true, clearing: true}
+# Obstacle layer configuration
+obstacle_layer:
+  observation_sources: laser_scan_sensor
+  laser_scan_sensor: {sensor_frame: base_laser, data_type: LaserScan, topic: scan, marking: true, clearing: true}
+
+# Range layer configuration
+range_layer:
+  topics: ["/left_range", "/center_range", "/right_range"]
+  no_readings_timeout: 1.0
 
 # Specifies the delay in transform (tf) data that is tolerable in seconds.
 # This parameter serves as a safeguard to losing a link in the tf tree while still allowing
