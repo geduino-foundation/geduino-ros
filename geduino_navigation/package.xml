@@ -33,6 +33,7 @@
   <buildtool_depend>catkin</buildtool_depend>
   <run_depend>move_base</run_depend>
   <run_depend>gmapping</run_depend>
+  <run_depend>range_sensor_layer</run_depend>
 
   <export>
   </export>

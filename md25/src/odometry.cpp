@@ -261,6 +261,6 @@ void Odometry::reset() {
    angVel.setValue(0, 0, 0);
 
    // Reset covariance
-   cov.setValue(0, 0, 0, 0, 0, 0, 0, 0 ,0);
+   cov.setValue(0, 0, 0, 0, 0, 0, 0, 0, 0);
 
 }

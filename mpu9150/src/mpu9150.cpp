@@ -26,9 +26,6 @@ extern "C" {
 	#include <utility.h>
 }
 
-#define GYRO_LSB_TO_DEGREE_S	7507
-#define ACCEL_LSB_TO_M_S2	1670
-
 // The DMP fifo data in LSB unit structure
 typedef struct {
         short gyro[3];
@@ -72,14 +69,16 @@ int INVMPU9150::init(int i2cBus, int frequency) {
 		return MPU9150_INIT_MPU_SET_SENSORS_ERROR;
 	}
 
-	// Set gyro full scale range
-	if (mpu_set_gyro_fsr(250)) {
-		return MPU9150_INIT_MPU_SET_GYRO_FSR_ERROR;
+	// Get gyro sensitivity scale factor and convert from [LSB/(degree/s)] to [LSB/(rad/s)]
+	float gyroSsfDegreePerSecond;
+	if (mpu_get_gyro_sens(& gyroSsfDegreePerSecond)) {
+		return MPU9150_INIT_MPU_GET_GYRO_FSR_ERROR;
 	}
+	gyroSsf = gyroSsfDegreePerSecond * 180 / M_PI;
 
-	// Set accel full scale range
-	if (mpu_set_accel_fsr(2)) {
-		return MPU9150_INIT_MPU_SET_ACCEL_FSR_ERROR;
+	// Get accel sensitivity scale factor
+	if (mpu_get_accel_sens(& accelSsf)) {
+		return MPU9150_INIT_MPU_GET_ACCEL_FSR_ERROR;
 	}
 
 	// Configure FIFO
@@ -147,39 +146,44 @@ int INVMPU9150::dmpReadFifoData(dmpFifoData_t * dmpFifoData) {
 	// Read fifo data
 	if  (dmp_read_fifo(dmpFifoDataLsb.gyro, dmpFifoDataLsb.accel, dmpFifoDataLsb.quat, &timestamp, &sensors, &more) < 0) {
 		return MPU9150_ERROR;
-	} else {
+	}
 
-		while (more) {
+	while (more) {
 
-			// Fell behind, reading again
-			if  (dmp_read_fifo(dmpFifoDataLsb.gyro, dmpFifoDataLsb.accel, dmpFifoDataLsb.quat, &timestamp, &sensors, &more) < 0) {
-				return MPU9150_ERROR;
-			}
-
+		// Fell behind, reading again
+		if  (dmp_read_fifo(dmpFifoDataLsb.gyro, dmpFifoDataLsb.accel, dmpFifoDataLsb.quat, &timestamp, &sensors, &more) < 0) {
+			return MPU9150_ERROR;
 		}
-
-		// Covert gyro data to rad/s
-		dmpFifoData->gyro[0] = ((float) dmpFifoDataLsb.gyro[0]) / GYRO_LSB_TO_DEGREE_S;
-		dmpFifoData->gyro[1] = ((float) dmpFifoDataLsb.gyro[1]) / GYRO_LSB_TO_DEGREE_S;
-		dmpFifoData->gyro[2] = ((float) dmpFifoDataLsb.gyro[2]) / GYRO_LSB_TO_DEGREE_S;
-
-		// Convert accel data to m/s2
-		dmpFifoData->accel[0] = ((float) dmpFifoDataLsb.accel[0]) / ACCEL_LSB_TO_M_S2;
-		dmpFifoData->accel[1] = ((float) dmpFifoDataLsb.accel[1]) / ACCEL_LSB_TO_M_S2;
-		dmpFifoData->accel[2] = ((float) dmpFifoDataLsb.accel[2]) / ACCEL_LSB_TO_M_S2;
-
-		// Normalize quaternion
-		float norm = sqrtf((float) dmpFifoDataLsb.quat[0] * (float) dmpFifoDataLsb.quat[0] +
-			(float) dmpFifoDataLsb.quat[1] * (float) dmpFifoDataLsb.quat[1] +
-			(float) dmpFifoDataLsb.quat[2] * (float) dmpFifoDataLsb.quat[2] +
-			(float) dmpFifoDataLsb.quat[3] * (float) dmpFifoDataLsb.quat[3]);
-		dmpFifoData->quat[0] = dmpFifoDataLsb.quat[0] / norm;
-		dmpFifoData->quat[1] = dmpFifoDataLsb.quat[1] / norm;
-		dmpFifoData->quat[2] = dmpFifoDataLsb.quat[2] / norm;
-		dmpFifoData->quat[3] = dmpFifoDataLsb.quat[3] / norm;
-
-		return MPU9150_OK;
 
 	}
 
+	// Covert gyro data to rad/s
+	dmpFifoData->gyro[0] = ((float) dmpFifoDataLsb.gyro[0]) / gyroSsf;
+	dmpFifoData->gyro[1] = ((float) dmpFifoDataLsb.gyro[1]) / gyroSsf;
+	dmpFifoData->gyro[2] = ((float) dmpFifoDataLsb.gyro[2]) / gyroSsf;
+
+	// Convert accel data to m/s2
+	dmpFifoData->accel[0] = ((float) dmpFifoDataLsb.accel[0]) / accelSsf;
+	dmpFifoData->accel[1] = ((float) dmpFifoDataLsb.accel[1]) / accelSsf;
+	dmpFifoData->accel[2] = ((float) dmpFifoDataLsb.accel[2]) / accelSsf;
+
+	// Normalize quaternion
+	float norm = sqrtf((float) dmpFifoDataLsb.quat[0] * (float) dmpFifoDataLsb.quat[0] +
+		(float) dmpFifoDataLsb.quat[1] * (float) dmpFifoDataLsb.quat[1] +
+		(float) dmpFifoDataLsb.quat[2] * (float) dmpFifoDataLsb.quat[2] +
+		(float) dmpFifoDataLsb.quat[3] * (float) dmpFifoDataLsb.quat[3]);
+	dmpFifoData->quat[0] = dmpFifoDataLsb.quat[0] / norm;
+	dmpFifoData->quat[1] = dmpFifoDataLsb.quat[1] / norm;
+	dmpFifoData->quat[2] = dmpFifoDataLsb.quat[2] / norm;
+	dmpFifoData->quat[3] = dmpFifoDataLsb.quat[3] / norm;
+
+	return MPU9150_OK;
+
 }
+
+
+
+
+
+
+

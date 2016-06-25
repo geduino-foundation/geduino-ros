@@ -22,24 +22,24 @@ timeout: 250
 # The frame attached to robot base, i.e. broadcasted transformation child frame
 base_frame: base_link
 
-# odometry frame, i.e. broadcasted transformation frame
+# Odometry frame, i.e. broadcasted transformation frame
 odom_frame: odom
 
 # The odometry update frequency in Hz
-odometryFrequency: 10
+odometry_frequency: 10
 
 # The diagnostics update frequency in Hz. It must be less or equals to odometryFrequency
-diagnosticsFrequency: 1
+diagnostics_frequency: 1
 
 # The encoders sensitivity in LSB / rad. It represent the inverse
 # of wheel shaft rotation angle for unitary encoder increment
-encoderSensitivity1: 0.00872639
-encoderSensitivity2: 0.00872639
+encoder_sensitivity1: 0.00872639
+encoder_sensitivity2: 0.00872639
 
 # The speeds sensitivity in LSB / (rad/s). It represent the inverse
 # of wheel shaft rotation speed for unitary speed input.
-speedSensitivity1: 12.4620
-speedSensitivity2: 12.4620
+speed_sensitivity1: 12.4620
+speed_sensitivity2: 12.4620
 
 # The wheels diameter in m
 wheel_diameter1: 0.1
@@ -56,3 +56,6 @@ covK2: 0.001
 
 # The threshold to distinguish between straight or arc path
 cov_radius_threshold: 10.0
+
+# The variance of yaw speed
+yaw_speed_variance: 0.06

@@ -111,3 +111,4 @@ transform_publish_period: 0.1
 # Threshold on gmapping's occupancy values. Cells with greater occupancy are considered
 # occupied (i.e., set to 100 in the resulting sensor_msgs/LaserScan).
 occ_thresh: 0.25
+

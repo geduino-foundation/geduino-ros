@@ -25,6 +25,7 @@
 
   <!-- The move base node -->
   <node pkg="move_base" type="move_base" respawn="false" name="move_base" output="screen" required="true">
+    <remap from="/odom" to="/odom_filtered" />
     <rosparam file="$(find geduino_navigation)/config/move_base_params.yaml" command="load" />
     <rosparam file="$(find geduino_navigation)/config/costmap_common_params.yaml" command="load" ns="global_costmap" />
     <rosparam file="$(find geduino_navigation)/config/costmap_common_params.yaml" command="load" ns="local_costmap" />

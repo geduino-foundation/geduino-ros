@@ -54,7 +54,7 @@ RPlidarDriver * rpLidarDriver = NULL;
 // The pointer to gpio
 GPIO * gpio = NULL;
 
-// The rpÃp lidar device info pointer
+// The rp lidar device info pointer
 _rplidar_response_device_info_t * rpLidarDeviceInfoPtr = NULL;
 
 // The laser scan publisher pointer
@@ -106,6 +106,11 @@ void publishLaserScan(rplidar_response_measurement_node_t * nodes,
 
 		// Get range index
 		int rangeIndex = (int) angle;
+
+		// Normalize index in [0, 360[ range
+		while (rangeIndex >= 360) {
+			rangeIndex -= 360;
+		}
 
 		if (nodes[nodeIndex].distance_q2 != 0) {
 
@@ -249,6 +254,12 @@ void startScan() {
 
 		// Start scan
 		rpLidarDriver->startScan();
+
+		// Log
+		ROS_INFO("waiting for rp lidar motor to stabilize...");
+
+		// Sleep for 1 sec to leave time motor speed to stabilize
+		usleep(1000 * 1000);
 
 	} else {
 
@@ -446,6 +457,9 @@ int main(int argc, char * argv[]) {
  	ros::Publisher laserScanMessagePublisher = nodeHandle.advertise<sensor_msgs::LaserScan>("scan", 1000);
 	laserScanMessagePublisherPtr = & laserScanMessagePublisher;
 
+	u_result opResult = RESULT_OK;
+	u_result previousOpResult = RESULT_OK;
+
 	while (ros::ok()) {
 
 		rplidar_response_measurement_node_t nodes[720];
@@ -455,17 +469,17 @@ int main(int argc, char * argv[]) {
 		ros::Time scanStartTime = ros::Time::now();
 
 		// Grab scan data
-		u_result grabOpResult = rpLidarDriver->grabScanData(nodes, nodeCount);
+		opResult = rpLidarDriver->grabScanData(nodes, nodeCount);
 
 		// Get scan end time
 		ros::Time scanEndTime = ros::Time::now();
 
-		if (grabOpResult == RESULT_OK) {
+		if (opResult == RESULT_OK) {
 
 			// Ascend scan data
-			u_result ascendOpResult = rpLidarDriver->ascendScanData(nodes, nodeCount);
+			opResult = rpLidarDriver->ascendScanData(nodes, nodeCount);
 
-			if (ascendOpResult == RESULT_OK) {
+			if (opResult == RESULT_OK) {
 
 				// Publish laser scan
 				publishLaserScan(nodes, nodeCount, scanStartTime, scanEndTime);
@@ -473,7 +487,7 @@ int main(int argc, char * argv[]) {
 			} else {
 
 				// Log
-				ROS_WARN("cannot ascend scan data. Operation result: %x", ascendOpResult);
+				ROS_WARN("cannot ascend scan data. Operation result: %x", opResult);
 
 				// Publish diagnostics
 				publishDiagnostics(STATUS_WARN, "Cannot ascend scan data");
@@ -484,7 +498,7 @@ int main(int argc, char * argv[]) {
 		} else {
 
 			// Log
-			ROS_WARN("cannot grab scan data. Operation result: %x", grabOpResult);
+			ROS_WARN("cannot grab scan data. Operation result: %x", opResult);
 
 			// Publish diagnostics
 			publishDiagnostics(STATUS_WARN, "Cannot grab scan data");
@@ -493,6 +507,16 @@ int main(int argc, char * argv[]) {
 
 		// Ros spin
 		ros::spinOnce();
+
+		if (opResult == RESULT_OK && previousOpResult != RESULT_OK) {
+
+			// Publish diagnostics
+			publishDiagnostics(STATUS_OK, "OK");
+
+		}
+
+		// Set previous operation result
+		previousOpResult = opResult;
 
 	}
 
