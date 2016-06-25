@@ -18,28 +18,5 @@ cmake_minimum_required(VERSION 2.8.3)
 
 project(geduino_perception)
 
-find_package(catkin REQUIRED COMPONENTS
-  roscpp
-  cv_bridge
-  image_transport
-  std_msgs
-  sensor_msgs
-  geduino_perception_msgs
-)
-
 catkin_package()
 
-include_directories(
-  ${catkin_INCLUDE_DIRS}
-  src
-)
-
-add_executable(camera_node src/camera_node.cpp)
-add_executable(face_detection_node src/face_detection_node.cpp)
-
-target_link_libraries(camera_node 
-  ${catkin_LIBRARIES}
-)
-target_link_libraries(face_detection_node 
-  ${catkin_LIBRARIES}
-)

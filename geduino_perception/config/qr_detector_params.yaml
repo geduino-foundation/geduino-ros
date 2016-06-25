@@ -1,0 +1,38 @@
+# qr_detector_params.yaml
+#
+# Copyright (C) 2016 Alessandro Francescon
+# 
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# The adaptive threshold algrogthim paramers.
+# See http://docs.opencv.org/master/d7/d1b/group__imgproc__misc.html#ga72b913f352e4a1b1b397736707afcde3
+# for more details
+adaptive_threshold_block_size: 201
+adaptive_threshold_threshold: 20
+
+# The points of qr code to be detected
+qr_code_points: [0, 0, 0, 0.10, 0, 0, 0, 0.10, 0]
+
+# Set the behavior when the number of points detected on qr code exceeds the given qr code point.
+# Set to true to ignore this error: points in excess will be discarded. Set to false to have
+# detection failed.
+ignore_point_in_excess: true
+
+# The scale used for marker. It must be a 3 element vector (x, y, z). By default is [0.1, 0.1, 0.1].
+marker_scale: [0.1, 0.1, 0.1]
+
+# The color used for point marker. It must be a 4 element vector (r, g, b, a). By default is [1, 0, 0 , 0.5].
+marker_point_color: [1, 0, 0, 0.5]
+
+# The color used for text marker. It must be a 4 element vector (r, g, b, a). By default is [0, 1, 1, 1].
+marker_text_color: [0, 1, 1, 1]

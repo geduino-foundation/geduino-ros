@@ -18,9 +18,19 @@
 
 <launch>
 
-  <!-- The camera node node -->
-  <node pkg="geduino_perception" type="camera_node" name="camera" output="screen" respawn="true">
-    <rosparam file="$(find geduino_perception)/config/perception_params.yaml" command="load" />
+  <!-- The nodelet manager -->
+  <node pkg="nodelet" type="nodelet" name="perception_nodelet"  args="manager" ns="perception"/>
+
+  <!-- The camera nodelet -->
+  <node pkg="nodelet" type="nodelet" name="camera" args="load cv_camera/CvCameraNodelet perception_nodelet" ns="perception">
+    <rosparam file="$(find geduino_perception)/config/cv_camera_params.yaml" command="load" />
+    <remap from="/perception/camera/image_raw" to="/perception/camera/image"/>
+  </node>
+
+  <!-- The qr detector nodelet -->
+  <node pkg="nodelet" type="nodelet" name="qr_detector" args="load zxing_cv/QRDetectorNodelet perception_nodelet" ns="perception">
+    <rosparam file="$(find geduino_perception)/config/qr_detector_params.yaml" command="load" />
+    <remap from="/camera/image" to="camera/image"/>
   </node>
 
 </launch>

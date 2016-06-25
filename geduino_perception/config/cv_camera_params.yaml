@@ -1,0 +1,31 @@
+# cv_camera_params.yaml
+#
+# Copyright (C) 2016 Alessandro Francescon
+# 
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# The publish rate [Hz]
+rate: 30
+
+# The capture device id
+device_id: 0
+
+# The frame_id of message header
+frame_id: camera
+
+# If specified try to set capture image width to given value
+image_width: 640
+
+# If specified try to set capture image height to given value
+image_height: 480
+
