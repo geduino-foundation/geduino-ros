@@ -73,7 +73,4 @@
   <!-- The MPU9150 -->
   <include file="$(find mpu9150)/launch/mpu9150.launch" />
 
-  <!-- The perception-->
-  <include file="$(find geduino_perception)/launch/perception.launch" />
-
 </launch>
