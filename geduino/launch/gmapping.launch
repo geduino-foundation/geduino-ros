@@ -1,5 +1,5 @@
 <!-- 
- md25.launch
+ navigation.launch
 
  Copyright (C) 2015 Alessandro Francescon
  
@@ -18,9 +18,9 @@
 
 <launch>
 
-  <!-- The MD25 odometry node -->
-  <node pkg="md25" type="md25_node" name="md25" output="screen" required="true">
-    <rosparam file="$(find md25)/config/md25_params.yaml" command="load" />
-  </node>    
+  <!-- The gmapping node -->
+  <node pkg="gmapping" type="slam_gmapping" name="gmapping" respawn="false" output="screen">
+    <rosparam file="$(find geduino)/config/gmapping_params.yaml" command="load" />  
+  </node>
 
 </launch>

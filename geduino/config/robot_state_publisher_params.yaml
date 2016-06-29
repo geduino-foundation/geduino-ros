@@ -1,6 +1,6 @@
-# geduino_perception/CMakeList.txt
+# robot_state_publisher_params.yaml
 #
-# Copyright (C) 2015 Alessandro Francescon
+# Copyright (C) 2016 Alessandro Francescon
 # 
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -14,9 +14,5 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-cmake_minimum_required(VERSION 2.8.3)
-
-project(geduino_perception)
-
-catkin_package()
-
+# Publish frequency of state publisher, default: 50Hz. 
+publish_frequency: 10

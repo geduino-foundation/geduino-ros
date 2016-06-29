@@ -25,20 +25,19 @@
   <description>The Geduino ROS package</description>
   <license>GPL</license>
 
-  <url type="blog">http://geduino.blogspot.it</url>
+  <url type="blog">http://www.geduino.org</url>
 
   <author email="alessandro.francescon@gmail.com">Alessandro Francescon</author>
   <maintainer email="alessandro.francescon@gmail.com">Alessandro Francescon</maintainer>
 
   <buildtool_depend>catkin</buildtool_depend>
-  <run_depend>geduino_diagnostic</run_depend>
-  <run_depend>geduino_navigation</run_depend>
   <run_depend>md25</run_depend>
   <run_depend>mpu9150</run_depend>
   <run_depend>rplidar</run_depend>
   <run_depend>rosserial_python</run_depend>
   <run_depend>tf</run_depend>
   <run_depend>robot_state_publisher</run_depend>
+  <run_depend>robot_localization</run_depend>
   <run_depend>zxing</run_depend>
   
   <export>

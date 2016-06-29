@@ -1,4 +1,4 @@
-# cv_camera_params.yaml
+# rplidar_params.yaml
 #
 # Copyright (C) 2016 Alessandro Francescon
 # 
@@ -14,18 +14,11 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-# The publish rate [Hz]
-rate: 30
+# The serial port RPLidar is connected to (default: /dev/ttymxc4)
+serial_port: /dev/ttymxc4
 
-# The capture device id
-device_id: 0
+# The frame laser data are referred (default: base_laser)
+frame_id: base_laser
 
-# The frame_id of message header
-frame_id: camera
-
-# If specified try to set capture image width to given value
-image_width: 640
-
-# If specified try to set capture image height to given value
-image_height: 480
-
+# The GPIO number the RPLidar motor control is connected to (default: 40)
+gpio_num: 40

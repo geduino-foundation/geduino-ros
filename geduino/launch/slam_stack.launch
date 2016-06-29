@@ -1,5 +1,5 @@
-<!-- 
- mpu9150.launch
+<!--
+ geduino_navigation_stack.launch
 
  Copyright (C) 2015 Alessandro Francescon
  
@@ -18,9 +18,13 @@
 
 <launch>
 
-  <!-- The MPU9150 node -->
-  <node pkg="mpu9150" type="mpu9150_node" name="imu" output="screen" respawn="true">
-    <rosparam file="$(find mpu9150)/config/mpu9150_params.yaml" command="load" />
-  </node>
+  <!-- The Geduino base configuration -->
+  <include file="$(find geduino)/launch/base_configuration.launch" />
+
+  <!-- The move base -->
+  <include file="$(find geduino)/launch/move_base.launch" />
+
+  <!-- The gmapping -->
+  <include file="$(find geduino)/launch/gmapping.launch" />
 
 </launch>

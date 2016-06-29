@@ -1,0 +1,55 @@
+<!-- 
+ base_configuration.launch
+
+ Copyright (C) 2015 Alessandro Francescon
+ 
+ This program is free software: you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation, either version 3 of the License.
+ 
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+ 
+ You should have received a copy of the GNU General Public License
+ along with this program.  If not, see <http://www.gnu.org/licenses/>.
+-->
+
+<launch>
+
+  <!-- The Geduino description -->
+  <param name="robot_description" textfile="$(find geduino)/urdf/geduino.urdf"/>
+
+  <!-- The robot state publisher -->
+  <node pkg="robot_state_publisher" type="robot_state_publisher" name="robot_state" respawn="true" output="screen">
+    <rosparam file="$(find geduino)/config/robot_state_publisher_params.yaml" command="load"/>
+  </node>
+
+  <!-- The ekf localization node -->
+  <node pkg="robot_localization" type="ekf_localization_node" name="ekf" respawn="true" output="screen">
+    <remap from="odometry/filtered" to="odom_filtered"/>
+    <rosparam file="$(find geduino)/config/ekf_localization_params.yaml" command="load"/>
+  </node>
+
+  <!-- The RPLidar node -->
+  <node pkg="rplidar" type="rplidar_node" name="rplidar" respawn="true" output="screen">
+    <rosparam file="$(find geduino)/config/rplidar_params.yaml" command="load"/> 
+  </node>
+
+  <!-- The Shield node -->
+  <node pkg="rosserial_python" type="serial_node.py" name="shield" respawn="true" output="screen">
+    <rosparam file="$(find geduino)/config/shield_params.yaml" command="load"/> 
+  </node>
+
+  <!-- The MD25 -->
+  <node pkg="md25" type="md25_node" name="md25" respawn="true" output="screen">
+    <rosparam file="$(find geduino)/config/md25_params.yaml" command="load" />
+  </node>
+
+  <!-- The MPU9150 -->
+  <node pkg="mpu9150" type="mpu9150_node" name="mpu9150" respawn="true" output="screen">
+    <rosparam file="$(find geduino)/config/mpu9150_params.yaml" command="load" />
+  </node>
+
+</launch>

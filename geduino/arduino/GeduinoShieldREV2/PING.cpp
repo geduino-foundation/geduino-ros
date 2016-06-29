@@ -22,7 +22,7 @@
 #include <Arduino.h>
 #include "PING.h"
 
-int PING::measure(float temperature, float * measurement) {
+int PING::measure(float temperature, float * measurement, float minValue, float maxValue) {
   
    // Set pin to output
   pinMode(pin,  OUTPUT);
@@ -50,8 +50,13 @@ int PING::measure(float temperature, float * measurement) {
     // Calculate sound speed
     float soundSpeed = 331.3 + 0.6 * temperature;
     
-    // Transform duration to measurement in [m]
-    *measurement = max(0, (duration * soundSpeed / 1000000 - mountingGap) / 2);
+    // Transform duration to raw measurement in [m]
+    float raw = max(0, (duration * soundSpeed / 1000000 - mountingGap) / 2);
+    
+    // Set measurement using max value if raw measure exceed it
+    *measurement = constrain(raw, minValue, maxValue);
+    
+    return 0;
     
   } else {
     

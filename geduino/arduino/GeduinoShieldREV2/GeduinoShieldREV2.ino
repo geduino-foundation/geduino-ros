@@ -49,7 +49,7 @@
 
 // Ping sensor specification
 #define PING_FIELD_OF_VIEW                    0.1745      // [rad]
-#define PING_MIN_RANGE                        0.02        // [m]
+#define PING_MIN_RANGE                        0.05        // [m]
 #define PING_MAX_RANGE                        3.00        // [m]
 #define PING_MOUNTING_GAP                     0.02        // [m]
 
@@ -352,9 +352,9 @@ void publishRange() {
 
   // Get measurements
   float leftPingMeasurement, centralPingMeasurement, rightPingMeasurement;
-  leftPing.measure(temperature, & leftPingMeasurement);
-  centralPing.measure(temperature, & centralPingMeasurement);
-  rightPing.measure(temperature, & rightPingMeasurement);
+  leftPing.measure(temperature, & leftPingMeasurement, PING_MIN_RANGE, PING_MAX_RANGE);
+  centralPing.measure(temperature, & centralPingMeasurement, PING_MIN_RANGE, PING_MAX_RANGE);
+  rightPing.measure(temperature, & rightPingMeasurement, PING_MIN_RANGE, PING_MAX_RANGE);
   
   // Update range messages
   leftRangeMessage.range = leftPingMeasurement;
