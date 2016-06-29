@@ -18,9 +18,9 @@ local_costmap:
 
   # The costmap layers dictionary
   plugins:
-#    - {name: obstacle_layer, type: "costmap_2d::VoxelLayer"}
+    - {name: obstacle_layer, type: "costmap_2d::VoxelLayer"}
     - {name: range_layer,   type: "range_sensor_layer::RangeSensorLayer"}
-#    - {name: inflation_layer, type: "costmap_2d::InflationLayer"}
+    - {name: inflation_layer, type: "costmap_2d::InflationLayer"}
 
   # Obstacle layer configuration
   obstacle_layer:
