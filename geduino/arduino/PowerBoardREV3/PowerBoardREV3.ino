@@ -1,6 +1,5 @@
 /*
  PowerBoardREV3.ino
- http://geduino.blogspot.it/
 
  Copyright (C) 2016 Alessandro Francescon
 

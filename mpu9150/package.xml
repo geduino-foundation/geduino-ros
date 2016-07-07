@@ -24,7 +24,7 @@
   <description>The mpu9150 package</description>
   <license>GPL</license>
 
-  <url type="blog">http://geduino.blogspot.it</url>
+  <url type="blog">http://www.geduino.org</url>
 
   <author email="alessandro.francescon@gmail.com">Alessandro Francescon</author>
   <maintainer email="alessandro.francescon@gmail.com">Alessandro Francescon</maintainer>
