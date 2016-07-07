@@ -76,6 +76,7 @@ void RangeLayer::reconfigureCallback(RangeLayerConfig & config, uint32_t level) 
     // Update configuration
     enabled_ = config.enabled;
     readingsTimeout = config.readings_timeout;
+    tfTimeout = config.tf_timeout;
 
 }
 
@@ -117,10 +118,10 @@ void RangeLayer::updatePoints() {
 
     for (int index = 0; index < rangesCopy.size(); index++) {
 
-        if (readingsTimeout > 0 && (now - rangesCopy[index].header.stamp).sec < readingsTimeout) {
+        if (readingsTimeout > 0 && (now - rangesCopy[index].header.stamp).toSec() > readingsTimeout) {
 
             // Log
-            ROS_ERROR_THROTTLE(1.0, "Range message timedout");
+            ROS_ERROR_THROTTLE(1.0, "Range message timed out: %.2f", (now - rangesCopy[index].header.stamp).toSec());
 
             // Skip this range
             continue;
@@ -169,7 +170,7 @@ void RangeLayer::updatePoints() {
             } else {
 
                 // Log
-                ROS_ERROR_THROTTLE(1.0, "Range message with range %g out of %g - %g bounds", rangesCopy[index].range, rangesCopy[index].min_range, rangesCopy[index].max_range);
+                ROS_ERROR_THROTTLE(1.0, "Range message with range %.2f out of %.2f - %.2f bounds", rangesCopy[index].range, rangesCopy[index].min_range, rangesCopy[index].max_range);
 
                 // Skip this range
                 continue;
@@ -180,7 +181,7 @@ void RangeLayer::updatePoints() {
 
         std::string errorMsg;
 
-        if (tf_->canTransform(globalFrame, rangesCopy[index].header.frame_id, rangesCopy[index].header.stamp, & errorMsg)) {
+        if(tf_->waitForTransform(globalFrame, rangesCopy[index].header.frame_id, pointInSensorFrame.header.stamp, ros::Duration(tfTimeout), ros::Duration(0.01), & errorMsg) ) {
 
             // Transform point from sensor frame to global frame
             tf_->transformPoint(globalFrame, pointInSensorFrame, pointInGlobalFrame);
@@ -190,7 +191,10 @@ void RangeLayer::updatePoints() {
         } else {
 
             // Log
-            ROS_ERROR_THROTTLE(1.0, "Range sensor layer can't transform from %s to %s at %f", globalFrame.c_str(), rangesCopy[index].header.frame_id.c_str(), rangesCopy[index].header.stamp.toSec());
+            ROS_ERROR_THROTTLE(1.0, "Cannot transform from %s -> %s at %f: %s", globalFrame.c_str(), rangesCopy[index].header.frame_id.c_str(), rangesCopy[index].header.stamp.toSec(), errorMsg.c_str());
+
+            // Skip this range
+            continue;
 
         }
 

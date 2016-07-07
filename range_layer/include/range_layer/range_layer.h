@@ -63,7 +63,7 @@ private:
 
     std::vector<geometry_msgs::PointStamped> points;
 
-    double readingsTimeout;
+    double readingsTimeout, tfTimeout;
 
 };
 

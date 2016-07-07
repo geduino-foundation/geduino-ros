@@ -18,7 +18,7 @@ local_costmap:
 
   # The costmap layers dictionary
   plugins:
-    - {name: obstacle_layer, type: "costmap_2d::VoxelLayer"}
+    - {name: obstacle_layer, type: "costmap_2d::ObstacleLayer"}
     - {name: range_layer,   type: "range_layer::RangeLayer"}
     - {name: inflation_layer, type: "costmap_2d::InflationLayer"}
 
@@ -31,23 +31,18 @@ local_costmap:
   range_layer:
     topics: ["/left_range", "/center_range", "/right_range"]
     readings_timeout: 0.5
+    tf_timeout: 0.1
+
+  # Inflation layer
+  inflation_layer:
+    inflation_radius: 0.25
+    cost_scaling_factor: 50
 
   # The global frame for the costmap to operate in
   global_frame: odom
   
   # The name of the frame for the base link of the robot
   robot_base_frame: base_link
-   
-  # The frequency in Hz for the map to be updated
-  update_frequency: 5.0
-  
-  # The frequency in Hz for the map to be publish display information
-  publish_frequency: 2.0
-  
-  # Determines whether or not the costmap should initialize itself based on a map served 
-  # by the map_server. If you aren't using an existing map or map server, 
-  # set the static_map parameter to false.
-  static_map: false
   
   # Whether or not to use a rolling window version of the costmap. 
   # If the static_map parameter is set to true, this parameter must be set to false.

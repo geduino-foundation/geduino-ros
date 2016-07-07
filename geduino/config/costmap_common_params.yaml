@@ -23,11 +23,6 @@ raytrace_range: 3
 # The radius of the robot in meters
 robot_radius: 0.15
 
-# The maximum distance in meters from obstacles at which a cost should be incurred.
-# For example, setting the inflation radius at 0.55 meters means that the robot will treat all
-# paths that stay 0.55 meters or more away from obstacles as having equal obstacle cost
-inflation_radius: 0.55
-
 # Specifies the delay in transform (tf) data that is tolerable in seconds.
 # This parameter serves as a safeguard to losing a link in the tf tree while still allowing
 # an amount of latency the user is comfortable with to exist in the system.
@@ -36,3 +31,9 @@ inflation_radius: 0.55
 # frames specified by the global_frame and robot_base_frame parameters is transform_tolerance
 # seconds older than ros::Time::now(), then the navigation stack will stop the robot.
 transform_tolerance: 0.3
+
+# The frequency in Hz for the map to be updated
+update_frequency: 10.0
+  
+# The frequency in Hz for the map to be publish display information
+publish_frequency: 1.0
