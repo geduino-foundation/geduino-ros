@@ -19,7 +19,7 @@ local_costmap:
   # The costmap layers dictionary
   plugins:
     - {name: obstacle_layer, type: "costmap_2d::VoxelLayer"}
-    - {name: range_layer,   type: "range_sensor_layer::RangeSensorLayer"}
+    - {name: range_layer,   type: "range_layer::RangeLayer"}
     - {name: inflation_layer, type: "costmap_2d::InflationLayer"}
 
   # Obstacle layer configuration
@@ -30,12 +30,7 @@ local_costmap:
   # Range layer configuration
   range_layer:
     topics: ["/left_range", "/center_range", "/right_range"]
-    no_readings_timeout: 0
-    clear_on_max_reading: true
-    clear_threshold: 0.4
-    mark_threshold: 0.9
-    phi: 1.2
-    max_angle: 0.1745    
+    readings_timeout: 0.5
 
   # The global frame for the costmap to operate in
   global_frame: odom

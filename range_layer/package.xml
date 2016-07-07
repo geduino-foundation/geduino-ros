@@ -1,9 +1,9 @@
 <?xml version="1.0"?>
 
 <!-- 
- geduino/package.xml
+ range_layer/package.xml
 
- Copyright (C) 2015 Alessandro Francescon
+ Copyright (C) 2016 Alessandro Francescon
  
  This program is free software: you can redistribute it and/or modify
  it under the terms of the GNU General Public License as published by
@@ -20,9 +20,9 @@
 
 <package>
 
-  <name>geduino</name>
+  <name>range_layer</name>
   <version>1.0.0</version>
-  <description>The Geduino ROS package</description>
+  <description>The range_layer package</description>
   <license>GPL</license>
 
   <url type="blog">http://www.geduino.org</url>
@@ -31,17 +31,19 @@
   <maintainer email="alessandro.francescon@gmail.com">Alessandro Francescon</maintainer>
 
   <buildtool_depend>catkin</buildtool_depend>
-  <run_depend>md25</run_depend>
-  <run_depend>mpu9150</run_depend>
-  <run_depend>rplidar</run_depend>
-  <run_depend>rosserial_python</run_depend>
-  <run_depend>tf</run_depend>
-  <run_depend>robot_state_publisher</run_depend>
-  <run_depend>robot_localization</run_depend>
-  <run_depend>zxing</run_depend>
-  <run_depend>range_layer</run_depend>
-  
+  <build_depend>roscpp</build_depend>
+  <build_depend>costmap_2d</build_depend>
+  <build_depend>dynamic_reconfigure</build_depend>
+  <build_depend>sensor_msgs</build_depend>
+  <build_depend>geometry_msgs</build_depend>
+  <run_depend>roscpp</run_depend>
+  <run_depend>costmap_2d</run_depend>
+  <run_depend>dynamic_reconfigure</run_depend>
+  <run_depend>sensor_msgs</run_depend>
+  <run_depend>geometry_msgs</run_depend>
+
   <export>
+    <costmap_2d plugin="${prefix}/costmap_plugins.xml" />
   </export>
 
 </package>
