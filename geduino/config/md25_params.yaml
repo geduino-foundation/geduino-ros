@@ -59,3 +59,7 @@ cov_radius_threshold: 10.0
 
 # The variance of yaw speed
 yaw_speed_variance: 0.06
+
+# True if odom frame -> base frame transformation must be
+# published by this node, false otherwise (default: true)
+publish_odom_transformation: false

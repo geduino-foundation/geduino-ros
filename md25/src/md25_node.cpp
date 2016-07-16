@@ -61,6 +61,8 @@
  - cov_K2: the constant of covariance model for wheel 2;
  - cov_radius_threshold: the radius threshold to distinguish between straight andarc path.
  - yaw_speed_variance: the variance of yaw speed (default: 0.06)
+ - publish_odom_transformation: true if odom frame -> base frame transformation must be
+   published by this node, false otherwise (default: true)
  */
 
 #include <ros/ros.h>
@@ -99,6 +101,7 @@ double covK1;
 double covK2;
 double covRTres;
 double yawSpeedVariance;
+bool publishOdomTransformation;
 
 // The last encoder values
 uint32_t lastEncoder1 = 0;
@@ -121,6 +124,12 @@ ros::Publisher * diagnosticsMessagePublisherPtr;
 
 // The odometry message
 nav_msgs::Odometry odometryMessage;
+
+// The pointer tp odometry transform broadcaster
+tf::TransformBroadcaster * odometryTransformBroadcasterPtr;
+
+// The odometry transformation
+geometry_msgs::TransformStamped odometryTransformation;
 
 void publishDiagnostics(uint8_t level, std::string message) {
 
@@ -299,6 +308,19 @@ void updateOdometry() {
 	// Publish odometry message
 	odometryMessagePublisherPtr->publish(odometryMessage);
 
+    if (publishOdomTransformation) {
+
+        // Update odometry transformation
+        odometryTransformation.header.stamp = now;
+        odometryTransformation.transform.translation.x = linPos.x();
+        odometryTransformation.transform.translation.y = linPos.y();
+        odometryTransformation.transform.rotation = odometryQuaternion;
+
+        // Broadcast odometry transformation
+        odometryTransformBroadcasterPtr->sendTransform(odometryTransformation);
+
+    }
+
 }
 
 int main(int argc, char** argv) {
@@ -335,6 +357,7 @@ int main(int argc, char** argv) {
 	privateNodeHandle.param("cov_k2", covK2, 0.001);
 	privateNodeHandle.param("cov_radius_threshold", covRTres, 10.0);
 	privateNodeHandle.param("yaw_speed_variance", yawSpeedVariance, 0.06);
+    privateNodeHandle.param("publish_odom_transformation", publishOdomTransformation, true);
 
 	// Log
 	ROS_INFO("broadcasting transformation %s -> %s", odomFrame.c_str(), baseFrame.c_str());
@@ -351,6 +374,7 @@ int main(int argc, char** argv) {
 	ROS_INFO("covariance constant 2: %g", covK2);
 	ROS_INFO("covariance radius threshold: %g m", covRTres);
 	ROS_INFO("yaw speed variance: %g", yawSpeedVariance);
+    ROS_INFO("publish odom transformation: %d", publishOdomTransformation);
 
 	// Create odometry
 	Odometry odometry(wheelBase, covK1, covK2, covRTres);
@@ -369,6 +393,15 @@ int main(int argc, char** argv) {
 	odometryMessage.child_frame_id = baseFrame;
 	odometryMessage.pose.pose.position.z = 0.0;
 	odometryMessage.twist.covariance[35] = pow(yawSpeedVariance, 2);
+
+    // The odometry transform broadcaster
+    tf::TransformBroadcaster odometryTransformBroadcaster;
+    odometryTransformBroadcasterPtr = & odometryTransformBroadcaster;
+
+    // Init odometry transformation
+    odometryTransformation.header.frame_id = odomFrame;
+    odometryTransformation.child_frame_id = baseFrame;
+    odometryTransformation.transform.translation.z = 0.0;
 
 	// Create cmd_vel message subscriber
 	ros::Subscriber cmdVelMessageSubscriber = nodeHandle.subscribe("/cmd_vel", 20, cmdVelCallback);
