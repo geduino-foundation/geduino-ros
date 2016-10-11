@@ -21,35 +21,47 @@
 #define _ODOMETRY_H_
 
 #include <math.h>
-#include <tf/LinearMath/Matrix3x3.h>
-#include <tf/LinearMath/Vector3.h>
+#include <Eigen/Core>
 
 #define HISTORY_SIZE 3
 
+typedef Eigen::Matrix<double, 3, 1> Vector3;
+typedef Eigen::Matrix<double, 3, 3> Matrix3x3;
+
 /*
- Implaments odometry for a differential drive robot. Position covariance model
- is provided by Lindsay KLEEMAN from Monash University, Technical Report MECSE-95-1-1995.
+ Implements odometry for a differential drive robot
  */
 class Odometry {
 
    public:
 
       // Create odometry for a DDR with given wheel base and error constants
-      Odometry(tfScalar _wb, tfScalar _kl, tfScalar _kr, tfScalar _rTres) : wb(_wb), kl(_kl), kr(_kr), rTres(_rTres) {
+      Odometry(double _wb, double _kl, double _kr) : wb(_wb), kl(_kl), kr(_kr) {
          reset();
       };
 
       // Update position and covariance for given wheel path increments and time
-      void update(tfScalar dl, tfScalar dr, tfScalar time);
+      void update(double dl, double dr, double time) {
 
-      // Get linear and angular position vector in world reference frame
-      void getPosition(tf::Vector3 & linear, tf::Vector3 & angular);
+          // Update position
+          updatePosition(dl, dr, time);
 
-      // Get linear and angular velocity in world reference frame
-      void getVelocity(tf::Vector3 & linear, tf::Vector3 & angular);
+          // Update velocity
+          updateVelocity(dl, dr, time);
 
-      // Get position covariance matrix in world reference frame
-      void getCovariance(tf::Matrix3x3 & covariance);
+      };
+
+      // Get position vector as (x, y, th) and its covariance matrix in odom reference frame
+      void getPosition(Vector3 & _pos, Matrix3x3 & _posCov) {
+          _pos = pos;
+          _posCov = posCov;
+      };
+
+      // Get velocity vector as (vx, vy, vth) and its covariance matrix in robot reference frame
+      void getVelocity(Vector3 & _vel, Matrix3x3 & _velCov) {
+          _vel = vel;
+          _velCov = velCov;
+      };
 
       // Reset position and covariance
       void reset();
@@ -57,29 +69,29 @@ class Odometry {
    private:
 
       // The robot wheel base
-      tfScalar wb;
+      double wb;
 
       // The error constants
-      tfScalar kl, kr;
-
-      // The threshold radius. The path will be considered straight if radius is greater than given threshold.
-      tfScalar rTres;
+      double kl, kr;
 
       // The last update time
-      tfScalar lastUpdateTime;
+      double lastUpdateTime;
 
-      // The linear and angular position vector in world reference frame
-      tf::Vector3 linPos, angPos;
+      // The position and velocity vector
+      Vector3 pos, vel;
+
+      // The position and velocity covariance matrix
+      Matrix3x3 posCov, velCov;
 
       // The history index and arrays
       char historyIndex;
-      tfScalar dsHistory[HISTORY_SIZE], dthHistory[HISTORY_SIZE], dtHistory[HISTORY_SIZE];
+      double drHistory[HISTORY_SIZE], dlHistory[HISTORY_SIZE], dtHistory[HISTORY_SIZE];
 
-      // The linear and angular velocity in robot reference frame
-      tf::Vector3 linVel, angVel;
+      // Update position and its covariance
+      void updatePosition(double dl, double dr, double time);
 
-      // The position covariance matrix in local robot reference frame
-      tf::Matrix3x3 cov;
+      // Update velocity and its covariance
+      void updateVelocity(double dl, double dr, double time);
 
 };
 

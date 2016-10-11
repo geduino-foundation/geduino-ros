@@ -26,10 +26,17 @@ find_package(catkin REQUIRED COMPONENTS
   serial
 )
 
-catkin_package()
+find_package(cmake_modules REQUIRED)
+
+find_package(Eigen REQUIRED)
+
+catkin_package(
+  DEPENDS Eigen
+)
 
 include_directories(
   ${catkin_INCLUDE_DIRS}
+  ${Eigen_INCLUDE_DIRS}
   src
 )
 

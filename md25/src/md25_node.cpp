@@ -59,7 +59,6 @@
  - wheel_base: the wheel base in m (default: 0.3);
  - cov_K1: the constant of covariance model for wheel 1;
  - cov_K2: the constant of covariance model for wheel 2;
- - cov_radius_threshold: the radius threshold to distinguish between straight andarc path.
  - yaw_speed_variance: the variance of yaw speed (default: 0.06)
  - publish_odom_transformation: true if odom frame -> base frame transformation must be
    published by this node, false otherwise (default: true)
@@ -99,7 +98,6 @@ double wheelDiameter2;
 double wheelBase;
 double covK1;
 double covK2;
-double covRTres;
 double yawSpeedVariance;
 bool publishOdomTransformation;
 
@@ -273,37 +271,36 @@ void updateOdometry() {
 
 	}
 
-	// Get linear and angular position
-	tf::Vector3 linPos, angPos;
-	odometryPtr->getPosition(linPos, angPos);
+    // Get position and its covariance
+    Vector3 pos;
+    Matrix3x3 posCov;
+    odometryPtr->getPosition(pos, posCov);
 
 	// Get linear and angular velocity
-	tf::Vector3 linVel, angVel;
-	odometryPtr->getVelocity(linVel, angVel);
-
-	// Get covariance
-	tf::Matrix3x3 covariance;
-	odometryPtr->getCovariance(covariance);
+    Vector3 vel;
+    Matrix3x3 velCov;
+    odometryPtr->getVelocity(vel, velCov);
 
 	// Create odometry quaternion from th
-	geometry_msgs::Quaternion odometryQuaternion = tf::createQuaternionMsgFromYaw(angPos.z());
+    geometry_msgs::Quaternion odometryQuaternion = tf::createQuaternionMsgFromYaw(pos(2));
 
 	// Update odometry message
 	odometryMessage.header.stamp = now;
-	odometryMessage.pose.pose.position.x = linPos.x();
-	odometryMessage.pose.pose.position.y = linPos.y();
-	odometryMessage.pose.covariance[0] = covariance[0].x();
-	odometryMessage.pose.covariance[1] = covariance[0].y();
-	odometryMessage.pose.covariance[5] = covariance[0].z();
-	odometryMessage.pose.covariance[6] = covariance[1].x();
-	odometryMessage.pose.covariance[7] = covariance[1].y();
-	odometryMessage.pose.covariance[11] = covariance[1].z();
-	odometryMessage.pose.covariance[30] = covariance[2].x();
-	odometryMessage.pose.covariance[31] = covariance[2].y();
-	odometryMessage.pose.covariance[35] = covariance[2].z();
-	odometryMessage.pose.pose.orientation = odometryQuaternion;
-	odometryMessage.twist.twist.linear.x = linVel.x();
-	odometryMessage.twist.twist.angular.z = angVel.z();
+    odometryMessage.pose.pose.position.x = pos(0);
+    odometryMessage.pose.pose.position.y = pos(1);
+    odometryMessage.pose.pose.orientation = odometryQuaternion;
+    odometryMessage.pose.covariance[0] = posCov(0, 0);
+    odometryMessage.pose.covariance[1] = posCov(0, 1);
+    odometryMessage.pose.covariance[5] = posCov(0, 2);
+    odometryMessage.pose.covariance[6] = posCov(1, 0);
+    odometryMessage.pose.covariance[7] = posCov(1, 1);
+    odometryMessage.pose.covariance[11] = posCov(1, 2);
+    odometryMessage.pose.covariance[30] = posCov(2, 0);
+    odometryMessage.pose.covariance[31] = posCov(2, 1);
+    odometryMessage.pose.covariance[35] = posCov(2, 2);
+    odometryMessage.twist.twist.linear.x = vel(0);
+    odometryMessage.twist.twist.linear.y = vel(1);
+    odometryMessage.twist.twist.angular.z = vel(2);
 
 	// Publish odometry message
 	odometryMessagePublisherPtr->publish(odometryMessage);
@@ -312,8 +309,8 @@ void updateOdometry() {
 
         // Update odometry transformation
         odometryTransformation.header.stamp = now;
-        odometryTransformation.transform.translation.x = linPos.x();
-        odometryTransformation.transform.translation.y = linPos.y();
+        odometryTransformation.transform.translation.x = pos(0);
+        odometryTransformation.transform.translation.y = pos(1);
         odometryTransformation.transform.rotation = odometryQuaternion;
 
         // Broadcast odometry transformation
@@ -355,7 +352,6 @@ int main(int argc, char** argv) {
 	privateNodeHandle.param("wheel_base", wheelBase, 0.3);
 	privateNodeHandle.param("cov_k1", covK1, 0.001);
 	privateNodeHandle.param("cov_k2", covK2, 0.001);
-	privateNodeHandle.param("cov_radius_threshold", covRTres, 10.0);
 	privateNodeHandle.param("yaw_speed_variance", yawSpeedVariance, 0.06);
     privateNodeHandle.param("publish_odom_transformation", publishOdomTransformation, true);
 
@@ -372,12 +368,11 @@ int main(int argc, char** argv) {
 	ROS_INFO("wheel base: %g m", wheelBase);
 	ROS_INFO("covariance constant 1: %g", covK1);
 	ROS_INFO("covariance constant 2: %g", covK2);
-	ROS_INFO("covariance radius threshold: %g m", covRTres);
 	ROS_INFO("yaw speed variance: %g", yawSpeedVariance);
     ROS_INFO("publish odom transformation: %d", publishOdomTransformation);
 
 	// Create odometry
-	Odometry odometry(wheelBase, covK1, covK2, covRTres);
+    Odometry odometry(wheelBase, covK1, covK2);
 	odometryPtr = &odometry;
 
 	// Create odometry message publisher
