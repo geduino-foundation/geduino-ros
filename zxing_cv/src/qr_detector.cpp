@@ -128,6 +128,9 @@ int QRDetector::init() {
     // Create image subscriber
     imageSubscriber = imageTransport.subscribeCamera("/camera/image", 1, & QRDetector::imageCallback, this);
 
+    // Create optimized image publisher
+    optimizedImagePublisher = imageTransport.advertise("image_optimized", 1);
+
     // Create debug image publisher
     debugImagePublisher = imageTransport.advertise("image_debug", 1);
 
@@ -168,6 +171,19 @@ void QRDetector::imageCallback(const sensor_msgs::ImageConstPtr & imageConstPtr,
 
     // Apply adaptive threshold
     cv::adaptiveThreshold(grayscaleImage, grayscaleImage, 255, cv::ADAPTIVE_THRESH_MEAN_C, cv::THRESH_BINARY, adaptiveThresholdBlockSize, adaptiveThresholdThreshold);
+
+    if (optimizedImagePublisher.getNumSubscribers() > 0) {
+
+        // Create optimized image message
+        cv_bridge::CvImage optimizedImageMessage;
+        optimizedImageMessage.header   = imageConstPtr->header;
+        optimizedImageMessage.encoding = sensor_msgs::image_encodings::MONO8;
+        optimizedImageMessage.image    = grayscaleImage;
+
+        // Publish optimized image message
+        optimizedImagePublisher.publish(optimizedImageMessage.toImageMsg());
+
+    }
 
     // Create luminance source
     zxing::Ref<zxing::LuminanceSource> source = zxing::MatSource::create(grayscaleImage);

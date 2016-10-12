@@ -58,7 +58,7 @@ class QRDetector {
         image_transport::ImageTransport imageTransport;
         image_transport::CameraSubscriber imageSubscriber;
         ros::Publisher qrCodeArrayPublisher;
-        image_transport::Publisher debugImagePublisher;
+        image_transport::Publisher optimizedImagePublisher, debugImagePublisher;
         ros::Publisher markerArrayPublisher;
 
         std::vector<cv::Point3f> qrCodePoints;
