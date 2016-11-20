@@ -20,11 +20,6 @@
  md25_node is a ROS node implementation for  MD25 boards. It publish odometry transformation 
  and topic to the navigation stack and subscribe cmd_vel to set whhels speed on MD25.
 
- The covariance model used get from work of Linsday KLEEMAN of Monash University (technical
- report MECSE-95-1-1995).
- This model assume that variance of travelled space for a wheel is proportial to travelled 
- space by a constant.
-
  Subscribes:
  - /cmd_vel (geometry_msgs/Twist): the velocity command.
 
