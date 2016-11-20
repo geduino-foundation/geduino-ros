@@ -167,12 +167,12 @@ void QRDetector::reconfigureCallback(zxing_cv::QRDetectorConfig & config, uint32
 
 void QRDetector::imageCallback(const sensor_msgs::ImageConstPtr & imageConstPtr, const sensor_msgs::CameraInfoConstPtr & cameraInfoPtr) {
 
-    cv_bridge::CvImageConstPtr cvImageConstPtr;
+    cv_bridge::CvImagePtr cvImagePtr;
 
     try {
 
         // Convert image message to OpenCV image
-        cvImageConstPtr = cv_bridge::toCvShare(imageConstPtr, "");
+        cvImagePtr = cv_bridge::toCvCopy(imageConstPtr, "");
 
     } catch (cv_bridge::Exception & ex) {
 
@@ -183,28 +183,22 @@ void QRDetector::imageCallback(const sensor_msgs::ImageConstPtr & imageConstPtr,
 
     }
 
-    // Convart to grayscale
-    cv::Mat grayscaleImage;
-    cv::cvtColor(cvImageConstPtr->image, grayscaleImage, CV_BGR2GRAY);
+    // Convert to grayscale
+    cv::cvtColor(cvImagePtr->image, cvImagePtr->image, CV_BGR2GRAY);
+    cvImagePtr->encoding = sensor_msgs::image_encodings::MONO8; // Image encodin on CvImage must changed too!
 
     // Apply adaptive threshold
-    cv::adaptiveThreshold(grayscaleImage, grayscaleImage, 255, cv::ADAPTIVE_THRESH_MEAN_C, cv::THRESH_BINARY, adaptiveThresholdBlockSize, adaptiveThresholdThreshold);
+    cv::adaptiveThreshold(cvImagePtr->image, cvImagePtr->image, 255, cv::ADAPTIVE_THRESH_MEAN_C, cv::THRESH_BINARY, adaptiveThresholdBlockSize, adaptiveThresholdThreshold);
 
     if (optimizedImagePublisher.getNumSubscribers() > 0) {
 
-        // Create optimized image message
-        cv_bridge::CvImage optimizedImageMessage;
-        optimizedImageMessage.header   = imageConstPtr->header;
-        optimizedImageMessage.encoding = sensor_msgs::image_encodings::MONO8;
-        optimizedImageMessage.image    = grayscaleImage;
-
         // Publish optimized image message
-        optimizedImagePublisher.publish(optimizedImageMessage.toImageMsg());
+        optimizedImagePublisher.publish(cvImagePtr->toImageMsg());
 
     }
 
     // Create luminance source
-    zxing::Ref<zxing::LuminanceSource> source = zxing::MatSource::create(grayscaleImage);
+    zxing::Ref<zxing::LuminanceSource> source = zxing::MatSource::create(cvImagePtr->image);
 
     try {
 
@@ -251,7 +245,7 @@ void QRDetector::imageCallback(const sensor_msgs::ImageConstPtr & imageConstPtr,
 
             // Create qr codes message
             zxing_cv::QRCodeArray qrCodeArrayMessage;
-            qrCodeArrayMessage.header = cvImageConstPtr->header;
+            qrCodeArrayMessage.header = cvImagePtr->header;
             qrCodeArrayMessage.qr_codes.resize(1);
             qrCodeArrayMessage.qr_codes[0].pose.position.x = tvec.at<double>(0);
             qrCodeArrayMessage.qr_codes[0].pose.position.y = tvec.at<double>(1);
