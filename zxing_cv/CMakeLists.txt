@@ -34,8 +34,11 @@ find_package(catkin REQUIRED COMPONENTS
 	std_msgs
 	sensor_msgs
         geometry_msgs
+        dynamic_reconfigure
 	zxing	
 )
+
+generate_dynamic_reconfigure_options(cfg/QRDetector.cfg)
 
 generate_messages(
   DEPENDENCIES
@@ -55,6 +58,8 @@ include_directories(
 )
 
 add_library(qr_detector_nodelet src/qr_detector_nodelet.cpp src/qr_detector.cpp)
+
+add_dependencies(qr_detector_nodelet qr_detector_gencfg)
 
 target_link_libraries(qr_detector_nodelet
         ${catkin_LIBRARIES}

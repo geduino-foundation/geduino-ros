@@ -46,9 +46,12 @@ int QRDetector::init() {
     tvec = cv::Mat::zeros(3, 1, cv::DataType<double>::type);
     tvec.at<double>(2) = 1;
 
+    // Create dynamic reconfigure server
+    dynamicReconfigureServer = new dynamic_reconfigure::Server<zxing_cv::QRDetectorConfig>(privateNodeHandle);
+    dynamic_reconfigure::Server<zxing_cv::QRDetectorConfig>::CallbackType callback = boost::bind(& QRDetector::reconfigureCallback, this, _1, _2);
+    dynamicReconfigureServer->setCallback(callback);
+
     // Get node parameters
-    privateNodeHandle.param("adaptive_threshold_block_size", adaptiveThresholdBlockSize, 201);
-    privateNodeHandle.param("adaptive_threshold_threshold", adaptiveThresholdThreshold, 20);
     std::vector<double> qrCodePointsParam;
     privateNodeHandle.getParam("qr_code_points", qrCodePointsParam);
     privateNodeHandle.param("ignore_point_in_excess", ignorePointsInExcess, true);
@@ -144,6 +147,21 @@ int QRDetector::init() {
     qrReader.reset(new zxing::qrcode::QRCodeReader);
 
     return 0;
+
+}
+
+void QRDetector::reconfigureCallback(zxing_cv::QRDetectorConfig & config, uint32_t level) {
+
+    // Update configuration
+    adaptiveThresholdBlockSize = config.adaptive_threshold_block_size;
+    adaptiveThresholdThreshold = config.adaptive_threshold_threshold;
+
+    if (adaptiveThresholdBlockSize % 2 == 0) {
+
+        // Increae by one (adaptive threshold block size must be an odd number
+        adaptiveThresholdBlockSize++;
+
+    }
 
 }
 

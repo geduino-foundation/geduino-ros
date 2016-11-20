@@ -20,12 +20,14 @@
 #define QR_DETECTOR_H_
 
 #include <ros/ros.h>
+#include <dynamic_reconfigure/server.h>
 #include <image_transport/image_transport.h>
 #include <sensor_msgs/Image.h>
 #include <zxing_cv/QRCodeArray.h>
 #include <opencv2/core/core.hpp>
 #include <zxing/Result.h>
 #include <zxing/Reader.h>
+#include <zxing_cv/QRDetectorConfig.h>
 
 class QRDetector {
 
@@ -37,6 +39,8 @@ class QRDetector {
 
     private:
 
+        void reconfigureCallback(zxing_cv::QRDetectorConfig & config, uint32_t level);
+
         void imageCallback(const sensor_msgs::ImageConstPtr & imageConstPtr, const sensor_msgs::CameraInfoConstPtr & cameraInfoPtr);
 
         void publishDebugImage(const sensor_msgs::ImageConstPtr & imageConstPtr, const zxing::Ref<zxing::Result> & result);
@@ -45,6 +49,8 @@ class QRDetector {
 
         ros::NodeHandle nodeHandle;
         ros::NodeHandle privateNodeHandle;
+
+        dynamic_reconfigure::Server<zxing_cv::QRDetectorConfig> * dynamicReconfigureServer;
 
         zxing::Ref<zxing::Reader> qrReader;
 
