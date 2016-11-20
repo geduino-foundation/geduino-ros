@@ -1,0 +1,55 @@
+<!-- 
+ zxing_qrdetector_demo.launch
+
+ Copyright (C) 2015 Alessandro Francescon
+ 
+ This program is free software: you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation, either version 3 of the License.
+ 
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+ 
+ You should have received a copy of the GNU General Public License
+ along with this program.  If not, see <http://www.gnu.org/licenses/>.
+-->
+
+<launch>
+
+	<!-- The nodelet manager -->
+	<node pkg="nodelet" type="nodelet" name="image_nodelet" args="manager">
+		<remap from="/cv_camera/image_raw" to="/camera/image" />
+		<param name="device_id" value="/dev/video0" />
+	</node>
+
+	<!-- The camera nodelet -->
+	<node pkg="nodelet" type="nodelet" name="cv_camera" args="load cv_camera/CvCameraNodelet image_nodelet">
+	</node>
+
+	<!-- The QR detector nodeler -->
+	<node pkg="nodelet" type="nodelet" name="qr_detector" args="load zxing_cv/QRDetectorNodelet image_nodelet">
+		<param name="adaptive_threshold_block_size" value="201" />
+		<param name="adaptive_threshold_threshold" value="21" />
+                <rosparam param="qr_code_points">[0.0, 0.0, 0.0, 0.0, 0.125, 0.0, 0.125, 0.0, 0.0]</rosparam>
+		<param name="ignore_point_in_excess" value="true" />
+	</node>
+
+        <!-- The dynamic reconfigure gui -->
+        <node pkg="rqt_reconfigure" type="rqt_reconfigure" name="rqt_reconfigure">
+        </node>
+
+	<!-- The optimized image viewer -->
+	<node pkg="image_view" type="image_view" name="optimized_image_viewer" args="image:=/qr_detector/image_optimized">
+	</node>
+
+	<!-- The debug image viewer -->
+	<node pkg="image_view" type="image_view" name="debug_image_viewer" args="image:=/qr_detector/image_debug">
+	</node>
+
+        <!-- The rqt topic gui -->
+        <node pkg="rqt_topic" type="rqt_topic" name="rqt_topic">
+        </node>
+
+</launch>
