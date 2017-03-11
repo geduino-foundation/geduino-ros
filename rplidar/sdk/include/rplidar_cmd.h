@@ -1,7 +1,13 @@
 /*
- * Copyright (c) 2014, RoboPeak
- * All rights reserved.
+ *  RPLIDAR SDK
  *
+ *  Copyright (c) 2009 - 2014 RoboPeak Team
+ *  http://www.robopeak.com
+ *  Copyright (c) 2014 - 2016 Shanghai Slamtec Co., Ltd.
+ *  http://www.slamtec.com
+ *
+ */
+/*
  * Redistribution and use in source and binary forms, with or without 
  * modification, are permitted provided that the following conditions are met:
  *
@@ -24,19 +30,6 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, 
  * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- */
-/*
- *  RoboPeak LIDAR System
- *  Data Packet IO packet definition for RP-LIDAR
- *
- *  Copyright 2009 - 2014 RoboPeak Team
- *  http://www.robopeak.com
- *  
- */
-/*
- *  Copyright 2014 - 2016 Shanghai Slamtec Co., Ltd.
- *  http://www.slamtec.com
- * 
  */
 
 #pragma once
@@ -80,8 +73,8 @@ typedef struct _rplidar_payload_express_scan_t {
     _u32  reserved;
 } __attribute__((packed)) rplidar_payload_express_scan_t;
 
-#define MAX_MOTOR_PWM               560
-#define DEFAULT_MOTOR_PWM           420
+#define MAX_MOTOR_PWM               1023
+#define DEFAULT_MOTOR_PWM           660
 typedef struct _rplidar_payload_motor_pwm_t {
     _u16 pwm_value;
 } __attribute__((packed)) rplidar_payload_motor_pwm_t;

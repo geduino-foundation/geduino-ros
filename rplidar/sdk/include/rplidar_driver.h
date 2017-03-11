@@ -1,7 +1,13 @@
 /*
- * Copyright (c) 2014, RoboPeak
- * All rights reserved.
+ *  RPLIDAR SDK
  *
+ *  Copyright (c) 2009 - 2014 RoboPeak Team
+ *  http://www.robopeak.com
+ *  Copyright (c) 2014 - 2016 Shanghai Slamtec Co., Ltd.
+ *  http://www.slamtec.com
+ *
+ */
+/*
  * Redistribution and use in source and binary forms, with or without 
  * modification, are permitted provided that the following conditions are met:
  *
@@ -24,19 +30,6 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, 
  * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- */
-/*
- *  RoboPeak LIDAR System
- *  Driver Interface
- *
- *  Copyright 2009 - 2014 RoboPeak Team
- *  http://www.robopeak.com
- * 
- */
-/*
- *  Copyright 2014 - 2016 Shanghai Slamtec Co., Ltd.
- *  http://www.slamtec.com
- * 
  */
 
 #pragma once
@@ -118,10 +111,16 @@ public:
     /// \param timeout       The operation timeout value (in millisecond) for the serial port communication
     virtual u_result getSampleDuration_uS(rplidar_response_sample_rate_t & rateInfo, _u32 timeout = DEFAULT_TIMEOUT) = 0;
     
-    /// Set the RPLIDAR's motor pwm when using accessory board
+    /// Set the RPLIDAR's motor pwm when using accessory board, currently valid for A2 only.
     /// 
     /// \param pwm           The motor pwm value would like to set 
     virtual u_result setMotorPWM(_u16 pwm) = 0;
+
+    /// Start RPLIDAR's motor when using accessory board
+    virtual u_result startMotor() = 0;
+
+    /// Stop RPLIDAR's motor when using accessory board
+    virtual u_result stopMotor() = 0;
 
     /// Check whether the device support motor control.
     /// Note: this API will disable grab.

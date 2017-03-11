@@ -24,9 +24,8 @@
  - /diagnostics (diagnostic_msgs/DiagnosticArray): the diagnostic information.
 
  Parameters:
- - serial_port, the serial port RPLidar is connected to (default: /dev/ttymxc4);
- - frame_id, the frame laser data are referred (default: base_laser);
- - gpio_num, the GPIO number the RPLidar motor control is connected to (default: 40).
+ - serial_port, the serial port RPLidar is connected to (default: /dev/ttyUSB0);
+ - frame_id, the frame laser data are referred (default: base_laser).
  */
 
 #include <ros/ros.h>
@@ -34,7 +33,6 @@
 #include <diagnostic_msgs/DiagnosticArray.h>
 #include <std_srvs/Empty.h>
 #include "rplidar.h"
-#include "gpio.h"
 
 #define SERIAL_BAUD_RATE 115200
 
@@ -51,9 +49,6 @@ using namespace rp::standalone::rplidar;
 // The pouinter to rplidar driver
 RPlidarDriver * rpLidarDriver = NULL;
 
-// The pointer to gpio
-GPIO * gpio = NULL;
-
 // The rp lidar device info pointer
 _rplidar_response_device_info_t * rpLidarDeviceInfoPtr = NULL;
 
@@ -66,7 +61,6 @@ ros::Publisher * diagnosticsMessagePublisherPtr;
 // Node parameter
 std::string frameId;
 std::string serialPort;
-std::string gpioNum;
 
 void publishLaserScan(rplidar_response_measurement_node_t * nodes, 
                   size_t nodeCount, ros::Time scanStartTime,
@@ -238,19 +232,10 @@ bool checkHealthStatus() {
 
 void startScan() {
 
-	if (gpio) {
-
-        	// Start motor
-        	gpio->setValue(VALUE_HIGH);
-
-	} else {
-
-		// Log
-		ROS_ERROR("cannot start scan: gpio was null");
-
-	}
-
 	if (rpLidarDriver) {
+
+        // Start motor
+        rpLidarDriver->startMotor();
 
 		// Start scan
 		rpLidarDriver->startScan();
@@ -277,22 +262,13 @@ void stopScan() {
 		// Stop scan
 		rpLidarDriver->stop();
 
+        // Stop motor
+        rpLidarDriver->stopMotor();
+
 	} else {
 
 		// Log
 		ROS_ERROR("cannot stop scan: rp lidar driver was null");
-
-	}
-
-	if (gpio) {
-
-        	// Stop motor
-        	gpio->setValue(VALUE_LOW);
-
-	} else {
-
-		// Log
-		ROS_ERROR("cannot stop scan: gpio was null");
 
 	}
 
@@ -310,21 +286,6 @@ void dispose() {
 
 	}
 
-	if (gpio) {
-
-		// Log
-		ROS_INFO("unexporting gpio %s ...", gpioNum.c_str());
-
-		// Unexport gpio
-		if (gpio->unexportGPIO() != 0) {
-
-			// Log
-			ROS_ERROR("cannot unexport gpio %s", gpioNum.c_str());
-
-		}
-
-	}
-
 }
 
 int main(int argc, char * argv[]) {
@@ -337,13 +298,11 @@ int main(int argc, char * argv[]) {
 
 	// Get node params
 	privateNodeHandle.param<std::string>("frame_id", frameId, "base_laser");
-	privateNodeHandle.param<std::string>("serial_port", serialPort, "/dev/ttymxc4");
-	privateNodeHandle.param<std::string>("gpio_num", gpioNum, "40");
+    privateNodeHandle.param<std::string>("serial_port", serialPort, "/dev/ttyUSB0");
 
 	// Log
 	ROS_INFO("framed id: %s", frameId.c_str());
 	ROS_INFO("serial port: %s", serialPort.c_str());
-	ROS_INFO("gpio number: %s", gpioNum.c_str());
 
 	// Get node handle
 	ros::NodeHandle nodeHandle;
@@ -418,31 +377,6 @@ int main(int argc, char * argv[]) {
 		ROS_ERROR("cannot get rp lidar device info");
 
 	}
-
-	// Log
-	ROS_INFO("binding gpio...");
-
-	// Create gpio
-	gpio = new GPIO(gpioNum);
-
-	// Export gpio
-	if (gpio->exportGPIO() != 0) {
-
-		// Log
-		ROS_ERROR("cannot export gpio number: %s. Exiting...", gpioNum.c_str());
-
-		// Publish diagnostics
-		publishDiagnostics(STATUS_ERROR, "Cannot bind GPIO");
-
-		// Dispose resources
-		dispose();
-
-		return -1;
-
-	}
-
-	// Set gpio direction
-	gpio->setDirection(DIRECTION_OUT);
 
 	// Log
 	ROS_INFO("all ready: starting scan...");

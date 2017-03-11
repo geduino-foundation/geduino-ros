@@ -1,7 +1,13 @@
 /*
- * Copyright (c) 2014, RoboPeak
- * All rights reserved.
+ *  RPLIDAR SDK
  *
+ *  Copyright (c) 2009 - 2014 RoboPeak Team
+ *  http://www.robopeak.com
+ *  Copyright (c) 2014 - 2016 Shanghai Slamtec Co., Ltd.
+ *  http://www.slamtec.com
+ *
+ */
+/*
  * Redistribution and use in source and binary forms, with or without 
  * modification, are permitted provided that the following conditions are met:
  *
@@ -24,19 +30,6 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, 
  * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- */
-/*
- *  RoboPeak LIDAR System
- *  Serial based RPlidar Driver
- *
- *  Copyright 2009 - 2014 RoboPeak Team
- *  http://www.robopeak.com
- * 
- */
-/*
- *  Copyright 2014 - 2016 Shanghai Slamtec Co., Ltd.
- *  http://www.slamtec.com
- * 
  */
 
 #include "sdkcommon.h"
@@ -77,6 +70,7 @@ void RPlidarDriver::DisposeDriver(RPlidarDriver * drv)
 RPlidarDriverSerialImpl::RPlidarDriverSerialImpl() 
     : _isConnected(false)
     , _isScanning(false)
+    , _isSupportingMotorCtrl(false)
 {
     _rxtx = rp::hal::serial_rxtx::CreateRxTx();
     _cached_scan_node_count = 0;
@@ -94,18 +88,25 @@ RPlidarDriverSerialImpl::~RPlidarDriverSerialImpl()
 
 u_result RPlidarDriverSerialImpl::connect(const char * port_path, _u32 baudrate, _u32 flag)
 {
-    rp::hal::AutoLocker l(_lock);
     if (isConnected()) return RESULT_ALREADY_DONE;
 
     if (!_rxtx) return RESULT_INSUFFICIENT_MEMORY;
 
-    // establish the serial connection...
-    if (!_rxtx->bind(port_path, baudrate)  ||  !_rxtx->open()) {
-        return RESULT_INVALID_DATA;
+    {
+        rp::hal::AutoLocker l(_lock);
+
+        // establish the serial connection...
+        if (!_rxtx->bind(port_path, baudrate)  ||  !_rxtx->open()) {
+            return RESULT_INVALID_DATA;
+        }
+
+        _rxtx->flush(0);
     }
 
-    _rxtx->flush(0);
     _isConnected = true;
+
+    checkMotorCtrlSupport(_isSupportingMotorCtrl);
+    stopMotor();
 
     return RESULT_OK;
 }
@@ -126,8 +127,13 @@ bool RPlidarDriverSerialImpl::isConnected()
 u_result RPlidarDriverSerialImpl::reset(_u32 timeout)
 {
     u_result ans;
-    if (IS_FAIL(ans = _sendCommand(RPLIDAR_CMD_RESET))) {
-        return ans;
+
+    {
+        rp::hal::AutoLocker l(_lock);
+
+        if (IS_FAIL(ans = _sendCommand(RPLIDAR_CMD_RESET))) {
+            return ans;
+        }
     }
     return RESULT_OK;
 }
@@ -142,6 +148,7 @@ u_result RPlidarDriverSerialImpl::getHealth(rplidar_response_device_health_t & h
 
     {
         rp::hal::AutoLocker l(_lock);
+
         if (IS_FAIL(ans = _sendCommand(RPLIDAR_CMD_GET_DEVICE_HEALTH))) {
             return ans;
         }
@@ -179,6 +186,7 @@ u_result RPlidarDriverSerialImpl::getDeviceInfo(rplidar_response_device_info_t &
 
     {
         rp::hal::AutoLocker l(_lock);
+
         if (IS_FAIL(ans = _sendCommand(RPLIDAR_CMD_GET_DEVICE_INFO))) {
             return ans;
         }
@@ -254,6 +262,9 @@ u_result RPlidarDriverSerialImpl::startScanNormal(bool force, _u32 timeout)
 
         _isScanning = true;
         _cachethread = CLASS_THREAD(RPlidarDriverSerialImpl, _cacheScanData);
+        if (_cachethread.getHandle() == 0) {
+            return RESULT_OPERATION_FAIL;
+        }
     }
     return RESULT_OK;
 }
@@ -315,6 +326,9 @@ u_result RPlidarDriverSerialImpl::startScanExpress(bool fixedAngle, _u32 timeout
 
         _isScanning = true;
         _cachethread = CLASS_THREAD(RPlidarDriverSerialImpl, _cacheCapsuledScanData);
+        if (_cachethread.getHandle() == 0) {
+            return RESULT_OPERATION_FAIL;
+        }
     }
     return RESULT_OK;
 }
@@ -340,9 +354,18 @@ u_result RPlidarDriverSerialImpl::startScan(bool force, bool autoExpressMode)
 
 u_result RPlidarDriverSerialImpl::stop(_u32 timeout)
 {
+    u_result ans;
     _disableDataGrabbing();
-    u_result ans = _sendCommand(RPLIDAR_CMD_STOP);
-    return ans;
+
+    {
+        rp::hal::AutoLocker l(_lock);
+
+        if (IS_FAIL(ans = _sendCommand(RPLIDAR_CMD_STOP))) {
+            return ans;
+        }
+    }
+
+    return RESULT_OK;
 }
 
 u_result RPlidarDriverSerialImpl::_cacheScanData()
@@ -463,9 +486,12 @@ u_result RPlidarDriverSerialImpl::_cacheCapsuledScanData()
     while(_isScanning)
     {
         if (IS_FAIL(ans=_waitCapsuledNode(capsule_node))) {
-            if (ans != RESULT_OPERATION_TIMEOUT) {
+            if (ans != RESULT_OPERATION_TIMEOUT && ans != RESULT_INVALID_DATA) {
                 _isScanning = false;
                 return RESULT_OPERATION_FAIL;
+            } else {
+                // current data is invalid, do not use it.
+                continue;
             }
         }
 
@@ -491,6 +517,7 @@ u_result RPlidarDriverSerialImpl::_cacheCapsuledScanData()
         }
     }
     _isScanning = false;
+
     return RESULT_OK;
 }
 
@@ -524,7 +551,7 @@ u_result RPlidarDriverSerialImpl::grabScanData(rplidar_response_measurement_node
 u_result RPlidarDriverSerialImpl::ascendScanData(rplidar_response_measurement_node_t * nodebuffer, size_t count)
 {
     float inc_origin_angle = 360.0/count;
-    int i = 0;
+    size_t i = 0;
 
     //Tune head
     for (i = 0; i < count; i++) {
@@ -574,7 +601,7 @@ u_result RPlidarDriverSerialImpl::ascendScanData(rplidar_response_measurement_no
 
     // Reorder the scan according to the angle value
     for (i = 0; i < (count-1); i++){
-        for (int j = (i+1); j < count; j++){
+        for (size_t j = (i+1); j < count; j++){
             if(nodebuffer[i].angle_q6_checkbit > nodebuffer[j].angle_q6_checkbit){
                 rplidar_response_measurement_node_t temp = nodebuffer[i];
                 nodebuffer[i] = nodebuffer[j];
@@ -876,6 +903,7 @@ u_result RPlidarDriverSerialImpl::getSampleDuration_uS(rplidar_response_sample_r
 
     {
         rp::hal::AutoLocker l(_lock);
+
         if (IS_FAIL(ans = _sendCommand(RPLIDAR_CMD_GET_SAMPLERATE))) {
             return ans;
         }
@@ -913,9 +941,11 @@ u_result RPlidarDriverSerialImpl::checkMotorCtrlSupport(bool & support, _u32 tim
     _disableDataGrabbing();
 
     {
+        rp::hal::AutoLocker l(_lock);
+
         rplidar_payload_acc_board_flag_t flag;
         flag.reserved = 0;
-        rp::hal::AutoLocker l(_lock);
+
         if (IS_FAIL(ans = _sendCommand(RPLIDAR_CMD_GET_ACC_BOARD_FLAG, &flag, sizeof(flag)))) {
             return ans;
         }
@@ -950,11 +980,47 @@ u_result RPlidarDriverSerialImpl::checkMotorCtrlSupport(bool & support, _u32 tim
 
 u_result RPlidarDriverSerialImpl::setMotorPWM(_u16 pwm)
 {
+    u_result ans;
     rplidar_payload_motor_pwm_t motor_pwm;
     motor_pwm.pwm_value = pwm;
-    _sendCommand(RPLIDAR_CMD_SET_MOTOR_PWM,(const _u8 *)&motor_pwm, sizeof(motor_pwm));
+
+    {
+        rp::hal::AutoLocker l(_lock);
+
+        if (IS_FAIL(ans = _sendCommand(RPLIDAR_CMD_SET_MOTOR_PWM,(const _u8 *)&motor_pwm, sizeof(motor_pwm)))) {
+            return ans;
+        }
+    }
+
     return RESULT_OK;
 }
 
+u_result RPlidarDriverSerialImpl::startMotor()
+{
+    if (_isSupportingMotorCtrl) { // RPLIDAR A2
+        setMotorPWM(DEFAULT_MOTOR_PWM);
+        delay(500);
+        return RESULT_OK;
+    } else { // RPLIDAR A1
+        rp::hal::AutoLocker l(_lock);
+        _rxtx->clearDTR();
+        delay(500);
+        return RESULT_OK;
+    }
+}
+
+u_result RPlidarDriverSerialImpl::stopMotor()
+{
+    if (_isSupportingMotorCtrl) { // RPLIDAR A2
+        setMotorPWM(0);
+        delay(500);
+        return RESULT_OK;
+    } else { // RPLIDAR A1
+        rp::hal::AutoLocker l(_lock);
+        _rxtx->setDTR();
+        delay(500);
+        return RESULT_OK;
+    }
+}
 
 }}}

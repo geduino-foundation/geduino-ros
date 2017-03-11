@@ -1,4 +1,5 @@
-Copyright (c) 2016, slamTec / RoboPeak Public Repos
+Copyright (c) 2009 - 2014 RoboPeak Team
+Copyright (c) 2014 - 2016 Shanghai Slamtec Co., Ltd.
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -25,11 +26,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
 This folder contains RPLIDAR SDK source code which is provided by RoboPeak.
+
 RoboPeak Website: http://www.robopeak.com
 SlamTec HomePage: http://www.slamtec.com
-RPLIDAR_SDK_VERSION:	1.5.3
+RPLIDAR_SDK_VERSION:	1.5.7
 Note: The SDK version may not up-to-date.
-
 rplidar product: http://www.slamtec.com/en/Lidar
-
-

@@ -1,7 +1,13 @@
 /*
- * Copyright (c) 2014, RoboPeak
- * All rights reserved.
+ *  RPLIDAR SDK
  *
+ *  Copyright (c) 2009 - 2014 RoboPeak Team
+ *  http://www.robopeak.com
+ *  Copyright (c) 2014 - 2016 Shanghai Slamtec Co., Ltd.
+ *  http://www.slamtec.com
+ *
+ */
+/*
  * Redistribution and use in source and binary forms, with or without 
  * modification, are permitted provided that the following conditions are met:
  *
@@ -24,19 +30,6 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, 
  * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- */
-/*
- *  RoboPeak LIDAR System
- *  Serial based RPlidar Driver
- *
- *  Copyright 2009 - 2014 RoboPeak Team
- *  http://www.robopeak.com
- * 
- */
-/*
- *  Copyright 2014 - 2016 Shanghai Slamtec Co., Ltd.
- *  http://www.slamtec.com
- * 
  */
 
 #pragma once
@@ -70,6 +63,8 @@ public:
     virtual u_result getSampleDuration_uS(rplidar_response_sample_rate_t & rateInfo, _u32 timeout = DEFAULT_TIMEOUT);
 
     virtual u_result setMotorPWM(_u16 pwm);
+    virtual u_result startMotor();
+    virtual u_result stopMotor();
     virtual u_result checkMotorCtrlSupport(bool & support, _u32 timeout = DEFAULT_TIMEOUT);
 	virtual u_result getFrequency(bool inExpressMode, size_t count, float & frequency, bool & is4kmode);
 
@@ -97,6 +92,7 @@ protected:
 
     bool     _isConnected;
     bool     _isScanning;
+    bool     _isSupportingMotorCtrl;
 
 	rp::hal::Locker         _lock;
     rp::hal::Event          _dataEvt;
