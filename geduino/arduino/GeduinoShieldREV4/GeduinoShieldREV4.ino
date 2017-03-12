@@ -28,6 +28,7 @@
 #include "Rate.h"
 #include "Counter.h"
 #include "Loop.h"
+#include "Led.h"
 
 /****************************************************************************************
  * Begin configuration
@@ -45,6 +46,8 @@
 #define RIGHT_PING_PIN                        13
 #define BATTERY_VOLT_PIN                      A1
 #define TMP36_PIN                             A0
+#define RED_LED_PIN                           7
+#define GREEN_LED_PIN                         4
 
 // Ping sensor specification
 #define PING_FIELD_OF_VIEW                    0.1745      // [rad]
@@ -87,6 +90,10 @@ Battery battery(BATTERY_VOLT_PIN, BATTERY_PARAM_A, BATTERY_PARAM_B);
 
 // The TMP36 sensor
 TMP36 tmp36(TMP36_PIN);
+
+// The leds
+Led redLed(RED_LED_PIN);
+Led greenLed(GREEN_LED_PIN);
 
 // The range publisher rate
 Rate rangePublisherRate(RANGE_PUBLISHER_FREQUENCY);
@@ -134,20 +141,12 @@ ros::Publisher diagnosticsMessagePublisher("diagnostics", & diagnosticsMessage);
  */
 
 void setup() {
-  
-  // Set pin 38 to input since GPIO 54 is handled by iMX.6
-  pinMode(38, INPUT);
-  
-  // Set pin 13 to input since GPIO 40 is handled by iMX.6
-  pinMode(13, INPUT);
-  
-  // Set pins 47 and 53 to input since UART3 is handled by iMX.6
-  pinMode(47, INPUT);
-  pinMode(53, INPUT);
-  
-  // Set pins 48 and 49 to input since UART5 is handled by iMX.6
-  pinMode(48, INPUT);
-  pinMode(49, INPUT);
+
+  // Blink leds to inform start 
+  greenLed.ledOn();
+  redLed.ledBlinkFastFor(2000);
+  redLed.ledOn();
+  greenLed.ledOff();
 
 #ifndef SERIAL_DEBUG
 
@@ -279,6 +278,24 @@ void setup() {
  */
 
 void loop() {
+
+  while (!nodeHandle.connected()) {
+
+    // Blink green led to inform wating for connection
+    greenLed.ledBlinkSlow();
+    redLed.ledOff();
+
+    // Spin once
+    nodeHandle.spinOnce();
+
+    // Check battery state
+    checkBatteryState();
+    
+  }
+
+  // Turn off red led and turn on green led
+  redLed.ledOff();
+  greenLed.ledOn();
   
   if (rangePublisherRate.ellapsed()) {
        
@@ -492,16 +509,25 @@ void publishDiagnostics() {
     
     diagnosticsMessage.status[3].level = diagnostic_msgs::DiagnosticStatus::OK;
     diagnosticsMessage.status[3].message = "OK";
+
+    // Turn off red led
+    redLed.ledOff();
     
   } else if (volts > BATTERY_CRITICAL_VOLTS) {
     
     diagnosticsMessage.status[3].level = diagnostic_msgs::DiagnosticStatus::WARN;
     diagnosticsMessage.status[3].message = "Voltage under warning level, charge battery";
+
+    // Turn on red led
+    redLed.ledOn();
   
   } else {
     
     diagnosticsMessage.status[3].level = diagnostic_msgs::DiagnosticStatus::ERROR;
     diagnosticsMessage.status[3].message = "Voltage under critical level, power off immediatly to avoid battery damage";
+
+    // Turn on red led
+    redLed.ledOn();
   
   }
 
@@ -556,6 +582,45 @@ void publishDiagnostics() {
   Serial.println("diagnostics published");
 
 #endif
+  
+}
+
+void checkBatteryState() {
+
+  // Get battery volts
+  float volts;
+  battery.getVolts(& volts);
+
+  if (volts > BATTERY_WARNING_VOLTS) {
+    
+    // Blink red led
+    redLed.ledBlinkFast();
+
+#ifdef SERIAL_DEBUG
+
+    // Debug
+    Serial.println("voltage under warning level, charge battery");
+
+#endif
+    
+  } else if (volts > BATTERY_CRITICAL_VOLTS) {
+    
+    // Turn on red led
+    redLed.ledOn();
+
+#ifdef SERIAL_DEBUG
+
+    // Debug
+    Serial.println("voltage under critical level, power off immediatly to avoid battery damage");
+
+#endif
+
+  } else {
+    
+    // Turn off red led
+    redLed.ledOn();
+  
+  }
   
 }
 
