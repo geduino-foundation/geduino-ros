@@ -1,5 +1,5 @@
 /*
- GeduinoShieldREV2.ino
+ GeduinoShieldREV4.ino
  http://www.geduino.org
  
  Copyright (C) 2016 Alessandro Francescon
@@ -22,7 +22,6 @@
 #include <sensor_msgs/Temperature.h>
 #include <std_msgs/Float32.h>
 #include <diagnostic_msgs/DiagnosticArray.h>
-#include "PString.h"
 #include "PING.h"
 #include "TMP36.h"
 #include "Battery.h"
@@ -41,11 +40,11 @@
 #define ROS_SERIAL_BAUD_RATE                  115200
 
 // Connected PINs
-#define LEFT_PING_PIN                         26
-#define CENTRAL_PING_PIN                      24
-#define RIGHT_PING_PIN                        28
-#define BATTERY_VOLT_PIN                      A11
-#define TMP36_PIN                             A10
+#define LEFT_PING_PIN                         8
+#define CENTRAL_PING_PIN                      12
+#define RIGHT_PING_PIN                        13
+#define BATTERY_VOLT_PIN                      A1
+#define TMP36_PIN                             A0
 
 // Ping sensor specification
 #define PING_FIELD_OF_VIEW                    0.1745      // [rad]
@@ -203,9 +202,9 @@ void setup() {
   diagnosticsMessage.status[0].values_length = 2;
   diagnosticsMessage.status[0].values = leftPingValues;
   diagnosticsMessage.status[0].values[0].key = "Failures";
-  diagnosticsMessage.status[0].values[0].value = (char *) malloc(16);
+  diagnosticsMessage.status[0].values[0].value = "N/A";
   diagnosticsMessage.status[0].values[1].key = "Measurement";
-  diagnosticsMessage.status[0].values[1].value = (char *) malloc(16);
+  diagnosticsMessage.status[0].values[1].value = "N/A";
   
   // The center ping diagnostic status
   diagnosticsMessage.status[1].name = "Center PING)))";
@@ -213,9 +212,9 @@ void setup() {
   diagnosticsMessage.status[1].values_length = 2;
   diagnosticsMessage.status[1].values = centerPingValues;
   diagnosticsMessage.status[1].values[0].key = "Failures";
-  diagnosticsMessage.status[1].values[0].value = (char *) malloc(16);
+  diagnosticsMessage.status[1].values[0].value = "N/A";
   diagnosticsMessage.status[1].values[1].key = "Measurement";
-  diagnosticsMessage.status[1].values[1].value = (char *) malloc(16);
+  diagnosticsMessage.status[1].values[1].value = "N/A";
   
   // The right ping diagnostic status
   diagnosticsMessage.status[2].name = "Right PING)))";
@@ -223,9 +222,9 @@ void setup() {
   diagnosticsMessage.status[2].values_length = 2;
   diagnosticsMessage.status[2].values = rightPingValues;
   diagnosticsMessage.status[2].values[0].key = "Failures";
-  diagnosticsMessage.status[2].values[0].value = (char *) malloc(16);
+  diagnosticsMessage.status[2].values[0].value = "N/A";
   diagnosticsMessage.status[2].values[1].key = "Measurement";
-  diagnosticsMessage.status[2].values[1].value = (char *) malloc(16);
+  diagnosticsMessage.status[2].values[1].value = "N/A";
  
   // The battery diagnostic status
   diagnosticsMessage.status[3].name = "Battery";
@@ -233,27 +232,27 @@ void setup() {
   diagnosticsMessage.status[3].values_length = 1;
   diagnosticsMessage.status[3].values = batteryValues;
   diagnosticsMessage.status[3].values[0].key = "Volts";
-  diagnosticsMessage.status[3].values[0].value = (char *) malloc(16);
+  diagnosticsMessage.status[3].values[0].value = "N/A";
 
-  // The SAMx8 diagnostic status
-  diagnosticsMessage.status[4].name = "SAMx8";
-  diagnosticsMessage.status[4].hardware_id = "samx8";
+  // The Arduino diagnostic status
+  diagnosticsMessage.status[4].name = "Arduino";
+  diagnosticsMessage.status[4].hardware_id = "arduino";
   diagnosticsMessage.status[4].values_length = 7;
   diagnosticsMessage.status[4].values = samx8Values;
   diagnosticsMessage.status[4].values[0].key = "Load";
-  diagnosticsMessage.status[4].values[0].value = (char *) malloc(16);
+  diagnosticsMessage.status[4].values[0].value = "N/A";
   diagnosticsMessage.status[4].values[1].key = "Range average delay";
-  diagnosticsMessage.status[4].values[1].value = (char *) malloc(16);
+  diagnosticsMessage.status[4].values[1].value = "N/A";
   diagnosticsMessage.status[4].values[2].key = "Range main duration";
-  diagnosticsMessage.status[4].values[2].value = (char *) malloc(16);
+  diagnosticsMessage.status[4].values[2].value = "N/A";
   diagnosticsMessage.status[4].values[3].key = "Battery state average delay";
-  diagnosticsMessage.status[4].values[3].value = (char *) malloc(16);
+  diagnosticsMessage.status[4].values[3].value = "N/A";
   diagnosticsMessage.status[4].values[4].key = "Battery state main duration";
-  diagnosticsMessage.status[4].values[4].value = (char *) malloc(16);
+  diagnosticsMessage.status[4].values[4].value = "N/A";
   diagnosticsMessage.status[4].values[5].key = "Diagnostics average delay";
-  diagnosticsMessage.status[4].values[5].value = (char *) malloc(16);
+  diagnosticsMessage.status[4].values[5].value = "N/A";
   diagnosticsMessage.status[4].values[6].key = "Diagnostics main duration";
-  diagnosticsMessage.status[4].values[6].value = (char *) malloc(16);
+  diagnosticsMessage.status[4].values[6].value = "N/A";
   
 #ifndef SERIAL_DEBUG
 
@@ -438,8 +437,8 @@ void getPingDiagnosticStatus(PING * ping, diagnostic_msgs::DiagnosticStatus * di
   ping->getFailureCounter().getCounters(& failures, & measurement);
   
   // Set ping diagnostic values
-  String(failures, DEC).toCharArray(diagnosticStatus->values[0].value, 16);
-  String(measurement, DEC).toCharArray(diagnosticStatus->values[1].value, 16);
+  diagnosticStatus->values[0].value = String(failures, DEC).c_str();
+  diagnosticStatus->values[1].value = String(measurement, DEC).c_str();
 
   // Set ping diagnostic level and message
   if (failures == 0) {
@@ -485,10 +484,8 @@ void publishDiagnostics() {
   float volts;
   battery.getVolts(& volts);
 
-  // Set SAMx8 diagnostic values
-  PString voltsString(diagnosticsMessage.status[3].values[0].value, 16);
-  voltsString.print(volts, 1);
-  voltsString.print(" V");
+  // Set battery diagnostic values
+  diagnosticsMessage.status[3].values[0].value = String(String(volts, 1) + " V").c_str();
 
   // Set battery diagnostic level and message
   if (volts > BATTERY_WARNING_VOLTS) {
@@ -518,31 +515,16 @@ void publishDiagnostics() {
   diagnosticsPublisherRate.getDelayCounter().getAverage(& diagnosticsDelay);
   diagnosticsPublisherRate.getDurationCounter().getAverage(& diagnosticsDuration);
   
-  // Set SAMx8 diagnostic values
-  char loadChars[16], rangeDelayChars[16], rangeDurationChars[16], batteryStateDelayChars[16], batteryStateDurationChars[16], diagnosticsDelayChars[16], diagnosticsDurationChars[16];
-  PString loadString(diagnosticsMessage.status[4].values[0].value, 16);
-  loadString.print(load, 2);
-  loadString.print(" %");
-  PString rangeDelayString(diagnosticsMessage.status[4].values[1].value, 16);
-  rangeDelayString.print(rangeDelay, 2);
-  rangeDelayString.print(" millis");
-  PString rangeDurationString(diagnosticsMessage.status[4].values[2].value, 16);
-  rangeDurationString.print(rangeDuration, 2);
-  rangeDurationString.print(" millis");
-  PString batteryStateDelayString(diagnosticsMessage.status[4].values[3].value, 16);
-  batteryStateDelayString.print(batteryStateDelay, 2);
-  batteryStateDelayString.print(" millis");
-  PString batteryStateDurationString(diagnosticsMessage.status[4].values[4].value, 16);
-  batteryStateDurationString.print(batteryStateDuration, 2);
-  batteryStateDurationString.print(" millis");
-  PString diagnosticsDelayString(diagnosticsMessage.status[4].values[5].value, 16);
-  diagnosticsDelayString.print(diagnosticsDelay, 2);
-  diagnosticsDelayString.print(" millis");
-  PString diagnosticsDurationString(diagnosticsMessage.status[4].values[6].value, 16);
-  diagnosticsDurationString.print(diagnosticsDuration, 2);
-  diagnosticsDurationString.print(" millis");
+  // Set Arduino diagnostic values
+  diagnosticsMessage.status[4].values[0].value = String(String(load, 2) + " %").c_str();
+  diagnosticsMessage.status[4].values[1].value = String(String(rangeDelay, 2) + " millis").c_str();
+  diagnosticsMessage.status[4].values[2].value = String(String(rangeDuration, 2) + " millis").c_str();
+  diagnosticsMessage.status[4].values[3].value = String(String(batteryStateDelay, 2) + " millis").c_str();
+  diagnosticsMessage.status[4].values[4].value = String(String(batteryStateDuration, 2) + " millis").c_str();
+  diagnosticsMessage.status[4].values[5].value = String(String(diagnosticsDelay, 2) + " millis").c_str();
+  diagnosticsMessage.status[4].values[6].value = String(String(diagnosticsDuration, 2) + " millis").c_str();
   
-  // Set SAMx8 diagnostic level and message
+  // Set Arduino diagnostic level and message
   if (load < SAMX8_WARNING_LOAD) {
     
     diagnosticsMessage.status[4].level = diagnostic_msgs::DiagnosticStatus::OK;

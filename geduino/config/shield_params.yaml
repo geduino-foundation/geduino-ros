@@ -15,7 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 # Name of port to use (default: /dev/ttyUSB0)
-port: /dev/ttymxc3
+port: /dev/ttyACM0
 
 # Baud rate, in bps (default: 57600)
 baud: 115200
