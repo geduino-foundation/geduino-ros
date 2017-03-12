@@ -15,7 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 # The serial port, the baudrate and timeout (in millis)
-port: /dev/ttymxc2
+port: /dev/ttyS5
 baudrate: 38400
 timeout: 250
 
@@ -62,4 +62,4 @@ yaw_speed_variance: 0.06
 
 # True if odom frame -> base frame transformation must be
 # published by this node, false otherwise (default: true)
-publish_odom_transformation: false
+publish_odom_transformation: true

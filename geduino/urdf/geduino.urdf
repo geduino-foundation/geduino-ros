@@ -60,15 +60,12 @@
   <link name="base_right_range">
   </link>
 
-  <!-- The base imu -->
-  <link name="base_imu">
-  </link>
 
   <!-- The base_link -> base_laser joint -->
   <joint name="base_link_to_base_laser" type="fixed">
     <parent link="base_link"/>
     <child link="base_laser"/>
-    <origin xyz="0.095 -0.026 0.15" rpy="3.1415 0 1.5707"/>
+    <origin xyz="0.000 0.000 0.15" rpy="3.1415 0 1.5707"/>
   </joint>
 
   <!-- The base_link -> base_left_range joint -->
@@ -90,13 +87,6 @@
     <parent link="base_link"/>
     <child link="base_right_range"/>
     <origin xyz="0.097 -0.097 0.055" rpy="0 0 -0.7853"/>
-  </joint>
-
-  <!-- The base_link -> base_imu joint -->
-  <joint name="base_link_to_base_imu" type="fixed">
-    <parent link="base_link"/>
-    <child link="base_imu"/>
-    <origin xyz="-0.07 -0.035 0.095" rpy="0 0 1.5707"/>
   </joint>
 
 </robot>
