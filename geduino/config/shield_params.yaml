@@ -14,8 +14,24 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+# Serial node related params
+
 # Name of port to use (default: /dev/ttyUSB0)
 port: /dev/ttyACM0
 
 # Baud rate, in bps (default: 57600)
 baud: 115200
+
+# Shield related params
+
+# The battery warning level threshold in Volts (default: 13.6)
+batteryWarningVolts: 13.6
+
+# The battery critical level threshold in Volts (default: 12.8)
+batteryCriticalVolts: 12.8
+
+# The MCU wearning load in % (default: 10)
+mcuWarningLoad: 10
+
+# The MCU critical load in % (default: 50)
+mcuCriticalLoad: 50

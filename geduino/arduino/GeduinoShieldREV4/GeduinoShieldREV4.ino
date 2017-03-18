@@ -59,13 +59,13 @@
 #define BATTERY_PARAM_A                       2.805
 #define BATTERY_PARAM_B                       10.232
 
-// The battery threshold levels
-#define BATTERY_WARNING_VOLTS                 13.6        // [V]
-#define BATTERY_CRITICAL_VOLTS                12.4        // [V]
+// The battery threshold default levels
+#define BATTERY_WARNING_VOLTS_DEFAULT         13.6        // [V]
+#define BATTERY_CRITICAL_VOLTS_DEFAULT        12.4        // [V]
 
-// The MCU threshold levels
-#define MCU_WARNING_LOAD                      10          // [%]
-#define MCU_CRITICAL_LOAD                     50          // [%]
+// The MCU threshold default levels
+#define MCU_WARNING_LOAD_DEFAULT              10          // [%]
+#define MCU_CRITICAL_LOAD_DEFAULT             50          // [%]
 
 // The range publisher frequency
 #define RANGE_PUBLISHER_FREQUENCY             10          // [Hz]
@@ -135,6 +135,14 @@ diagnostic_msgs::KeyValue rightPingValues[2];
 diagnostic_msgs::KeyValue batteryValues[1];
 diagnostic_msgs::KeyValue samx8Values[7];
 ros::Publisher diagnosticsMessagePublisher("diagnostics", & diagnosticsMessage);
+
+// The battery threshold levels
+int batteryWarningVolts = BATTERY_WARNING_VOLTS_DEFAULT;
+int batteryCriticalVolts = BATTERY_CRITICAL_VOLTS_DEFAULT;
+
+// The MCU threshold levels
+int mcuWarningLoad = MCU_WARNING_LOAD_DEFAULT;
+int mcuCriticalLoad = MCU_CRITICAL_LOAD_DEFAULT;
 
 /****************************************************************************************
  * Setup
@@ -290,6 +298,13 @@ void loop() {
 
     // Check battery state
     checkBatteryState();
+
+    if (nodeHandle.connected()) {
+
+      // Update params
+      updateParams();
+      
+    }
     
   }
 
@@ -505,21 +520,28 @@ void publishDiagnostics() {
   diagnosticsMessage.status[3].values[0].value = String(String(volts, 1) + " V").c_str();
 
   // Set battery diagnostic level and message
-  if (volts > BATTERY_WARNING_VOLTS) {
+  if (volts > batteryWarningVolts) {
     
     diagnosticsMessage.status[3].level = diagnostic_msgs::DiagnosticStatus::OK;
     diagnosticsMessage.status[3].message = "OK";
 
     // Turn off red led
     redLed.ledOff();
-    
-  } else if (volts > BATTERY_CRITICAL_VOLTS) {
+
+  } else if (volts > batteryCriticalVolts) {
     
     diagnosticsMessage.status[3].level = diagnostic_msgs::DiagnosticStatus::WARN;
     diagnosticsMessage.status[3].message = "Voltage under warning level, charge battery";
 
     // Turn on red led
     redLed.ledOn();
+
+#ifndef SERIAL_DEBUG
+
+    // Log
+    nodeHandle.logwarn("Voltage under warning level, charge battery");
+
+#endif
   
   } else {
     
@@ -528,6 +550,14 @@ void publishDiagnostics() {
 
     // Turn on red led
     redLed.ledOn();
+
+#ifndef SERIAL_DEBUG
+
+    // Log
+    nodeHandle.logwarn("Voltage under critical level, power off immediatly to avoid battery damage");
+
+#endif
+    
   
   }
 
@@ -551,12 +581,12 @@ void publishDiagnostics() {
   diagnosticsMessage.status[4].values[6].value = String(String(diagnosticsDuration, 2) + " millis").c_str();
   
   // Set MCU diagnostic level and message
-  if (load < MCU_WARNING_LOAD) {
+  if (load < mcuWarningLoad) {
     
     diagnosticsMessage.status[4].level = diagnostic_msgs::DiagnosticStatus::OK;
     diagnosticsMessage.status[4].message = "OK";
     
-  } else if (load < MCU_CRITICAL_LOAD) {
+  } else if (load < mcuCriticalLoad) {
     
     diagnosticsMessage.status[4].level = diagnostic_msgs::DiagnosticStatus::WARN;
     diagnosticsMessage.status[4].message = "Load over warning level";
@@ -591,7 +621,7 @@ void checkBatteryState() {
   float volts;
   battery.getVolts(& volts);
 
-  if (volts > BATTERY_WARNING_VOLTS) {
+  if (volts > batteryWarningVolts) {
     
     // Blink red led
     redLed.ledBlinkFast();
@@ -599,11 +629,11 @@ void checkBatteryState() {
 #ifdef SERIAL_DEBUG
 
     // Debug
-    Serial.println("voltage under warning level, charge battery");
-
+    Serial.println("Voltage under warning level, charge battery");
+    
 #endif
     
-  } else if (volts > BATTERY_CRITICAL_VOLTS) {
+  } else if (volts > batteryCriticalVolts) {
     
     // Turn on red led
     redLed.ledOn();
@@ -611,7 +641,7 @@ void checkBatteryState() {
 #ifdef SERIAL_DEBUG
 
     // Debug
-    Serial.println("voltage under critical level, power off immediatly to avoid battery damage");
+    Serial.println("Voltage under critical level, power off immediatly to avoid battery damage");
 
 #endif
 
@@ -624,4 +654,15 @@ void checkBatteryState() {
   
 }
 
+void updateParams() {
+
+  nodeHandle.getParam("~batteryWarningVolts", & batteryWarningVolts);
+  nodeHandle.getParam("~batteryCriticalVolts", & batteryCriticalVolts);
+  
+  nodeHandle.getParam("~mcuWarningLoad", & mcuWarningLoad);
+  nodeHandle.getParam("~mcuCriticalLoad", & mcuCriticalLoad);
+
+  nodeHandle.loginfo("Parameter updated");
+  
+}
 
