@@ -63,9 +63,9 @@
 #define BATTERY_WARNING_VOLTS                 13.6        // [V]
 #define BATTERY_CRITICAL_VOLTS                12.4        // [V]
 
-// The SAMx8 threshold levels
-#define SAMX8_WARNING_LOAD                    10          // [%]
-#define SAMX8_CRITICAL_LOAD                   50          // [%]
+// The MCU threshold levels
+#define MCU_WARNING_LOAD                      10          // [%]
+#define MCU_CRITICAL_LOAD                     50          // [%]
 
 // The range publisher frequency
 #define RANGE_PUBLISHER_FREQUENCY             10          // [Hz]
@@ -233,9 +233,9 @@ void setup() {
   diagnosticsMessage.status[3].values[0].key = "Volts";
   diagnosticsMessage.status[3].values[0].value = "N/A";
 
-  // The Arduino diagnostic status
-  diagnosticsMessage.status[4].name = "Arduino";
-  diagnosticsMessage.status[4].hardware_id = "arduino";
+  // The MCU diagnostic status
+  diagnosticsMessage.status[4].name = "MCU";
+  diagnosticsMessage.status[4].hardware_id = "mcu";
   diagnosticsMessage.status[4].values_length = 7;
   diagnosticsMessage.status[4].values = samx8Values;
   diagnosticsMessage.status[4].values[0].key = "Load";
@@ -550,13 +550,13 @@ void publishDiagnostics() {
   diagnosticsMessage.status[4].values[5].value = String(String(diagnosticsDelay, 2) + " millis").c_str();
   diagnosticsMessage.status[4].values[6].value = String(String(diagnosticsDuration, 2) + " millis").c_str();
   
-  // Set Arduino diagnostic level and message
-  if (load < SAMX8_WARNING_LOAD) {
+  // Set MCU diagnostic level and message
+  if (load < MCU_WARNING_LOAD) {
     
     diagnosticsMessage.status[4].level = diagnostic_msgs::DiagnosticStatus::OK;
     diagnosticsMessage.status[4].message = "OK";
     
-  } else if (load < SAMX8_CRITICAL_LOAD) {
+  } else if (load < MCU_CRITICAL_LOAD) {
     
     diagnosticsMessage.status[4].level = diagnostic_msgs::DiagnosticStatus::WARN;
     diagnosticsMessage.status[4].message = "Load over warning level";
