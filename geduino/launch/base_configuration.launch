@@ -26,11 +26,8 @@
     <rosparam file="$(find geduino)/config/robot_state_publisher_params.yaml" command="load"/>
   </node>
 
-  <!-- The ekf localization node -->
-  <node pkg="robot_localization" type="ekf_localization_node" name="ekf" respawn="true" output="screen">
-    <remap from="odometry/filtered" to="odom_filtered"/>
-    <rosparam file="$(find geduino)/config/ekf_localization_params.yaml" command="load"/>
-  </node>
+  <!-- The System Monitor -->
+  <include file="$(find geduino)/launch/system_monitor.launch" />
 
   <!-- The RPLidar node -->
   <node pkg="rplidar" type="rplidar_node" name="rplidar" respawn="true" output="screen">
@@ -45,11 +42,6 @@
   <!-- The MD25 -->
   <node pkg="md25" type="md25_node" name="md25" respawn="true" output="screen">
     <rosparam file="$(find geduino)/config/md25_params.yaml" command="load" />
-  </node>
-
-  <!-- The MPU9150 -->
-  <node pkg="mpu9150" type="mpu9150_node" name="mpu9150" respawn="true" output="screen">
-    <rosparam file="$(find geduino)/config/mpu9150_params.yaml" command="load" />
   </node>
 
 </launch>

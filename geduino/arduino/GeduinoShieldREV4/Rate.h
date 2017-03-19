@@ -29,6 +29,9 @@ public:
 
   // Create new rate with given frequency
   Rate(float frequency);
+
+  // Change rate frequency
+  void setFrequency(float frequency);
   
   // Get if current rate is ellapsed and, if it is, schedule next
   boolean ellapsed();

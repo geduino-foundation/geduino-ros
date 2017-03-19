@@ -14,8 +14,40 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+# Serial node related params
+
 # Name of port to use (default: /dev/ttyUSB0)
-port: /dev/ttymxc3
+port: /dev/ttyACM0
 
 # Baud rate, in bps (default: 57600)
 baud: 115200
+
+# Shield related params
+
+# The battery warning level threshold in Volts (default: 13.6)
+batteryWarningVolts: 13.6
+
+# The battery critical level threshold in Volts (default: 12.8)
+batteryCriticalVolts: 12.8
+
+# The MCU wearning load in % (default: 10)
+mcuWarningLoad: 10
+
+# The MCU critical load in % (default: 50.0)
+mcuCriticalLoad: 50
+
+# The range publisher frequency in Hz (default: 10)
+rangePublisherFrequency: 10.0
+
+# The battery state publisher frequency in Hz (default: 1)
+batteryStatePublisherFrequency: 1.0
+
+# The diagnostics publisher frequency in Hz (default: 1)
+diagnosticsPublisherFrequency: 1.0
+
+# The battery params conversion from raw volts.
+# The conversion parameter are used to convert raw voltage to battery voltage with formula:
+#   Vbatt = Vraw * paramA + paramB.
+# (default: 2.805, 10.232)
+batteryParamA: 2.805
+batteryParamB: 10.232

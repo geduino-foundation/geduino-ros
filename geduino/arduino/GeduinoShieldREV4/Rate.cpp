@@ -22,6 +22,10 @@
 /* Public methods */
 
 Rate::Rate(float frequency) {
+  setFrequency(frequency);
+}
+
+void Rate::setFrequency(float frequency) {
 
   // Calculate time interval
   timeInterval = 1000 / frequency;
@@ -31,7 +35,7 @@ Rate::Rate(float frequency) {
 
   // Schedule next
   scheduleNext(now);
-
+  
 }
 
 boolean Rate::ellapsed() {

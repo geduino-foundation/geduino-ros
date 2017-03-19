@@ -1,5 +1,5 @@
 /*
- GeduinoShieldREV2.ino
+ GeduinoShieldREV4.ino
  http://www.geduino.org
  
  Copyright (C) 2016 Alessandro Francescon
@@ -22,57 +22,56 @@
 #include <sensor_msgs/Temperature.h>
 #include <std_msgs/Float32.h>
 #include <diagnostic_msgs/DiagnosticArray.h>
-#include "PString.h"
 #include "PING.h"
 #include "TMP36.h"
 #include "Battery.h"
 #include "Rate.h"
 #include "Counter.h"
 #include "Loop.h"
+#include "Led.h"
 
 /****************************************************************************************
  * Begin configuration
  */
- 
-// Enable/disable serial debug
-//#define SERIAL_DEBUG
 
 // The ROS serial baud rare
-#define ROS_SERIAL_BAUD_RATE                  115200
+#define ROS_SERIAL_BAUD_RATE                          115200
 
 // Connected PINs
-#define LEFT_PING_PIN                         26
-#define CENTRAL_PING_PIN                      24
-#define RIGHT_PING_PIN                        28
-#define BATTERY_VOLT_PIN                      A11
-#define TMP36_PIN                             A10
+#define LEFT_PING_PIN                                 8
+#define CENTRAL_PING_PIN                              12
+#define RIGHT_PING_PIN                                13
+#define BATTERY_VOLT_PIN                              A1
+#define TMP36_PIN                                     A0
+#define RED_LED_PIN                                   7
+#define GREEN_LED_PIN                                 4
 
 // Ping sensor specification
-#define PING_FIELD_OF_VIEW                    0.1745      // [rad]
-#define PING_MIN_RANGE                        0.05        // [m]
-#define PING_MAX_RANGE                        3.00        // [m]
-#define PING_MOUNTING_GAP                     0.02        // [m]
+#define PING_FIELD_OF_VIEW                            0.1745      // [rad]
+#define PING_MIN_RANGE                                0.05        // [m]
+#define PING_MAX_RANGE                                3.00        // [m]
+#define PING_MOUNTING_GAP                             0.02        // [m]
 
 // The battery parameters
-#define BATTERY_PARAM_A                       2.805
-#define BATTERY_PARAM_B                       10.232
+#define BATTERY_PARAM_A_DEFAULT                       2.805
+#define BATTERY_PARAM_B_DEFAULT                       10.232
 
-// The battery threshold levels
-#define BATTERY_WARNING_VOLTS                 13.6        // [V]
-#define BATTERY_CRITICAL_VOLTS                12.4        // [V]
+// The battery threshold default levels
+#define BATTERY_WARNING_VOLTS_DEFAULT                 13.6        // [V]
+#define BATTERY_CRITICAL_VOLTS_DEFAULT                12.4        // [V]
 
-// The SAMx8 threshold levels
-#define SAMX8_WARNING_LOAD                    10          // [%]
-#define SAMX8_CRITICAL_LOAD                   50          // [%]
+// The MCU threshold default levels
+#define MCU_WARNING_LOAD_DEFAULT                      10          // [%]
+#define MCU_CRITICAL_LOAD_DEFAULT                     50          // [%]
 
-// The range publisher frequency
-#define RANGE_PUBLISHER_FREQUENCY             10          // [Hz]
+// The range publisher default frequency
+#define RANGE_PUBLISHER_FREQUENCY_DEFAULT             10          // [Hz]
 
-// The battery state publisher frequency
-#define BATTERY_STATE_PUBLISHER_FREQUENCY     1           // [Hz]
+// The battery state publisher default frequency
+#define BATTERY_STATE_PUBLISHER_FREQUENCY_DEFAULT     1           // [Hz]
 
-// The diagnostics publisher frequency
-#define DIAGNOSTICS_PUBLISHER_FREQUENCY       1          // [Hz]
+// The diagnostics publisher default frequency
+#define DIAGNOSTICS_PUBLISHER_FREQUENCY_DEFAULT       1          // [Hz]
 
 /****************************************************************************************
  * End configuration
@@ -84,19 +83,23 @@ PING centralPing(CENTRAL_PING_PIN, PING_MOUNTING_GAP);
 PING rightPing(RIGHT_PING_PIN, PING_MOUNTING_GAP);
 
 // The battery voltage sensor
-Battery battery(BATTERY_VOLT_PIN, BATTERY_PARAM_A, BATTERY_PARAM_B);
+Battery battery(BATTERY_VOLT_PIN, BATTERY_PARAM_A_DEFAULT, BATTERY_PARAM_B_DEFAULT);
 
 // The TMP36 sensor
 TMP36 tmp36(TMP36_PIN);
 
+// The leds
+Led redLed(RED_LED_PIN);
+Led greenLed(GREEN_LED_PIN);
+
 // The range publisher rate
-Rate rangePublisherRate(RANGE_PUBLISHER_FREQUENCY);
+Rate rangePublisherRate(RANGE_PUBLISHER_FREQUENCY_DEFAULT);
 
 // The battery state publisher rate
-Rate batteryStatePublisherRate(BATTERY_STATE_PUBLISHER_FREQUENCY);
+Rate batteryStatePublisherRate(BATTERY_STATE_PUBLISHER_FREQUENCY_DEFAULT);
 
 // The diagnostics publisher rate
-Rate diagnosticsPublisherRate(DIAGNOSTICS_PUBLISHER_FREQUENCY);
+Rate diagnosticsPublisherRate(DIAGNOSTICS_PUBLISHER_FREQUENCY_DEFAULT);
 
 // The main loop statistic
 Loop mainLoop;
@@ -130,27 +133,25 @@ diagnostic_msgs::KeyValue batteryValues[1];
 diagnostic_msgs::KeyValue samx8Values[7];
 ros::Publisher diagnosticsMessagePublisher("diagnostics", & diagnosticsMessage);
 
+// The battery threshold levels
+float batteryWarningVolts = BATTERY_WARNING_VOLTS_DEFAULT;
+float batteryCriticalVolts = BATTERY_CRITICAL_VOLTS_DEFAULT;
+
+// The MCU threshold levels
+int mcuWarningLoad = MCU_WARNING_LOAD_DEFAULT;
+int mcuCriticalLoad = MCU_CRITICAL_LOAD_DEFAULT;
+
 /****************************************************************************************
  * Setup
  */
 
 void setup() {
-  
-  // Set pin 38 to input since GPIO 54 is handled by iMX.6
-  pinMode(38, INPUT);
-  
-  // Set pin 13 to input since GPIO 40 is handled by iMX.6
-  pinMode(13, INPUT);
-  
-  // Set pins 47 and 53 to input since UART3 is handled by iMX.6
-  pinMode(47, INPUT);
-  pinMode(53, INPUT);
-  
-  // Set pins 48 and 49 to input since UART5 is handled by iMX.6
-  pinMode(48, INPUT);
-  pinMode(49, INPUT);
 
-#ifndef SERIAL_DEBUG
+  // Blink leds to inform start 
+  greenLed.ledOn();
+  redLed.ledBlinkFastFor(2000);
+  redLed.ledOn();
+  greenLed.ledOff();
 
   // Set baud rate
   nodeHandle.getHardware()->setBaud(ROS_SERIAL_BAUD_RATE);
@@ -160,16 +161,6 @@ void setup() {
   
   // Debug
   nodeHandle.logdebug("intializing messages...");
-  
-#else
-
-  // Begin debug serial
-  Serial.begin(ROS_SERIAL_BAUD_RATE);
-  
-  // Debug
-  Serial.println("setup completed: starting loop...");
-  
-#endif
   
   // Init range messages
   leftRangeMessage.radiation_type = sensor_msgs::Range::ULTRASOUND;
@@ -203,9 +194,9 @@ void setup() {
   diagnosticsMessage.status[0].values_length = 2;
   diagnosticsMessage.status[0].values = leftPingValues;
   diagnosticsMessage.status[0].values[0].key = "Failures";
-  diagnosticsMessage.status[0].values[0].value = (char *) malloc(16);
+  diagnosticsMessage.status[0].values[0].value = "N/A";
   diagnosticsMessage.status[0].values[1].key = "Measurement";
-  diagnosticsMessage.status[0].values[1].value = (char *) malloc(16);
+  diagnosticsMessage.status[0].values[1].value = "N/A";
   
   // The center ping diagnostic status
   diagnosticsMessage.status[1].name = "Center PING)))";
@@ -213,9 +204,9 @@ void setup() {
   diagnosticsMessage.status[1].values_length = 2;
   diagnosticsMessage.status[1].values = centerPingValues;
   diagnosticsMessage.status[1].values[0].key = "Failures";
-  diagnosticsMessage.status[1].values[0].value = (char *) malloc(16);
+  diagnosticsMessage.status[1].values[0].value = "N/A";
   diagnosticsMessage.status[1].values[1].key = "Measurement";
-  diagnosticsMessage.status[1].values[1].value = (char *) malloc(16);
+  diagnosticsMessage.status[1].values[1].value = "N/A";
   
   // The right ping diagnostic status
   diagnosticsMessage.status[2].name = "Right PING)))";
@@ -223,9 +214,9 @@ void setup() {
   diagnosticsMessage.status[2].values_length = 2;
   diagnosticsMessage.status[2].values = rightPingValues;
   diagnosticsMessage.status[2].values[0].key = "Failures";
-  diagnosticsMessage.status[2].values[0].value = (char *) malloc(16);
+  diagnosticsMessage.status[2].values[0].value = "N/A";
   diagnosticsMessage.status[2].values[1].key = "Measurement";
-  diagnosticsMessage.status[2].values[1].value = (char *) malloc(16);
+  diagnosticsMessage.status[2].values[1].value = "N/A";
  
   // The battery diagnostic status
   diagnosticsMessage.status[3].name = "Battery";
@@ -233,32 +224,27 @@ void setup() {
   diagnosticsMessage.status[3].values_length = 1;
   diagnosticsMessage.status[3].values = batteryValues;
   diagnosticsMessage.status[3].values[0].key = "Volts";
-  diagnosticsMessage.status[3].values[0].value = (char *) malloc(16);
+  diagnosticsMessage.status[3].values[0].value = "N/A";
 
-  // The SAMx8 diagnostic status
-  diagnosticsMessage.status[4].name = "SAMx8";
-  diagnosticsMessage.status[4].hardware_id = "samx8";
+  // The MCU diagnostic status
+  diagnosticsMessage.status[4].name = "MCU";
+  diagnosticsMessage.status[4].hardware_id = "mcu";
   diagnosticsMessage.status[4].values_length = 7;
   diagnosticsMessage.status[4].values = samx8Values;
   diagnosticsMessage.status[4].values[0].key = "Load";
-  diagnosticsMessage.status[4].values[0].value = (char *) malloc(16);
+  diagnosticsMessage.status[4].values[0].value = "N/A";
   diagnosticsMessage.status[4].values[1].key = "Range average delay";
-  diagnosticsMessage.status[4].values[1].value = (char *) malloc(16);
+  diagnosticsMessage.status[4].values[1].value = "N/A";
   diagnosticsMessage.status[4].values[2].key = "Range main duration";
-  diagnosticsMessage.status[4].values[2].value = (char *) malloc(16);
+  diagnosticsMessage.status[4].values[2].value = "N/A";
   diagnosticsMessage.status[4].values[3].key = "Battery state average delay";
-  diagnosticsMessage.status[4].values[3].value = (char *) malloc(16);
+  diagnosticsMessage.status[4].values[3].value = "N/A";
   diagnosticsMessage.status[4].values[4].key = "Battery state main duration";
-  diagnosticsMessage.status[4].values[4].value = (char *) malloc(16);
+  diagnosticsMessage.status[4].values[4].value = "N/A";
   diagnosticsMessage.status[4].values[5].key = "Diagnostics average delay";
-  diagnosticsMessage.status[4].values[5].value = (char *) malloc(16);
+  diagnosticsMessage.status[4].values[5].value = "N/A";
   diagnosticsMessage.status[4].values[6].key = "Diagnostics main duration";
-  diagnosticsMessage.status[4].values[6].value = (char *) malloc(16);
-  
-#ifndef SERIAL_DEBUG
-
-  // Debug
-  nodeHandle.logdebug("advertise node handle for publishers...");
+  diagnosticsMessage.status[4].values[6].value = "N/A";
   
   // Advertise node handle for publishers
   nodeHandle.advertise(leftRangeMessagePublisher);
@@ -268,11 +254,6 @@ void setup() {
   nodeHandle.advertise(batteryStateMessagePublisher);
   nodeHandle.advertise(diagnosticsMessagePublisher);
   
-  // Debug
-  nodeHandle.loginfo("initialization complete");
-
-#endif
-
 }
 
 /****************************************************************************************
@@ -280,6 +261,34 @@ void setup() {
  */
 
 void loop() {
+
+  while (!nodeHandle.connected()) {
+
+    // Blink green led to inform wating for connection
+    greenLed.ledBlinkSlow();
+    redLed.ledOff();
+
+    // Spin once
+    nodeHandle.spinOnce();
+
+    // Check battery state
+    checkBatteryState();
+
+    if (nodeHandle.connected()) {
+
+      // Update params
+      updateParams();
+
+      // Log
+      nodeHandle.loginfo("Starting loop...");
+      
+    }
+    
+  }
+
+  // Turn off red led and turn on green led
+  redLed.ledOff();
+  greenLed.ledOn();
   
   if (rangePublisherRate.ellapsed()) {
        
@@ -336,13 +345,6 @@ void loop() {
 
 void publishRange() {
 
-#ifdef SERIAL_DEBUG
-
-  // Debug
-  Serial.println("Publish range...");
-  
-#endif
-
   // Get temperature
   float temperature;
   tmp36.getTemperature(& temperature);
@@ -368,8 +370,6 @@ void publishRange() {
   temperatureMessage.header.stamp = now;
   temperatureMessage.temperature = temperature;
 
-#ifndef SERIAL_DEBUG
-
   // Publish range messages
   leftRangeMessagePublisher.publish(& leftRangeMessage);
   centerRangeMessagePublisher.publish(& centerRangeMessage);
@@ -381,36 +381,13 @@ void publishRange() {
   // Spin once
   nodeHandle.spinOnce();
 
-#else
-
-  // Debug
-  Serial.print("Temperature [C]: ");
-  Serial.print(temperature);
-  Serial.print(" Left [m]: ");
-  Serial.print(leftPingMeasurement);
-  Serial.print(" Central [m]: ");
-  Serial.print(centralPingMeasurement);
-  Serial.print(" Right [m]: ");
-  Serial.println(rightPingMeasurement);
-
-#endif
-
 }
 
 void publishBatteryState() {
 
-#ifdef SERIAL_DEBUG
-
-  // Debug
-  Serial.println("Publish battery state...");
-  
-#endif
-
   // Get battery volts
   float volts;
   battery.getVolts(& volts);
-  
-#ifndef SERIAL_DEBUG
 
   // Update battery state message
   batteryStateMessage.data = volts;
@@ -420,55 +397,10 @@ void publishBatteryState() {
   
   // Spin once
   nodeHandle.spinOnce();
-  
-#else
 
-  // Debug
-  Serial.print("Battery Voltage [V]: ");
-  Serial.println(volts);
-  
-#endif
-
-}
-
-void getPingDiagnosticStatus(PING * ping, diagnostic_msgs::DiagnosticStatus * diagnosticStatus) {
-  
-   // Get ping diagnostic status
-  unsigned long failures, measurement;
-  ping->getFailureCounter().getCounters(& failures, & measurement);
-  
-  // Set ping diagnostic values
-  String(failures, DEC).toCharArray(diagnosticStatus->values[0].value, 16);
-  String(measurement, DEC).toCharArray(diagnosticStatus->values[1].value, 16);
-
-  // Set ping diagnostic level and message
-  if (failures == 0) {
-    
-    diagnosticStatus->level = diagnostic_msgs::DiagnosticStatus::OK;
-    diagnosticStatus->message = "OK";
-    
-  } else if (failures < measurement) {
-    
-    diagnosticStatus->level = diagnostic_msgs::DiagnosticStatus::WARN;
-    diagnosticStatus->message = "Some measurement failed";
-  
-  } else {
-    
-    diagnosticStatus->level = diagnostic_msgs::DiagnosticStatus::ERROR;
-    diagnosticStatus->message = "All measurement failed";
-  
-  }
-  
 }
 
 void publishDiagnostics() {
-  
-#ifdef SERIAL_DEBUG
-
-  // Debug
-  Serial.println("Publish diagnostics...");
-  
-#endif
 
   // Get ROS current time
   ros::Time now = nodeHandle.now();
@@ -476,39 +408,133 @@ void publishDiagnostics() {
   // Set time on diagnstics message header
   diagnosticsMessage.header.stamp = now;
 
-  // Get pings diagnostic status
-  getPingDiagnosticStatus(& leftPing, & diagnosticsMessage.status[0]);
-  getPingDiagnosticStatus(& centralPing, & diagnosticsMessage.status[1]);
-  getPingDiagnosticStatus(& rightPing, & diagnosticsMessage.status[2]);
+  // Get left ping failures and measurements
+  unsigned long leftPingFailures, leftPingMeasurement;
+  leftPing.getFailureCounter().getCounters(& leftPingFailures, & leftPingMeasurement);
+
+  // Set left ping diagnostic values
+  String leftPingFailuresString = String(leftPingFailures, DEC);
+  diagnosticsMessage.status[0].values[0].value = leftPingFailuresString.c_str();
+  String leftPingMeasurementString = String(leftPingMeasurement, DEC);
+  diagnosticsMessage.status[0].values[1].value = leftPingMeasurementString.c_str();
+
+  // Set ping diagnostic level and message
+  if (leftPingFailures == 0) {
+    
+    diagnosticsMessage.status[0].level = diagnostic_msgs::DiagnosticStatus::OK;
+    diagnosticsMessage.status[0].message = "OK";
+    
+  } else if (leftPingFailures < leftPingMeasurement) {
+    
+    diagnosticsMessage.status[0].level = diagnostic_msgs::DiagnosticStatus::WARN;
+    diagnosticsMessage.status[0].message = "Some measurement failed";
+  
+  } else {
+    
+    diagnosticsMessage.status[0].level = diagnostic_msgs::DiagnosticStatus::ERROR;
+    diagnosticsMessage.status[0].message = "All measurement failed";
+  
+
+  }
+
+  // Get central ping failures and measurements
+  unsigned long centralPingFailures, centralPingMeasurement;
+  centralPing.getFailureCounter().getCounters(& centralPingFailures, & centralPingMeasurement);
+
+  // Set central ping diagnostic values
+  String centralPingFailuresString = String(centralPingFailures, DEC);
+  diagnosticsMessage.status[1].values[0].value = centralPingFailuresString.c_str();
+  String centralPingMeasurementString = String(centralPingMeasurement, DEC);
+  diagnosticsMessage.status[1].values[1].value = centralPingMeasurementString.c_str();
+
+  // Set ping diagnostic level and message
+  if (centralPingFailures == 0) {
+    
+    diagnosticsMessage.status[1].level = diagnostic_msgs::DiagnosticStatus::OK;
+    diagnosticsMessage.status[1].message = "OK";
+    
+  } else if (centralPingFailures < centralPingMeasurement) {
+    
+    diagnosticsMessage.status[1].level = diagnostic_msgs::DiagnosticStatus::WARN;
+    diagnosticsMessage.status[1].message = "Some measurement failed";
+  
+  } else {
+    
+    diagnosticsMessage.status[1].level = diagnostic_msgs::DiagnosticStatus::ERROR;
+    diagnosticsMessage.status[1].message = "All measurement failed";
+  
+  }
+
+  // Get right ping failures and measurements
+  unsigned long rightPingFailures, rightPingMeasurement;
+  rightPing.getFailureCounter().getCounters(& rightPingFailures, & rightPingMeasurement);
+
+  // Set right ping diagnostic values
+  String rightPingFailuresString = String(rightPingFailures, DEC);
+  diagnosticsMessage.status[2].values[0].value = rightPingFailuresString.c_str();
+  String rightPingMeasurementString = String(rightPingMeasurement, DEC);
+  diagnosticsMessage.status[2].values[1].value = rightPingMeasurementString.c_str();
+
+  // Set ping diagnostic level and message
+  if (rightPingFailures == 0) {
+    
+    diagnosticsMessage.status[2].level = diagnostic_msgs::DiagnosticStatus::OK;
+    diagnosticsMessage.status[2].message = "OK";
+    
+  } else if (rightPingFailures < rightPingMeasurement) {
+    
+    diagnosticsMessage.status[2].level = diagnostic_msgs::DiagnosticStatus::WARN;
+    diagnosticsMessage.status[2].message = "Some measurement failed";
+  
+  } else {
+    
+    diagnosticsMessage.status[2].level = diagnostic_msgs::DiagnosticStatus::ERROR;
+    diagnosticsMessage.status[2].message = "All measurement failed";
+  
+  }
 
   // Get battery volts
   float volts;
   battery.getVolts(& volts);
 
-  // Set SAMx8 diagnostic values
-  PString voltsString(diagnosticsMessage.status[3].values[0].value, 16);
-  voltsString.print(volts, 1);
-  voltsString.print(" V");
+  // Set battery diagnostic values
+  String voltsString = String(String(volts, 1) + " V");
+  diagnosticsMessage.status[3].values[0].value = voltsString.c_str();
 
   // Set battery diagnostic level and message
-  if (volts > BATTERY_WARNING_VOLTS) {
+  if (volts > batteryWarningVolts) {
     
     diagnosticsMessage.status[3].level = diagnostic_msgs::DiagnosticStatus::OK;
     diagnosticsMessage.status[3].message = "OK";
-    
-  } else if (volts > BATTERY_CRITICAL_VOLTS) {
+
+    // Turn off red led
+    redLed.ledOff();
+
+  } else if (volts > batteryCriticalVolts) {
     
     diagnosticsMessage.status[3].level = diagnostic_msgs::DiagnosticStatus::WARN;
     diagnosticsMessage.status[3].message = "Voltage under warning level, charge battery";
-  
+
+    // Turn on red led
+    redLed.ledOn();
+
+    // Log
+    nodeHandle.logwarn("Voltage under warning level, charge battery");
+
   } else {
     
     diagnosticsMessage.status[3].level = diagnostic_msgs::DiagnosticStatus::ERROR;
     diagnosticsMessage.status[3].message = "Voltage under critical level, power off immediatly to avoid battery damage";
+
+    // Turn on red led
+    redLed.ledOn();
+
+    // Log
+    nodeHandle.logwarn("Voltage under critical level, power off immediatly to avoid battery damage");
   
   }
 
-  // Get SAMx8 load, delays and duration
+  // Get MCU load, delays and duration
   float load, rangeDelay, rangeDuration, batteryStateDelay, batteryStateDuration, diagnosticsDelay, diagnosticsDuration;
   mainLoop.getUsedCounter().getAverage(& load);
   rangePublisherRate.getDelayCounter().getAverage(& rangeDelay);
@@ -517,38 +543,30 @@ void publishDiagnostics() {
   batteryStatePublisherRate.getDurationCounter().getAverage(& batteryStateDuration);
   diagnosticsPublisherRate.getDelayCounter().getAverage(& diagnosticsDelay);
   diagnosticsPublisherRate.getDurationCounter().getAverage(& diagnosticsDuration);
+
+  // Set Arduino diagnostic values
+  String loadString = String(String(load, 2) + " %").c_str();
+  diagnosticsMessage.status[4].values[0].value = loadString.c_str();
+  String rangeDelayString = String(String(rangeDelay, 2) + " millis");
+  diagnosticsMessage.status[4].values[1].value = rangeDelayString.c_str();
+  String rangeDurationString = String(String(rangeDuration, 2) + " millis");
+  diagnosticsMessage.status[4].values[2].value = rangeDurationString.c_str();
+  String batteryStateDelayString = String(String(batteryStateDelay, 2) + " millis");
+  diagnosticsMessage.status[4].values[3].value = batteryStateDelayString.c_str();
+  String batteryStateDurationString = String(String(batteryStateDuration, 2) + " millis");
+  diagnosticsMessage.status[4].values[4].value = batteryStateDurationString.c_str();
+  String diagnosticsDelayString = String(String(diagnosticsDelay, 2) + " millis");
+  diagnosticsMessage.status[4].values[5].value = diagnosticsDelayString.c_str();
+  String diagnosticsDurationString = String(String(diagnosticsDuration, 2) + " millis");
+  diagnosticsMessage.status[4].values[6].value = diagnosticsDurationString.c_str();
   
-  // Set SAMx8 diagnostic values
-  char loadChars[16], rangeDelayChars[16], rangeDurationChars[16], batteryStateDelayChars[16], batteryStateDurationChars[16], diagnosticsDelayChars[16], diagnosticsDurationChars[16];
-  PString loadString(diagnosticsMessage.status[4].values[0].value, 16);
-  loadString.print(load, 2);
-  loadString.print(" %");
-  PString rangeDelayString(diagnosticsMessage.status[4].values[1].value, 16);
-  rangeDelayString.print(rangeDelay, 2);
-  rangeDelayString.print(" millis");
-  PString rangeDurationString(diagnosticsMessage.status[4].values[2].value, 16);
-  rangeDurationString.print(rangeDuration, 2);
-  rangeDurationString.print(" millis");
-  PString batteryStateDelayString(diagnosticsMessage.status[4].values[3].value, 16);
-  batteryStateDelayString.print(batteryStateDelay, 2);
-  batteryStateDelayString.print(" millis");
-  PString batteryStateDurationString(diagnosticsMessage.status[4].values[4].value, 16);
-  batteryStateDurationString.print(batteryStateDuration, 2);
-  batteryStateDurationString.print(" millis");
-  PString diagnosticsDelayString(diagnosticsMessage.status[4].values[5].value, 16);
-  diagnosticsDelayString.print(diagnosticsDelay, 2);
-  diagnosticsDelayString.print(" millis");
-  PString diagnosticsDurationString(diagnosticsMessage.status[4].values[6].value, 16);
-  diagnosticsDurationString.print(diagnosticsDuration, 2);
-  diagnosticsDurationString.print(" millis");
-  
-  // Set SAMx8 diagnostic level and message
-  if (load < SAMX8_WARNING_LOAD) {
+  // Set MCU diagnostic level and message
+  if (load < mcuWarningLoad) {
     
     diagnosticsMessage.status[4].level = diagnostic_msgs::DiagnosticStatus::OK;
     diagnosticsMessage.status[4].message = "OK";
     
-  } else if (load < SAMX8_CRITICAL_LOAD) {
+  } else if (load < mcuCriticalLoad) {
     
     diagnosticsMessage.status[4].level = diagnostic_msgs::DiagnosticStatus::WARN;
     diagnosticsMessage.status[4].message = "Load over warning level";
@@ -560,21 +578,69 @@ void publishDiagnostics() {
   
   }
   
-#ifndef SERIAL_DEBUG
-  
   // Publish diagnostics message
   diagnosticsMessagePublisher.publish(& diagnosticsMessage);
   
   // Spin once
   nodeHandle.spinOnce();
   
-#else
+}
 
-  // Debug
-  Serial.println("diagnostics published");
+void checkBatteryState() {
 
-#endif
+  // Get battery volts
+  float volts;
+  battery.getVolts(& volts);
+
+  if (volts > batteryWarningVolts) {
+    
+    // Blink red led
+    redLed.ledBlinkFast();
+    
+  } else if (volts > batteryCriticalVolts) {
+    
+    // Turn on red led
+    redLed.ledOn();
+
+  } else {
+    
+    // Turn off red led
+    redLed.ledOn();
+  
+  }
   
 }
 
+void updateParams() {
+
+  nodeHandle.getParam("~batteryWarningVolts", & batteryWarningVolts);
+  nodeHandle.getParam("~batteryCriticalVolts", & batteryCriticalVolts);
+  
+  nodeHandle.getParam("~mcuWarningLoad", & mcuWarningLoad);
+  nodeHandle.getParam("~mcuCriticalLoad", & mcuCriticalLoad);
+
+  float rangePublisherFrequency;
+  if (nodeHandle.getParam("~rangePublisherFrequency", & rangePublisherFrequency)) {
+    rangePublisherRate.setFrequency(rangePublisherFrequency);
+  }
+
+  float batteryStatePublisherFrequency;
+  if (nodeHandle.getParam("~batteryStatePublisherFrequency", & batteryStatePublisherFrequency)) {
+    batteryStatePublisherRate.setFrequency(batteryStatePublisherFrequency);
+  }
+
+  float diagnosticsPublisherFrequency;
+  if (nodeHandle.getParam("~diagnosticsPublisherFrequency", & diagnosticsPublisherFrequency)) {
+    diagnosticsPublisherRate.setFrequency(diagnosticsPublisherFrequency);
+  }
+
+  float batteryParamA, batteryParamB;
+  if (nodeHandle.getParam("~batteryParamA", & batteryParamA) &&
+      nodeHandle.getParam("~batteryParamB", & batteryParamB)) {
+    battery.setParams(batteryParamA, batteryParamB);
+  }
+  
+  nodeHandle.loginfo("Parameter updated");
+  
+}
 

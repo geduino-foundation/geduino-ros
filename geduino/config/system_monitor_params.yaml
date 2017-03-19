@@ -1,0 +1,50 @@
+# system_monitor_params.yaml
+#
+# Copyright (C) 2017 Alessandro Francescon
+# 
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# CPU monitor params
+cpu_monitor:
+  check_core_temps: true
+  cpu_load_warn:  0.9
+  cpu_load_error: 1.0
+  cpu_load1_warn: 0.9
+  cpu_load5_warn: 0.8
+  cpu_temp_warn: 85.0
+  cpu_temp_error: 90.0
+
+# HDD monitor params
+hdd_monitor:
+  no_hdd_temp: true
+  no_hdd_temp_warn: false
+  hdd_level_warn: 0.95
+  hdd_level_error: 0.99
+  hdd_temp_warn: 55.0
+  hdd_temp_error: 70.0
+
+# Memory monitor params
+mem_monitor:
+  mem_level_warn: 0.95
+  mem_level_error: 0.99
+
+# NTP monitor param
+ntp_monitor:
+  reference_host: ntp.ubuntu.com
+  offset_tolerance: 500.0
+  error_offset_tolerance: 5000000.0
+
+# Network monitor param
+net_monitor:
+  net_level_warn: 0.95
+  net_capacity: 128.0

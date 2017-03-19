@@ -15,7 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 # The serial port RPLidar is connected to (default: /dev/ttymxc4)
-serial_port: /dev/ttymxc4
+serial_port: /dev/ttyUSB0
 
 # The frame laser data are referred (default: base_laser)
 frame_id: base_laser
