@@ -38,43 +38,43 @@
 //#define SERIAL_DEBUG
 
 // The ROS serial baud rare
-#define ROS_SERIAL_BAUD_RATE                  115200
+#define ROS_SERIAL_BAUD_RATE                          115200
 
 // Connected PINs
-#define LEFT_PING_PIN                         8
-#define CENTRAL_PING_PIN                      12
-#define RIGHT_PING_PIN                        13
-#define BATTERY_VOLT_PIN                      A1
-#define TMP36_PIN                             A0
-#define RED_LED_PIN                           7
-#define GREEN_LED_PIN                         4
+#define LEFT_PING_PIN                                 8
+#define CENTRAL_PING_PIN                              12
+#define RIGHT_PING_PIN                                13
+#define BATTERY_VOLT_PIN                              A1
+#define TMP36_PIN                                     A0
+#define RED_LED_PIN                                   7
+#define GREEN_LED_PIN                                 4
 
 // Ping sensor specification
-#define PING_FIELD_OF_VIEW                    0.1745      // [rad]
-#define PING_MIN_RANGE                        0.05        // [m]
-#define PING_MAX_RANGE                        3.00        // [m]
-#define PING_MOUNTING_GAP                     0.02        // [m]
+#define PING_FIELD_OF_VIEW                            0.1745      // [rad]
+#define PING_MIN_RANGE                                0.05        // [m]
+#define PING_MAX_RANGE                                3.00        // [m]
+#define PING_MOUNTING_GAP                             0.02        // [m]
 
 // The battery parameters
-#define BATTERY_PARAM_A                       2.805
-#define BATTERY_PARAM_B                       10.232
+#define BATTERY_PARAM_A_DEFAULT                       2.805
+#define BATTERY_PARAM_B_DEFAULT                       10.232
 
 // The battery threshold default levels
-#define BATTERY_WARNING_VOLTS_DEFAULT         13.6        // [V]
-#define BATTERY_CRITICAL_VOLTS_DEFAULT        12.4        // [V]
+#define BATTERY_WARNING_VOLTS_DEFAULT                 13.6        // [V]
+#define BATTERY_CRITICAL_VOLTS_DEFAULT                12.4        // [V]
 
 // The MCU threshold default levels
-#define MCU_WARNING_LOAD_DEFAULT              10          // [%]
-#define MCU_CRITICAL_LOAD_DEFAULT             50          // [%]
+#define MCU_WARNING_LOAD_DEFAULT                      10          // [%]
+#define MCU_CRITICAL_LOAD_DEFAULT                     50          // [%]
 
-// The range publisher frequency
-#define RANGE_PUBLISHER_FREQUENCY             10          // [Hz]
+// The range publisher default frequency
+#define RANGE_PUBLISHER_FREQUENCY_DEFAULT             10          // [Hz]
 
-// The battery state publisher frequency
-#define BATTERY_STATE_PUBLISHER_FREQUENCY     1           // [Hz]
+// The battery state publisher default frequency
+#define BATTERY_STATE_PUBLISHER_FREQUENCY_DEFAULT     1           // [Hz]
 
-// The diagnostics publisher frequency
-#define DIAGNOSTICS_PUBLISHER_FREQUENCY       1          // [Hz]
+// The diagnostics publisher default frequency
+#define DIAGNOSTICS_PUBLISHER_FREQUENCY_DEFAULT       1          // [Hz]
 
 /****************************************************************************************
  * End configuration
@@ -86,7 +86,7 @@ PING centralPing(CENTRAL_PING_PIN, PING_MOUNTING_GAP);
 PING rightPing(RIGHT_PING_PIN, PING_MOUNTING_GAP);
 
 // The battery voltage sensor
-Battery battery(BATTERY_VOLT_PIN, BATTERY_PARAM_A, BATTERY_PARAM_B);
+Battery battery(BATTERY_VOLT_PIN, BATTERY_PARAM_A_DEFAULT, BATTERY_PARAM_B_DEFAULT);
 
 // The TMP36 sensor
 TMP36 tmp36(TMP36_PIN);
@@ -96,13 +96,13 @@ Led redLed(RED_LED_PIN);
 Led greenLed(GREEN_LED_PIN);
 
 // The range publisher rate
-Rate rangePublisherRate(RANGE_PUBLISHER_FREQUENCY);
+Rate rangePublisherRate(RANGE_PUBLISHER_FREQUENCY_DEFAULT);
 
 // The battery state publisher rate
-Rate batteryStatePublisherRate(BATTERY_STATE_PUBLISHER_FREQUENCY);
+Rate batteryStatePublisherRate(BATTERY_STATE_PUBLISHER_FREQUENCY_DEFAULT);
 
 // The diagnostics publisher rate
-Rate diagnosticsPublisherRate(DIAGNOSTICS_PUBLISHER_FREQUENCY);
+Rate diagnosticsPublisherRate(DIAGNOSTICS_PUBLISHER_FREQUENCY_DEFAULT);
 
 // The main loop statistic
 Loop mainLoop;
@@ -137,8 +137,8 @@ diagnostic_msgs::KeyValue samx8Values[7];
 ros::Publisher diagnosticsMessagePublisher("diagnostics", & diagnosticsMessage);
 
 // The battery threshold levels
-int batteryWarningVolts = BATTERY_WARNING_VOLTS_DEFAULT;
-int batteryCriticalVolts = BATTERY_CRITICAL_VOLTS_DEFAULT;
+float batteryWarningVolts = BATTERY_WARNING_VOLTS_DEFAULT;
+float batteryCriticalVolts = BATTERY_CRITICAL_VOLTS_DEFAULT;
 
 // The MCU threshold levels
 int mcuWarningLoad = MCU_WARNING_LOAD_DEFAULT;
@@ -262,9 +262,6 @@ void setup() {
   diagnosticsMessage.status[4].values[6].value = "N/A";
   
 #ifndef SERIAL_DEBUG
-
-  // Debug
-  nodeHandle.logdebug("advertise node handle for publishers...");
   
   // Advertise node handle for publishers
   nodeHandle.advertise(leftRangeMessagePublisher);
@@ -274,9 +271,6 @@ void setup() {
   nodeHandle.advertise(batteryStateMessagePublisher);
   nodeHandle.advertise(diagnosticsMessagePublisher);
   
-  // Debug
-  nodeHandle.loginfo("initialization complete");
-
 #endif
 
 }
@@ -303,6 +297,9 @@ void loop() {
 
       // Update params
       updateParams();
+
+      // Log
+      nodeHandle.loginfo("Starting loop...");
       
     }
     
@@ -662,6 +659,27 @@ void updateParams() {
   nodeHandle.getParam("~mcuWarningLoad", & mcuWarningLoad);
   nodeHandle.getParam("~mcuCriticalLoad", & mcuCriticalLoad);
 
+  float rangePublisherFrequency;
+  if (nodeHandle.getParam("~rangePublisherFrequency", & rangePublisherFrequency)) {
+    rangePublisherRate.setFrequency(rangePublisherFrequency);
+  }
+
+  float batteryStatePublisherFrequency;
+  if (nodeHandle.getParam("~batteryStatePublisherFrequency", & batteryStatePublisherFrequency)) {
+    batteryStatePublisherRate.setFrequency(batteryStatePublisherFrequency);
+  }
+
+  float diagnosticsPublisherFrequency;
+  if (nodeHandle.getParam("~diagnosticsPublisherFrequency", & diagnosticsPublisherFrequency)) {
+    diagnosticsPublisherRate.setFrequency(diagnosticsPublisherFrequency);
+  }
+
+  float batteryParamA, batteryParamB;
+  if (nodeHandle.getParam("~batteryParamA", & batteryParamA) &&
+      nodeHandle.getParam("~batteryParamB", & batteryParamB)) {
+    battery.setParams(batteryParamA, batteryParamB);
+  }
+  
   nodeHandle.loginfo("Parameter updated");
   
 }

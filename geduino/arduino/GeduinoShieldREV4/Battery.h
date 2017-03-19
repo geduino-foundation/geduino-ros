@@ -30,6 +30,12 @@ public:
   // Vbatt = Vraw * paramA + paramB.
   Battery(const unsigned int _pin, float _paramA, float _paramB) : pin(_pin), paramA(_paramA), paramB(_paramB) {
   };
+
+  // Update params
+  void setParams(float _paramA, float _paramB) { 
+    paramA = _paramA;
+    paramB = _paramB;
+  };
    
   // Get volts in [V]. Every reading of volts are stored and the returned value is the
   // average of last readings.

@@ -33,5 +33,21 @@ batteryCriticalVolts: 12.8
 # The MCU wearning load in % (default: 10)
 mcuWarningLoad: 10
 
-# The MCU critical load in % (default: 50)
+# The MCU critical load in % (default: 50.0)
 mcuCriticalLoad: 50
+
+# The range publisher frequency in Hz (default: 10)
+rangePublisherFrequency: 10.0
+
+# The battery state publisher frequency in Hz (default: 1)
+batteryStatePublisherFrequency: 1.0
+
+# The diagnostics publisher frequency in Hz (default: 1)
+diagnosticsPublisherFrequency: 1.0
+
+# The battery params conversion from raw volts.
+# The conversion parameter are used to convert raw voltage to battery voltage with formula:
+#   Vbatt = Vraw * paramA + paramB.
+# (default: 2.805, 10.232)
+batteryParamA: 2.805
+batteryParamB: 10.232
