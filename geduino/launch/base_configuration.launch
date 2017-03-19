@@ -26,6 +26,9 @@
     <rosparam file="$(find geduino)/config/robot_state_publisher_params.yaml" command="load"/>
   </node>
 
+  <!-- The System Monitor -->
+  <include file="$(find geduino)/launch/system_monitor.launch" />
+
   <!-- The RPLidar node -->
   <node pkg="rplidar" type="rplidar_node" name="rplidar" respawn="true" output="screen">
     <rosparam file="$(find geduino)/config/rplidar_params.yaml" command="load"/> 
