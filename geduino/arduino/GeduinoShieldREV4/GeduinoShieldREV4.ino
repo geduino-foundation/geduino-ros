@@ -33,9 +33,6 @@
 /****************************************************************************************
  * Begin configuration
  */
- 
-// Enable/disable serial debug
-//#define SERIAL_DEBUG
 
 // The ROS serial baud rare
 #define ROS_SERIAL_BAUD_RATE                          115200
@@ -156,8 +153,6 @@ void setup() {
   redLed.ledOn();
   greenLed.ledOff();
 
-#ifndef SERIAL_DEBUG
-
   // Set baud rate
   nodeHandle.getHardware()->setBaud(ROS_SERIAL_BAUD_RATE);
   
@@ -166,16 +161,6 @@ void setup() {
   
   // Debug
   nodeHandle.logdebug("intializing messages...");
-  
-#else
-
-  // Begin debug serial
-  Serial.begin(ROS_SERIAL_BAUD_RATE);
-  
-  // Debug
-  Serial.println("setup completed: starting loop...");
-  
-#endif
   
   // Init range messages
   leftRangeMessage.radiation_type = sensor_msgs::Range::ULTRASOUND;
@@ -261,8 +246,6 @@ void setup() {
   diagnosticsMessage.status[4].values[6].key = "Diagnostics main duration";
   diagnosticsMessage.status[4].values[6].value = "N/A";
   
-#ifndef SERIAL_DEBUG
-  
   // Advertise node handle for publishers
   nodeHandle.advertise(leftRangeMessagePublisher);
   nodeHandle.advertise(centerRangeMessagePublisher);
@@ -271,8 +254,6 @@ void setup() {
   nodeHandle.advertise(batteryStateMessagePublisher);
   nodeHandle.advertise(diagnosticsMessagePublisher);
   
-#endif
-
 }
 
 /****************************************************************************************
@@ -364,13 +345,6 @@ void loop() {
 
 void publishRange() {
 
-#ifdef SERIAL_DEBUG
-
-  // Debug
-  Serial.println("Publish range...");
-  
-#endif
-
   // Get temperature
   float temperature;
   tmp36.getTemperature(& temperature);
@@ -396,8 +370,6 @@ void publishRange() {
   temperatureMessage.header.stamp = now;
   temperatureMessage.temperature = temperature;
 
-#ifndef SERIAL_DEBUG
-
   // Publish range messages
   leftRangeMessagePublisher.publish(& leftRangeMessage);
   centerRangeMessagePublisher.publish(& centerRangeMessage);
@@ -409,36 +381,13 @@ void publishRange() {
   // Spin once
   nodeHandle.spinOnce();
 
-#else
-
-  // Debug
-  Serial.print("Temperature [C]: ");
-  Serial.print(temperature);
-  Serial.print(" Left [m]: ");
-  Serial.print(leftPingMeasurement);
-  Serial.print(" Central [m]: ");
-  Serial.print(centralPingMeasurement);
-  Serial.print(" Right [m]: ");
-  Serial.println(rightPingMeasurement);
-
-#endif
-
 }
 
 void publishBatteryState() {
 
-#ifdef SERIAL_DEBUG
-
-  // Debug
-  Serial.println("Publish battery state...");
-  
-#endif
-
   // Get battery volts
   float volts;
   battery.getVolts(& volts);
-  
-#ifndef SERIAL_DEBUG
 
   // Update battery state message
   batteryStateMessage.data = volts;
@@ -448,14 +397,6 @@ void publishBatteryState() {
   
   // Spin once
   nodeHandle.spinOnce();
-  
-#else
-
-  // Debug
-  Serial.print("Battery Voltage [V]: ");
-  Serial.println(volts);
-  
-#endif
 
 }
 
@@ -490,13 +431,6 @@ void getPingDiagnosticStatus(PING * ping, diagnostic_msgs::DiagnosticStatus * di
 }
 
 void publishDiagnostics() {
-  
-#ifdef SERIAL_DEBUG
-
-  // Debug
-  Serial.println("Publish diagnostics...");
-  
-#endif
 
   // Get ROS current time
   ros::Time now = nodeHandle.now();
@@ -533,13 +467,9 @@ void publishDiagnostics() {
     // Turn on red led
     redLed.ledOn();
 
-#ifndef SERIAL_DEBUG
-
     // Log
     nodeHandle.logwarn("Voltage under warning level, charge battery");
 
-#endif
-  
   } else {
     
     diagnosticsMessage.status[3].level = diagnostic_msgs::DiagnosticStatus::ERROR;
@@ -548,17 +478,12 @@ void publishDiagnostics() {
     // Turn on red led
     redLed.ledOn();
 
-#ifndef SERIAL_DEBUG
-
     // Log
     nodeHandle.logwarn("Voltage under critical level, power off immediatly to avoid battery damage");
-
-#endif
-    
   
   }
 
-  // Get SAMx8 load, delays and duration
+  // Get MCU load, delays and duration
   float load, rangeDelay, rangeDuration, batteryStateDelay, batteryStateDuration, diagnosticsDelay, diagnosticsDuration;
   mainLoop.getUsedCounter().getAverage(& load);
   rangePublisherRate.getDelayCounter().getAverage(& rangeDelay);
@@ -595,20 +520,11 @@ void publishDiagnostics() {
   
   }
   
-#ifndef SERIAL_DEBUG
-  
   // Publish diagnostics message
   diagnosticsMessagePublisher.publish(& diagnosticsMessage);
   
   // Spin once
   nodeHandle.spinOnce();
-  
-#else
-
-  // Debug
-  Serial.println("diagnostics published");
-
-#endif
   
 }
 
@@ -622,25 +538,11 @@ void checkBatteryState() {
     
     // Blink red led
     redLed.ledBlinkFast();
-
-#ifdef SERIAL_DEBUG
-
-    // Debug
-    Serial.println("Voltage under warning level, charge battery");
-    
-#endif
     
   } else if (volts > batteryCriticalVolts) {
     
     // Turn on red led
     redLed.ledOn();
-
-#ifdef SERIAL_DEBUG
-
-    // Debug
-    Serial.println("Voltage under critical level, power off immediatly to avoid battery damage");
-
-#endif
 
   } else {
     
