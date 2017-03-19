@@ -447,9 +447,6 @@ int main(int argc, char * argv[]) {
 
 		}
 
-		// Ros spin
-		ros::spinOnce();
-
         // Get now
         ros::Time now = ros::Time::now();
 
@@ -462,6 +459,9 @@ int main(int argc, char * argv[]) {
             lastDiagnosticsUpdateTime = now;
 
         }
+
+        // Ros spin
+        ros::spinOnce();
 
 	}
 
