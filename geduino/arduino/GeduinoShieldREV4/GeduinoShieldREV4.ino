@@ -613,34 +613,54 @@ void checkBatteryState() {
 
 void updateParams() {
 
-  nodeHandle.getParam("~batteryWarningVolts", & batteryWarningVolts);
-  nodeHandle.getParam("~batteryCriticalVolts", & batteryCriticalVolts);
+  bool result = false;
+
+  result = nodeHandle.getParam("~batteryWarningVolts", & batteryWarningVolts);
+  result = result && nodeHandle.getParam("~batteryCriticalVolts", & batteryCriticalVolts);
   
-  nodeHandle.getParam("~mcuWarningLoad", & mcuWarningLoad);
-  nodeHandle.getParam("~mcuCriticalLoad", & mcuCriticalLoad);
+  result = result && nodeHandle.getParam("~mcuWarningLoad", & mcuWarningLoad);
+  result = result && nodeHandle.getParam("~mcuCriticalLoad", & mcuCriticalLoad);
 
   float rangePublisherFrequency;
-  if (nodeHandle.getParam("~rangePublisherFrequency", & rangePublisherFrequency)) {
+  if (result && nodeHandle.getParam("~rangePublisherFrequency", & rangePublisherFrequency)) {
     rangePublisherRate.setFrequency(rangePublisherFrequency);
+  } else {
+    result = false;
   }
 
   float batteryStatePublisherFrequency;
-  if (nodeHandle.getParam("~batteryStatePublisherFrequency", & batteryStatePublisherFrequency)) {
+  if (result && nodeHandle.getParam("~batteryStatePublisherFrequency", & batteryStatePublisherFrequency)) {
     batteryStatePublisherRate.setFrequency(batteryStatePublisherFrequency);
+  } else {
+    result = false;
   }
 
   float diagnosticsPublisherFrequency;
-  if (nodeHandle.getParam("~diagnosticsPublisherFrequency", & diagnosticsPublisherFrequency)) {
+  if (result && nodeHandle.getParam("~diagnosticsPublisherFrequency", & diagnosticsPublisherFrequency)) {
     diagnosticsPublisherRate.setFrequency(diagnosticsPublisherFrequency);
+  } else {
+    result = false;
   }
 
   float batteryParamA, batteryParamB;
-  if (nodeHandle.getParam("~batteryParamA", & batteryParamA) &&
+  if (result && nodeHandle.getParam("~batteryParamA", & batteryParamA) &&
       nodeHandle.getParam("~batteryParamB", & batteryParamB)) {
     battery.setParams(batteryParamA, batteryParamB);
+  } else {
+    result = false;
   }
-  
-  nodeHandle.loginfo("Parameter updated");
-  
+
+  if (!result) {
+
+    // Log
+    nodeHandle.logerror("Failed to get some parameters: continue with default ones");
+
+  } else {
+
+    // Log
+    nodeHandle.loginfo("Parameter updated");
+
+  } 
+    
 }
 
