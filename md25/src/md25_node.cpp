@@ -141,17 +141,24 @@ void publishDiagnostics(uint8_t level, std::string message) {
 			md25Ptr->getVI(& volts, & current1, & current2) == MD25_RESPONSE_OK)
 			? MD25_RESPONSE_OK : MD25_RESPONSE_ERROR;
 
+    // Convert volts to float
+    float voltsFloat = 0.1 * volts;
+
+    // Covert current to float
+    float current1Float = 0.1 * current1;
+    float current2Float = 0.1 * current2;
+
 	if (result == MD25_RESPONSE_OK) {
 
 		// Get values as char array
 		char versionChars[1];
 		sprintf(versionChars, "%d", version);
 		char voltsChars[1];
-		sprintf(voltsChars, "%d", volts);
+        sprintf(voltsChars, "%g V", voltsFloat);
 		char current1Chars[1];
-		sprintf(current1Chars, "%d", current1);
+        sprintf(current1Chars, "%g A", current1Float);
 		char current2Chars[1];
-		sprintf(current2Chars, "%d", current2);
+        sprintf(current2Chars, "%g A", current2Float);
 
 		diagnosticsMessage.status[0].values.resize(4);
 		diagnosticsMessage.status[0].values[0].key = "Version";
