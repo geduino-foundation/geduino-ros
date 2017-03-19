@@ -400,36 +400,6 @@ void publishBatteryState() {
 
 }
 
-void getPingDiagnosticStatus(PING * ping, diagnostic_msgs::DiagnosticStatus * diagnosticStatus) {
-  
-   // Get ping diagnostic status
-  unsigned long failures, measurement;
-  ping->getFailureCounter().getCounters(& failures, & measurement);
-  
-  // Set ping diagnostic values
-  diagnosticStatus->values[0].value = String(failures, DEC).c_str();
-  diagnosticStatus->values[1].value = String(measurement, DEC).c_str();
-
-  // Set ping diagnostic level and message
-  if (failures == 0) {
-    
-    diagnosticStatus->level = diagnostic_msgs::DiagnosticStatus::OK;
-    diagnosticStatus->message = "OK";
-    
-  } else if (failures < measurement) {
-    
-    diagnosticStatus->level = diagnostic_msgs::DiagnosticStatus::WARN;
-    diagnosticStatus->message = "Some measurement failed";
-  
-  } else {
-    
-    diagnosticStatus->level = diagnostic_msgs::DiagnosticStatus::ERROR;
-    diagnosticStatus->message = "All measurement failed";
-  
-  }
-  
-}
-
 void publishDiagnostics() {
 
   // Get ROS current time
@@ -438,17 +408,98 @@ void publishDiagnostics() {
   // Set time on diagnstics message header
   diagnosticsMessage.header.stamp = now;
 
-  // Get pings diagnostic status
-  getPingDiagnosticStatus(& leftPing, & diagnosticsMessage.status[0]);
-  getPingDiagnosticStatus(& centralPing, & diagnosticsMessage.status[1]);
-  getPingDiagnosticStatus(& rightPing, & diagnosticsMessage.status[2]);
+  // Get left ping failures and measurements
+  unsigned long leftPingFailures, leftPingMeasurement;
+  leftPing.getFailureCounter().getCounters(& leftPingFailures, & leftPingMeasurement);
+
+  // Set left ping diagnostic values
+  String leftPingFailuresString = String(leftPingFailures, DEC);
+  diagnosticsMessage.status[0].values[0].value = leftPingFailuresString.c_str();
+  String leftPingMeasurementString = String(leftPingMeasurement, DEC);
+  diagnosticsMessage.status[0].values[1].value = leftPingMeasurementString.c_str();
+
+  // Set ping diagnostic level and message
+  if (leftPingFailures == 0) {
+    
+    diagnosticsMessage.status[0].level = diagnostic_msgs::DiagnosticStatus::OK;
+    diagnosticsMessage.status[0].message = "OK";
+    
+  } else if (leftPingFailures < leftPingMeasurement) {
+    
+    diagnosticsMessage.status[0].level = diagnostic_msgs::DiagnosticStatus::WARN;
+    diagnosticsMessage.status[0].message = "Some measurement failed";
+  
+  } else {
+    
+    diagnosticsMessage.status[0].level = diagnostic_msgs::DiagnosticStatus::ERROR;
+    diagnosticsMessage.status[0].message = "All measurement failed";
+  
+
+  }
+
+  // Get central ping failures and measurements
+  unsigned long centralPingFailures, centralPingMeasurement;
+  centralPing.getFailureCounter().getCounters(& centralPingFailures, & centralPingMeasurement);
+
+  // Set central ping diagnostic values
+  String centralPingFailuresString = String(centralPingFailures, DEC);
+  diagnosticsMessage.status[1].values[0].value = centralPingFailuresString.c_str();
+  String centralPingMeasurementString = String(centralPingMeasurement, DEC);
+  diagnosticsMessage.status[1].values[1].value = centralPingMeasurementString.c_str();
+
+  // Set ping diagnostic level and message
+  if (centralPingFailures == 0) {
+    
+    diagnosticsMessage.status[1].level = diagnostic_msgs::DiagnosticStatus::OK;
+    diagnosticsMessage.status[1].message = "OK";
+    
+  } else if (centralPingFailures < centralPingMeasurement) {
+    
+    diagnosticsMessage.status[1].level = diagnostic_msgs::DiagnosticStatus::WARN;
+    diagnosticsMessage.status[1].message = "Some measurement failed";
+  
+  } else {
+    
+    diagnosticsMessage.status[1].level = diagnostic_msgs::DiagnosticStatus::ERROR;
+    diagnosticsMessage.status[1].message = "All measurement failed";
+  
+  }
+
+  // Get right ping failures and measurements
+  unsigned long rightPingFailures, rightPingMeasurement;
+  rightPing.getFailureCounter().getCounters(& rightPingFailures, & rightPingMeasurement);
+
+  // Set right ping diagnostic values
+  String rightPingFailuresString = String(rightPingFailures, DEC);
+  diagnosticsMessage.status[2].values[0].value = rightPingFailuresString.c_str();
+  String rightPingMeasurementString = String(rightPingMeasurement, DEC);
+  diagnosticsMessage.status[2].values[1].value = rightPingMeasurementString.c_str();
+
+  // Set ping diagnostic level and message
+  if (rightPingFailures == 0) {
+    
+    diagnosticsMessage.status[2].level = diagnostic_msgs::DiagnosticStatus::OK;
+    diagnosticsMessage.status[2].message = "OK";
+    
+  } else if (rightPingFailures < rightPingMeasurement) {
+    
+    diagnosticsMessage.status[2].level = diagnostic_msgs::DiagnosticStatus::WARN;
+    diagnosticsMessage.status[2].message = "Some measurement failed";
+  
+  } else {
+    
+    diagnosticsMessage.status[2].level = diagnostic_msgs::DiagnosticStatus::ERROR;
+    diagnosticsMessage.status[2].message = "All measurement failed";
+  
+  }
 
   // Get battery volts
   float volts;
   battery.getVolts(& volts);
 
   // Set battery diagnostic values
-  diagnosticsMessage.status[3].values[0].value = String(String(volts, 1) + " V").c_str();
+  String voltsString = String(String(volts, 1) + " V");
+  diagnosticsMessage.status[3].values[0].value = voltsString.c_str();
 
   // Set battery diagnostic level and message
   if (volts > batteryWarningVolts) {
@@ -492,15 +543,22 @@ void publishDiagnostics() {
   batteryStatePublisherRate.getDurationCounter().getAverage(& batteryStateDuration);
   diagnosticsPublisherRate.getDelayCounter().getAverage(& diagnosticsDelay);
   diagnosticsPublisherRate.getDurationCounter().getAverage(& diagnosticsDuration);
-  
+
   // Set Arduino diagnostic values
-  diagnosticsMessage.status[4].values[0].value = String(String(load, 2) + " %").c_str();
-  diagnosticsMessage.status[4].values[1].value = String(String(rangeDelay, 2) + " millis").c_str();
-  diagnosticsMessage.status[4].values[2].value = String(String(rangeDuration, 2) + " millis").c_str();
-  diagnosticsMessage.status[4].values[3].value = String(String(batteryStateDelay, 2) + " millis").c_str();
-  diagnosticsMessage.status[4].values[4].value = String(String(batteryStateDuration, 2) + " millis").c_str();
-  diagnosticsMessage.status[4].values[5].value = String(String(diagnosticsDelay, 2) + " millis").c_str();
-  diagnosticsMessage.status[4].values[6].value = String(String(diagnosticsDuration, 2) + " millis").c_str();
+  String loadString = String(String(load, 2) + " %").c_str();
+  diagnosticsMessage.status[4].values[0].value = loadString.c_str();
+  String rangeDelayString = String(String(rangeDelay, 2) + " millis");
+  diagnosticsMessage.status[4].values[1].value = rangeDelayString.c_str();
+  String rangeDurationString = String(String(rangeDuration, 2) + " millis");
+  diagnosticsMessage.status[4].values[2].value = rangeDurationString.c_str();
+  String batteryStateDelayString = String(String(batteryStateDelay, 2) + " millis");
+  diagnosticsMessage.status[4].values[3].value = batteryStateDelayString.c_str();
+  String batteryStateDurationString = String(String(batteryStateDuration, 2) + " millis");
+  diagnosticsMessage.status[4].values[4].value = batteryStateDurationString.c_str();
+  String diagnosticsDelayString = String(String(diagnosticsDelay, 2) + " millis");
+  diagnosticsMessage.status[4].values[5].value = diagnosticsDelayString.c_str();
+  String diagnosticsDurationString = String(String(diagnosticsDuration, 2) + " millis");
+  diagnosticsMessage.status[4].values[6].value = diagnosticsDurationString.c_str();
   
   // Set MCU diagnostic level and message
   if (load < mcuWarningLoad) {
