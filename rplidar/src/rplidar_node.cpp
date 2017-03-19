@@ -25,7 +25,9 @@
 
  Parameters:
  - serial_port, the serial port RPLidar is connected to (default: /dev/ttyUSB0);
- - frame_id, the frame laser data are referred (default: base_laser).
+ - frame_id, the frame laser data are referred (default: base_laser);
+ - diagnostic_frequency, the diagnostic update frequency in Hz. It must be less or equals than
+   odometry_frequency (default: 1);
  */
 
 #include <ros/ros.h>
@@ -61,6 +63,7 @@ ros::Publisher * diagnosticsMessagePublisherPtr;
 // Node parameter
 std::string frameId;
 std::string serialPort;
+double diagnosticsFrequency;
 
 void publishLaserScan(rplidar_response_measurement_node_t * nodes, 
                   size_t nodeCount, ros::Time scanStartTime,
@@ -299,16 +302,18 @@ int main(int argc, char * argv[]) {
 	// Get node params
 	privateNodeHandle.param<std::string>("frame_id", frameId, "base_laser");
     privateNodeHandle.param<std::string>("serial_port", serialPort, "/dev/ttyUSB0");
+    privateNodeHandle.param("diagnostics_frequency", diagnosticsFrequency, 1.0);
 
 	// Log
 	ROS_INFO("framed id: %s", frameId.c_str());
 	ROS_INFO("serial port: %s", serialPort.c_str());
+    ROS_INFO("diagnostics update frequency: %g Hz", diagnosticsFrequency);
 
 	// Get node handle
 	ros::NodeHandle nodeHandle;
 
 	// Create disgnostics message publisher
- 	ros::Publisher diagnosticsMessagePublisher = nodeHandle.advertise<diagnostic_msgs::DiagnosticArray>("/diagnostics", 20, true);
+    ros::Publisher diagnosticsMessagePublisher = nodeHandle.advertise<diagnostic_msgs::DiagnosticArray>("/diagnostics", 20);
 	diagnosticsMessagePublisherPtr = & diagnosticsMessagePublisher;
 
 	// Log
@@ -391,8 +396,11 @@ int main(int argc, char * argv[]) {
  	ros::Publisher laserScanMessagePublisher = nodeHandle.advertise<sensor_msgs::LaserScan>("scan", 1000);
 	laserScanMessagePublisherPtr = & laserScanMessagePublisher;
 
+    // Define diagnostic duration
+    ros::Duration diagnosticsDuration(1 / diagnosticsFrequency);
+    ros::Time lastDiagnosticsUpdateTime = ros::Time::now();
+
 	u_result opResult = RESULT_OK;
-	u_result previousOpResult = RESULT_OK;
 
 	while (ros::ok()) {
 
@@ -442,15 +450,18 @@ int main(int argc, char * argv[]) {
 		// Ros spin
 		ros::spinOnce();
 
-		if (opResult == RESULT_OK && previousOpResult != RESULT_OK) {
+        // Get now
+        ros::Time now = ros::Time::now();
 
-			// Publish diagnostics
-			publishDiagnostics(STATUS_OK, "OK");
+        if (opResult == RESULT_OK && (now - lastDiagnosticsUpdateTime) > diagnosticsDuration) {
 
-		}
+            // Publish diagnostics
+            publishDiagnostics(STATUS_OK, "OK");
 
-		// Set previous operation result
-		previousOpResult = opResult;
+            // Reset last diagnostics update time
+            lastDiagnosticsUpdateTime = now;
+
+        }
 
 	}
 

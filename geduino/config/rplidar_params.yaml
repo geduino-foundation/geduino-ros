@@ -20,5 +20,5 @@ serial_port: /dev/ttymxc4
 # The frame laser data are referred (default: base_laser)
 frame_id: base_laser
 
-# The GPIO number the RPLidar motor control is connected to (default: 40)
-gpio_num: 40
+# The diagnostics update frequency in Hz (default: 1.0)
+diagnostics_frequency: 1.0
