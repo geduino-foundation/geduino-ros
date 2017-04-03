@@ -146,13 +146,11 @@ int mcuCriticalLoad = MCU_CRITICAL_LOAD_DEFAULT;
  */
 
 void setup() {
-
-  // Blink leds to inform start 
-  greenLed.ledOn();
-  redLed.ledBlinkFastFor(2000);
-  redLed.ledOn();
+greenLed.ledBlinkFastFor(1000);
+  // Turn on red led 
   greenLed.ledOff();
-
+  redLed.ledOn();
+  
   // Set baud rate
   nodeHandle.getHardware()->setBaud(ROS_SERIAL_BAUD_RATE);
   
@@ -261,13 +259,12 @@ void setup() {
  */
 
 void loop() {
-
+  
   while (!nodeHandle.connected()) {
 
     // Blink green led to inform wating for connection
     greenLed.ledBlinkSlow();
-    redLed.ledOff();
-
+    
     // Spin once
     nodeHandle.spinOnce();
 
@@ -594,8 +591,8 @@ void checkBatteryState() {
 
   if (volts > batteryWarningVolts) {
     
-    // Blink red led
-    redLed.ledBlinkFast();
+    // Turn off red led
+    redLed.ledOff();
     
   } else if (volts > batteryCriticalVolts) {
     
@@ -604,9 +601,9 @@ void checkBatteryState() {
 
   } else {
     
-    // Turn off red led
-    redLed.ledOn();
-  
+    // Blink red led
+    redLed.ledBlinkFast();
+      
   }
   
 }
@@ -615,52 +612,54 @@ void updateParams() {
 
   bool result = false;
 
-  result = nodeHandle.getParam("~batteryWarningVolts", & batteryWarningVolts);
-  result = result && nodeHandle.getParam("~batteryCriticalVolts", & batteryCriticalVolts);
+  while (!result) {
   
-  result = result && nodeHandle.getParam("~mcuWarningLoad", & mcuWarningLoad);
-  result = result && nodeHandle.getParam("~mcuCriticalLoad", & mcuCriticalLoad);
+    result = nodeHandle.getParam("~batteryWarningVolts", & batteryWarningVolts);
+    result = result && nodeHandle.getParam("~batteryCriticalVolts", & batteryCriticalVolts);
+    
+    result = result && nodeHandle.getParam("~mcuWarningLoad", & mcuWarningLoad);
+    result = result && nodeHandle.getParam("~mcuCriticalLoad", & mcuCriticalLoad);
+  
+    float rangePublisherFrequency;
+    if (result && nodeHandle.getParam("~rangePublisherFrequency", & rangePublisherFrequency)) {
+      rangePublisherRate.setFrequency(rangePublisherFrequency);
+    } else {
+      result = false;
+    }
+  
+    float batteryStatePublisherFrequency;
+    if (result && nodeHandle.getParam("~batteryStatePublisherFrequency", & batteryStatePublisherFrequency)) {
+      batteryStatePublisherRate.setFrequency(batteryStatePublisherFrequency);
+    } else {
+      result = false;
+    }
+  
+    float diagnosticsPublisherFrequency;
+    if (result && nodeHandle.getParam("~diagnosticsPublisherFrequency", & diagnosticsPublisherFrequency)) {
+      diagnosticsPublisherRate.setFrequency(diagnosticsPublisherFrequency);
+    } else {
+      result = false;
+    }
+  
+    float batteryParamA, batteryParamB;
+    if (result && nodeHandle.getParam("~batteryParamA", & batteryParamA) &&
+        nodeHandle.getParam("~batteryParamB", & batteryParamB)) {
+      battery.setParams(batteryParamA, batteryParamB);
+    } else {
+      result = false;
+    }
+  
+    if (!result) {
+  
+      // Log
+      nodeHandle.logerror("Failed to get some parameters: retrying...");
+  
+    }
 
-  float rangePublisherFrequency;
-  if (result && nodeHandle.getParam("~rangePublisherFrequency", & rangePublisherFrequency)) {
-    rangePublisherRate.setFrequency(rangePublisherFrequency);
-  } else {
-    result = false;
   }
-
-  float batteryStatePublisherFrequency;
-  if (result && nodeHandle.getParam("~batteryStatePublisherFrequency", & batteryStatePublisherFrequency)) {
-    batteryStatePublisherRate.setFrequency(batteryStatePublisherFrequency);
-  } else {
-    result = false;
-  }
-
-  float diagnosticsPublisherFrequency;
-  if (result && nodeHandle.getParam("~diagnosticsPublisherFrequency", & diagnosticsPublisherFrequency)) {
-    diagnosticsPublisherRate.setFrequency(diagnosticsPublisherFrequency);
-  } else {
-    result = false;
-  }
-
-  float batteryParamA, batteryParamB;
-  if (result && nodeHandle.getParam("~batteryParamA", & batteryParamA) &&
-      nodeHandle.getParam("~batteryParamB", & batteryParamB)) {
-    battery.setParams(batteryParamA, batteryParamB);
-  } else {
-    result = false;
-  }
-
-  if (!result) {
-
-    // Log
-    nodeHandle.logerror("Failed to get some parameters: continue with default ones");
-
-  } else {
-
-    // Log
-    nodeHandle.loginfo("Parameter updated");
-
-  } 
+  
+  // Log
+  nodeHandle.loginfo("Parameter updated successfully");
     
 }
 

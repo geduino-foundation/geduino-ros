@@ -49,5 +49,5 @@ diagnosticsPublisherFrequency: 1.0
 # The conversion parameter are used to convert raw voltage to battery voltage with formula:
 #   Vbatt = Vraw * paramA + paramB.
 # (default: 2.805, 10.232)
-batteryParamA: 2.805
-batteryParamB: 10.232
+batteryParamA: 2.29
+batteryParamB: 12.15

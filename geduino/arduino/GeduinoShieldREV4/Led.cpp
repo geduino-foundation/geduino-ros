@@ -96,14 +96,17 @@ void Led::init() {
 }
 
 void Led::ledBlink(const uint32_t & period) {
-
+  
   // Get now
   uint32_t now = millis();
 
   if (now - last_blink_millis > period) {
 
+    // Toggle led status
+    led_on_status = !led_on_status;
+
     // Invert led PIN status
-    digitalWrite(led_pin, !digitalRead(led_pin));
+    digitalWrite(led_pin, led_on_status ? HIGH : LOW);
 
     // Reset last blink millis
     last_blink_millis = now;
