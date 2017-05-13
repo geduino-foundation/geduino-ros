@@ -18,7 +18,7 @@
 #define __MAT_SOURCE_H_
 
 #include <zxing/LuminanceSource.h>
-#include <opencv2/core/core.hpp>
+#include <opencv2/core.hpp>
 
 namespace zxing {
 

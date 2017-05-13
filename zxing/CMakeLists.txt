@@ -20,6 +20,7 @@ project(zxing)
 
 find_package(catkin REQUIRED COMPONENTS
   roscpp
+  cv_bridge
 )
 
 catkin_package(
