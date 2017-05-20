@@ -151,13 +151,13 @@ void publishDiagnostics(uint8_t level, std::string message) {
 	if (result == MD25_RESPONSE_OK) {
 
 		// Get values as char array
-		char versionChars[1];
+		char versionChars[3];
 		sprintf(versionChars, "%d", version);
-		char voltsChars[1];
+		char voltsChars[6];
         sprintf(voltsChars, "%g V", voltsFloat);
-		char current1Chars[1];
+		char current1Chars[6];
         sprintf(current1Chars, "%g A", current1Float);
-		char current2Chars[1];
+		char current2Chars[6];
         sprintf(current2Chars, "%g A", current2Float);
 
 		diagnosticsMessage.status[0].values.resize(4);
