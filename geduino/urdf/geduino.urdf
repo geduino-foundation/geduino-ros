@@ -10,7 +10,7 @@
         <cylinder length="0.10" radius="0.15"/>
       </geometry>
       <origin xyz="0 0 0.06"/>
-      <material name="dark_gray">
+      <material name="cyan">
         <color rgba="0.43 0.68 0.69 1"/>
       </material>       
     </visual>
@@ -60,6 +60,20 @@
   <link name="base_right_range">
   </link>
 
+  <!-- The camera link -->
+  <link name="camera_link">
+   
+    <visual>
+      <geometry>
+         <box size="0.008 0.130 0.020"/>
+      </geometry>
+      <origin xyz="0 0.045 0"/>
+      <material name="blue">
+         <color rgba="0 0 1 1"/>
+      </material>
+    </visual>
+
+  </link>
 
   <!-- The base_link -> base_laser joint -->
   <joint name="base_link_to_base_laser" type="fixed">
@@ -87,6 +101,13 @@
     <parent link="base_link"/>
     <child link="base_right_range"/>
     <origin xyz="0.097 -0.097 0.055" rpy="0 0 -0.7853"/>
+  </joint>
+
+  <!-- The base_link -> camera_link joint -->
+  <joint name="base_link_to_camera_link" type="fixed">
+    <parent link="base_link"/>
+    <child link="camera_link"/>
+    <origin xyz="0.125 -0.045 0.13" rpy="0 0 0"/>
   </joint>
 
 </robot>

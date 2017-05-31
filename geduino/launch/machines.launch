@@ -1,7 +1,7 @@
 <!-- 
- navigation.launch
+ machines.launch
 
- Copyright (C) 2015 Alessandro Francescon
+ Copyright (C) 2017 Alessandro Francescon
  
  This program is free software: you can redistribute it and/or modify
  it under the terms of the GNU General Public License as published by
@@ -18,13 +18,10 @@
 
 <launch>
 
-  <!-- Machines -->
-  <include file="$(find geduino)/launch/machines.launch">
-  </include>
+  <!-- Geduino1 machine -->
+  <machine name="geduino1" address="geduino1" env-loader="/home/ros/env.sh" user="ros" default="never" timeout="10"/>
 
-  <!-- The gmapping node -->
-  <node machine="geduino2" pkg="gmapping" type="slam_gmapping" name="gmapping" respawn="false" output="screen">
-    <rosparam file="$(find geduino)/config/gmapping_params.yaml" command="load" />  
-  </node>
+  <!-- Geduino2 machine -->
+  <machine name="geduino2" address="geduino2" env-loader="/home/ros/env.sh" user="ros" default="never" timeout="10"/>
 
 </launch>

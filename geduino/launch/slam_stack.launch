@@ -18,6 +18,10 @@
 
 <launch>
 
+  <!-- Machines -->
+  <include file="$(find geduino)/launch/machines.launch">
+  </include>
+
   <!-- The Geduino base configuration -->
   <include file="$(find geduino)/launch/base_configuration.launch" />
 
