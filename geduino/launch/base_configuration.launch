@@ -18,30 +18,54 @@
 
 <launch>
 
+  <!-- Machines -->
+  <include file="$(find geduino)/launch/machines.launch">
+  </include>
+
   <!-- The Geduino description -->
   <param name="robot_description" textfile="$(find geduino)/urdf/geduino.urdf"/>
 
   <!-- The robot state publisher -->
-  <node pkg="robot_state_publisher" type="robot_state_publisher" name="robot_state" respawn="true" output="screen">
+  <node machine="geduino2" pkg="robot_state_publisher" type="robot_state_publisher" name="robot_state" respawn="true" output="log">
     <rosparam file="$(find geduino)/config/robot_state_publisher_params.yaml" command="load"/>
   </node>
 
-  <!-- The System Monitor -->
-  <include file="$(find geduino)/launch/system_monitor.launch" />
-
+  <!-- System Monitor nodes -->
+  <group ns="system_monitor/geduino1">
+    <rosparam command="load" file="$(find geduino)/config/system_monitor_params.yaml"/>
+    <node machine="geduino1" name="cpu_monitor" pkg="system_monitor" type="cpu_monitor.py" output="log" respawn="true"/>
+    <node machine="geduino1" name="mem_monitor" pkg="system_monitor" type="mem_monitor.py" output="log" respawn="true"/>
+    <node machine="geduino1" name="net_monitor" pkg="system_monitor" type="net_monitor.py" output="log" respawn="true"/>      
+  </group>
+  <group ns="system_monitor/geduino2">
+    <rosparam command="load" file="$(find geduino)/config/system_monitor_params.yaml"/>
+    <node machine="geduino2" name="cpu_monitor" pkg="system_monitor" type="cpu_monitor.py" output="log" respawn="true"/>
+    <node machine="geduino2" name="mem_monitor" pkg="system_monitor" type="mem_monitor.py" output="log" respawn="true"/>
+    <node machine="geduino2" name="net_monitor" pkg="system_monitor" type="net_monitor.py" output="log" respawn="true"/>      
+  </group>
+  
   <!-- The RPLidar node -->
-  <node pkg="rplidar" type="rplidar_node" name="rplidar" respawn="true" output="screen">
+  <node machine="geduino2" pkg="rplidar" type="rplidar_node" name="rplidar" respawn="true" output="log">
     <rosparam file="$(find geduino)/config/rplidar_params.yaml" command="load"/> 
   </node>
 
   <!-- The Shield node -->
-  <node pkg="rosserial_python" type="serial_node.py" name="shield" respawn="true" output="screen">
+  <node machine="geduino2" pkg="rosserial_python" type="serial_node.py" name="shield" respawn="true" output="log">
     <rosparam file="$(find geduino)/config/shield_params.yaml" command="load"/> 
   </node>
 
   <!-- The MD25 -->
-  <node pkg="md25" type="md25_node" name="md25" respawn="true" output="screen">
+  <node machine="geduino2" pkg="md25" type="md25_node" name="md25" respawn="true" output="screen">
     <rosparam file="$(find geduino)/config/md25_params.yaml" command="load" />
   </node>
+
+  <!-- The RealSense camera nodelet -->
+  <!-- This node should be targettted to geduino1 device but, unfortunately, it is not possible to specify machine
+       in inlcude tag due to a ROS lack. Hope be fixed asap, in meanwhile this launch file can be launched by geduino1
+       only. -->
+  <include file="$(find realsense_camera)/launch/r200_nodelet_rgbd.launch">
+    <arg name="depth_fps" value="30" />
+    <arg name="color_fps" value="30" />
+  </include>
 
 </launch>

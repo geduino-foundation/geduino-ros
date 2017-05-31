@@ -40,6 +40,8 @@
   <run_depend>range_layer</run_depend>
   <run_depend>gmapping</run_depend>
   <run_depend>system_monitor</run_depend>
+  <run_depend>realsense_camera</run_depend>
+  <run_depend>rgbd_launch</run_depend>
   
   <export>
   </export>
