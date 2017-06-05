@@ -1,0 +1,4 @@
+# Convenient aliases to remotely power off Geduino boards.
+# Append thos lines to your ~/.bash_aliases file
+alias geduino1off = 'ssh -t udoo@geduino1 "sudo poweroff"'
+alias geduino2off = 'ssh -t udoo@geduino2 "sudo poweroff"'
