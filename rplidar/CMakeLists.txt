@@ -43,7 +43,12 @@ include_directories(
 catkin_package()
 
 add_executable(rplidar_node src/rplidar_node.cpp ${RPLIDAR_SDK_SRC})
+add_executable(rplidar_off src/rplidar_off.c)
 
-target_link_libraries(rplidar_node 
+target_link_libraries(rplidar_node
+	${catkin_LIBRARIES}
+)
+
+target_link_libraries(rplidar_off
 	${catkin_LIBRARIES}
 )
