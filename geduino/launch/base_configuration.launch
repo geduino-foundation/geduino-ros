@@ -55,7 +55,7 @@
   </node>
 
   <!-- The MD25 -->
-  <node machine="geduino2" pkg="md25" type="md25_node" name="md25" respawn="true" output="screen">
+  <node machine="geduino2" pkg="md25" type="md25_node" name="md25" respawn="true" output="log">
     <rosparam file="$(find geduino)/config/md25_params.yaml" command="load" />
   </node>
 
@@ -63,9 +63,12 @@
   <!-- This node should be targettted to geduino1 device but, unfortunately, it is not possible to specify machine
        in inlcude tag due to a ROS lack. Hope be fixed asap, in meanwhile this launch file can be launched by geduino1
        only. -->
-  <include file="$(find realsense_camera)/launch/r200_nodelet_rgbd.launch">
-    <arg name="depth_fps" value="30" />
-    <arg name="color_fps" value="30" />
+  <include file="$(find realsense_camera)/launch/r200_nodelet_default.launch">
   </include>
+
+  <!-- Throttle -->
+  <node machine="geduino2" pkg="topic_tools" type="throttle" name="scan_throttle" args="messages /scan 0.5" respawn="true" output="log" />
+  <node machine="geduino1" pkg="topic_tools" type="throttle" name="camera_color_image_raw_throttle" args="messages /camera/color/image_raw 0.5" respawn="true" output="log" />
+  <node machine="geduino1" pkg="topic_tools" type="throttle" name="camera_depth_image_raw_throttle" args="messages /camera/depth/image_raw 0.5" respawn="true" output="log" />
 
 </launch>
