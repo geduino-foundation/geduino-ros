@@ -1,0 +1,77 @@
+# r200_camera_driver_params.yaml
+#
+# Copyright (C) 2017 Alessandro Francescon
+# 
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# Specify the serial_no to uniquely connect to a camera, especially if multiple cameras
+# are detected by the nodelet.
+# You may get the serial_no from the info stream by launching the default launch file.
+serial_no: ''
+
+# Alternatively to serial_no, this can be used to connect to a camera by its USB Port ID,
+# which is a Bus Number-Port Number in the format "Bus#-Port#".
+# If used with serial_no, both must match correctly for camera to be connected. 
+usb_port_id: ''
+
+# Specify the type of the camera - "R200", "F200", "SR300" or "ZR300".
+camera_type: R200
+
+# Specify the base frame id of the camera (default: camera_link)
+base_frame_id: camera_link
+
+# Specify the depth frame id of the camera (default: camera_depth_frame)
+depth_frame_id: camera_depth_frame
+
+# Specify the color frame id of the camera (default: camera_rgb_frame)
+color_frame_id: camera_rgb_frame
+
+# Specify the IR frame id of the camera (default: camera_ir_frame)
+ir_frame_id: camera_ir_frame
+
+# Available only for R200 and ZR300 cameras. Specify the IR2 frame id of the camera (default: camera_ir2_frame)
+ir2_frame_id: camera_ir2_frame
+
+# Specify the depth optical frame id of the camera (default: camera_depth_optical_frame)
+depth_optical_frame_id: camera_depth_optical_frame
+
+# Specify the color optical frame id of the camera (default: camera_rgb_optical_frame)
+color_optical_frame_id: camera_rgb_optical_frame
+
+# Specify the IR optical frame id of the camera (default: camera_ir_optical_frame)
+ir_optical_frame_id: camera_ir_optical_frame
+
+# Available only for R200 and ZR300 cameras. Specify the IR2 optical frame id of the camera (default: camera_ir2_optical_frame)
+ir2_optical_frame_id: camera_ir2_optical_frame
+
+# Specify the mode to start camera streams. Mode comprises of height, width and fps.
+# Preset mode enables default values whereas Manual mode enables the specified parameter values. 
+mode: manual
+
+# Specify the color camera FPS (default: 60)
+color_fps: 30
+
+# Specify the color camera width resolution (default: 640)
+color_width: 640
+
+# Specify the color camera height resolution (default: 480)
+color_height: 480
+
+# Specify the depth camera FPS (default: 60)
+depth_fps: 30
+
+# Specify the depth camera width resolution (default: 480 (R200/ZR300), 640 (F200/SR300))
+depth_width: 480
+
+# Specify the depth camera height resolution (default: 360 (R200/ZR300), 480 (F200/SR300))
+depth_height: 360
