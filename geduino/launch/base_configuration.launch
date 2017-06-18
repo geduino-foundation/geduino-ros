@@ -59,16 +59,8 @@
     <rosparam file="$(find geduino)/config/md25_params.yaml" command="load" />
   </node>
 
-  <!-- The RealSense camera nodelet -->
-  <!-- This node should be targettted to geduino1 device but, unfortunately, it is not possible to specify machine
-       in inlcude tag due to a ROS lack. Hope be fixed asap, in meanwhile this launch file can be launched by geduino1
-       only. -->
-  <include file="$(find realsense_camera)/launch/r200_nodelet_default.launch">
+  <!-- The RealSense R200 camera -->
+  <include file="$(find geduino)/launch/r200_camera.launch">
   </include>
-
-  <!-- Throttle -->
-  <node machine="geduino2" pkg="topic_tools" type="throttle" name="scan_throttle" args="messages /scan 0.5" respawn="true" output="log" />
-  <node machine="geduino1" pkg="topic_tools" type="throttle" name="camera_color_image_raw_throttle" args="messages /camera/color/image_raw 0.5" respawn="true" output="log" />
-  <node machine="geduino1" pkg="topic_tools" type="throttle" name="camera_depth_image_raw_throttle" args="messages /camera/depth/image_raw 0.5" respawn="true" output="log" />
 
 </launch>

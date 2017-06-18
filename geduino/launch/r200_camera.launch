@@ -1,0 +1,68 @@
+<!--
+ r200_camera.launch
+
+ Copyright (C) 2017 Alessandro Francescon
+ 
+ This program is free software: you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation, either version 3 of the License.
+ 
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+ 
+ You should have received a copy of the GNU General Public License
+ along with this program.  If not, see <http://www.gnu.org/licenses/>.
+-->
+
+<launch>
+
+  <!-- Machines -->
+  <include file="$(find geduino)/launch/machines.launch">
+  </include>
+
+  <group ns="camera">
+
+    <!-- The nodelet manager -->
+    <node machine="geduino1" pkg="nodelet" type="nodelet" name="camera_nodelet_manager" args="manager" respawn="true" output="log"/>
+
+    <!-- The RealSense R200 camera driver -->
+    <node machine="geduino1" pkg="nodelet" type="nodelet" name="camera_driver" args="load realsense_camera/R200Nodelet camera_nodelet_manager" respawn="true" output="log">
+      <rosparam file="$(find geduino)/config/r200_camera_driver_params.yaml" command="load"/>      
+      <remap from="color"                    to="rgb" />
+    </node>
+
+    <!-- The image rectifier: from image raw provide rectified depth image -->
+    <node machine="geduino1" pkg="nodelet" type="nodelet" name="depth_rectify" args="load image_proc/rectify camera_nodelet_manager" respawn="true" output="log">
+      <remap from="image_mono"               to="depth/image_raw" />
+      <remap from="image_rect"               to="depth/image_rectified" />
+      <!-- Use nearest neighbor (0) interpolation so we don't streak across depth boundaries -->
+      <param name="interpolation"            value="0" />
+    </node>
+
+    <!-- The depth image register: from rectified depth image provide registered depth image (i.e. the depth image projected
+         on RGB camera frame -->
+    <node machine="geduino1" pkg="nodelet" type="nodelet" name="depth_register" args="load depth_image_proc/register camera_nodelet_manager" respawn="true" output="log">
+      <param name="queue_size"               type="int"  value="5" />
+      <remap from="rgb/camera_info"          to="rgb/camera_info" />
+      <remap from="depth/camera_info"        to="depth/camera_info" />
+      <remap from="depth/image_rect"         to="depth/image_rectified" />
+      <remap from="depth_registered/image_rect" to="depth_registered/image_rectified" />
+    </node>
+
+    <!-- The depth image convert metric -->
+    <node machine="geduino1" pkg="nodelet" type="nodelet" name="depth_convert_metric" args="load depth_image_proc/convert_metric camera_nodelet_manager" respawn="true" output="log">
+      <remap from="image_raw"                to="depth_registered/image_rectified" />
+      <remap from="image"                    to="depth_registered/image_metric" />
+    </node>
+
+    <!-- The image rectifier: from rgb image raw provide rgb rectified image -->
+    <node machine="geduino1" pkg="nodelet" type="nodelet" name="rgb_rectify" args="load image_proc/rectify camera_nodelet_manager" respawn="true" output="log">
+      <remap from="image_mono"               to="rgb/image_raw" />
+      <remap from="image_rect"               to="rgb/image_rectified" />
+    </node>
+
+  </group>
+
+</launch>
