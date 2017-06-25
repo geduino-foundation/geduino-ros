@@ -54,6 +54,9 @@ pos_covariance_diagonal: [0.001, 0.001, 0, 0, 0, 0.001]
 # The diagonal of the velocity covariance matrix (a 6 element vector of type double)
 vel_covariance_diagonal: [0.001, 0, 0, 0, 0, 0.001]
 
+# The size of rolling windows used to apply median filter in velocity computation (default: 3)
+rolling_window_size: 3
+
 # True if odom frame -> base frame transformation must be
 # published by this node, false otherwise (default: true)
 publish_odom_transformation: true

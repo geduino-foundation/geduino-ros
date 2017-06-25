@@ -21,9 +21,8 @@
 #define _ODOMETRY_H_
 
 #include <math.h>
+#include <rolling_window.h>
 #include <Eigen/Core>
-
-#define HISTORY_SIZE 3
 
 typedef Eigen::Matrix<double, 3, 1> Vector3;
 
@@ -35,15 +34,21 @@ class Odometry {
    public:
 
       // Create odometry for a DDR with given wheel base
-      Odometry(double _wb) : wb(_wb) {
-         reset();
+      Odometry(double _wb, char _rollingWindowSize) :
+            wb(_wb),
+            drRollingWindow(RollingWindow(_rollingWindowSize)),
+            dlRollingWindow(RollingWindow(_rollingWindowSize)),
+            dtRollingWindow(RollingWindow(_rollingWindowSize)) {
+
+          reset();
+
       };
 
       // Update position and covariance for given wheel path increments and time
       void update(double dl, double dr, double time) {
 
           // Update position
-          updatePosition(dl, dr, time);
+          updatePosition(dl, dr);
 
           // Update velocity
           updateVelocity(dl, dr, time);
@@ -74,14 +79,15 @@ class Odometry {
       // The position and velocity vector
       Vector3 pos, vel;
 
-      // The history index and arrays
-      char historyIndex;
-      double drHistory[HISTORY_SIZE], dlHistory[HISTORY_SIZE], dtHistory[HISTORY_SIZE];
+      // The rolling windows used to compute velocity
+      RollingWindow drRollingWindow;
+      RollingWindow dlRollingWindow;
+      RollingWindow dtRollingWindow;
 
-      // Update position and its covariance
-      void updatePosition(double dl, double dr, double time);
+      // Update position
+      void updatePosition(double dl, double dr);
 
-      // Update velocity and its covariance
+      // Update velocity
       void updateVelocity(double dl, double dr, double time);
 
 };

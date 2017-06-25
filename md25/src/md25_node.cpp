@@ -56,6 +56,8 @@
    vector of type double);
  - vel_covariance_diagonal: the diagonal of the velocity covariance matrix (a 6 element
    vector of type double);
+ - rolling_window_size: the size of rolling windows used to apply median filter in velocity
+   computation (default: 3);
  - publish_odom_transformation: true if odom frame -> base frame transformation must be
    published by this node, false otherwise (default: true)
  */
@@ -94,6 +96,7 @@ double wheelDiameter2;
 double wheelBase;
 std::vector<double> posCovarianceDiagonal;
 std::vector<double> velCovarianceDiagonal;
+int rollingWindowSize;
 bool publishOdomTransformation;
 
 // The last encoder values
@@ -343,6 +346,7 @@ int main(int argc, char** argv) {
     privateNodeHandle.param("wheel_base", wheelBase, 0.3);
     privateNodeHandle.getParam("pos_covariance_diagonal", posCovarianceDiagonal);
     privateNodeHandle.getParam("vel_covariance_diagonal", velCovarianceDiagonal);
+    privateNodeHandle.param("rolling_window_size", rollingWindowSize, 3);
     privateNodeHandle.param("publish_odom_transformation", publishOdomTransformation, true);
 
     if (posCovarianceDiagonal.size() != 6) {
@@ -374,10 +378,11 @@ int main(int argc, char** argv) {
 	ROS_INFO("wheel diameter1: %g m", wheelDiameter1);
 	ROS_INFO("wheel diameter2: %g m", wheelDiameter2);
 	ROS_INFO("wheel base: %g m", wheelBase);
+    ROS_INFO("rolling window siZE: %d m", rollingWindowSize);
     ROS_INFO("publish odom transformation: %d", publishOdomTransformation);
 
 	// Create odometry
-    Odometry odometry(wheelBase);
+    Odometry odometry(wheelBase, rollingWindowSize);
 	odometryPtr = &odometry;
 
 	// Create odometry message publisher

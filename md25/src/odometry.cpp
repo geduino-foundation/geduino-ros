@@ -20,7 +20,7 @@
 
 #define TWO_PI 6.28318530717959
 
-void Odometry::updatePosition(double dl, double dr, double time) {
+void Odometry::updatePosition(double dl, double dr) {
 
     // Calculate ds and dth
     double ds = 0.5 * (dr + dl);
@@ -48,53 +48,41 @@ void Odometry::updatePosition(double dl, double dr, double time) {
 }
 
 void Odometry::updateVelocity(double dl, double dr, double time) {
-
+    
     if (lastUpdateTime > 0) {
 
-       // Add deltas to history
-       drHistory[historyIndex] = dr;
-       dlHistory[historyIndex] = dl;
-       dtHistory[historyIndex] = time - lastUpdateTime;
+        // Add values to rolling window
+        drRollingWindow.add(dr);
+        dlRollingWindow.add(dl);
+        dtRollingWindow.add(time - lastUpdateTime);
 
-       double drSum = 0;
-       double dlSum = 0;
-       double dtSum = 0;
+        // Get sums
+        double drSum;
+        double dlSum;
+        double dtSum;
+        drRollingWindow.sum(& drSum);
+        dlRollingWindow.sum(& dlSum);
+        dtRollingWindow.sum(& dtSum);
 
-       for (char index = 0; index < HISTORY_SIZE; index++) {
-
-          drSum += drHistory[index];
-          dlSum += dlHistory[index];
-          dtSum += dtHistory[index];
-
-       }
-
-       if (dtSum > 0) {
-
-          // Update velocity
-          vel(0) = (drSum + dlSum) / (2 * dtSum);
-          vel(2) = (drSum - dlSum) / (wb * dtSum);
-
-       } else {
-
-          // Set linear and angular velocity to zero (avoid by zero division)
-          vel(0) = 0;
-          vel(2) = 0;
-
-       }
-
-       // Increase history index
-       if (++historyIndex >= HISTORY_SIZE) {
-
-          // Reset history index
-          historyIndex = 0;
-
-       }
-
+        if (dtSum > 0) {
+            
+            // Update velocity
+            vel(0) = (drSum + dlSum) / (2 * dtSum);
+            vel(2) = (drSum - dlSum) / (wb * dtSum);
+            
+        } else {
+            
+            // Set linear and angular velocity to zero (avoid by zero division)
+            vel(0) = 0;
+            vel(2) = 0;
+            
+        }
+        
     }
-
+    
     // Set last update time
     lastUpdateTime = time;
-
+    
 }
 
 void Odometry::reset() {
@@ -106,15 +94,9 @@ void Odometry::reset() {
    pos.fill(0);
    vel.fill(0);
 
-   // Reset history
-   historyIndex = 0;
-
-   for (char index = 0; index < HISTORY_SIZE; index++) {
-
-       drHistory[index] = 0;
-       dlHistory[index] = 0;
-       dtHistory[index] = 0;
-
-   }
+   // Reset rolling window
+   drRollingWindow.reset();
+   dlRollingWindow.reset();
+   dtRollingWindow.reset();
 
 }
