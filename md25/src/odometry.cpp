@@ -20,9 +20,6 @@
 
 #define TWO_PI 6.28318530717959
 
-typedef Eigen::Matrix<double, 2, 2> Matrix2x2;
-typedef Eigen::Matrix<double, 3, 2> Matrix3x2;
-
 void Odometry::updatePosition(double dl, double dr, double time) {
 
     // Calculate ds and dth
@@ -48,29 +45,6 @@ void Odometry::updatePosition(double dl, double dr, double time) {
         pos(2) += TWO_PI;
     }
 
-    Matrix2x2 sigmaD;
-    Matrix3x3 nablaFp;
-    Matrix3x2 nablaFrl;
-
-    // Pre calculation
-    double ds_2wb = ds / (2 * wb);
-
-    // Compute sigmaD
-    sigmaD << kr * std::abs(dr), 0,
-            0, kl * std::abs(dl);
-
-    // Compute nablaFp
-    nablaFp << 1, 0, -1 * ds * sinmdth,
-            0, 1, ds * cosmdth,
-            0, 0, 1;
-
-    // Compute nablaFrl
-    nablaFrl << 0.5 * cosmdth - ds_2wb * sinmdth, 0.5 * cosmdth + ds_2wb * sinmdth,
-            0.5 * sinmdth + ds_2wb * cosmdth, 0.5 * sinmdth - ds_2wb * cosmdth,
-            1 / wb, -1 / wb;
-
-    // Update position covariance
-    posCov = nablaFp * posCov * nablaFp.transpose() + nablaFrl * sigmaD * nablaFrl.transpose();
 }
 
 void Odometry::updateVelocity(double dl, double dr, double time) {
@@ -100,28 +74,11 @@ void Odometry::updateVelocity(double dl, double dr, double time) {
           vel(0) = (drSum + dlSum) / (2 * dtSum);
           vel(2) = (drSum - dlSum) / (wb * dtSum);
 
-          // Compute sigma
-          Matrix2x2 sigma;
-          sigma << kr * std::abs(drSum), 0,
-                  0, kl * std::abs(dlSum);
-
-          // Compute transformation
-          Matrix3x2 transformation;
-          transformation << 0.5, 0.5,
-                  0, 0,
-                  1 / wb, -1 / wb;
-
-          // Update velocity covariance
-          velCov = transformation * sigma * transformation.transpose();
-
        } else {
 
           // Set linear and angular velocity to zero (avoid by zero division)
           vel(0) = 0;
           vel(2) = 0;
-
-          // Fill velocity covariance with zeroes
-          velCov.fill(0);
 
        }
 
@@ -148,8 +105,6 @@ void Odometry::reset() {
    // Reset position and velocity
    pos.fill(0);
    vel.fill(0);
-   posCov.fill(0);
-   velCov.fill(0);
 
    // Reset history
    historyIndex = 0;

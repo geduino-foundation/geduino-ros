@@ -26,7 +26,6 @@
 #define HISTORY_SIZE 3
 
 typedef Eigen::Matrix<double, 3, 1> Vector3;
-typedef Eigen::Matrix<double, 3, 3> Matrix3x3;
 
 /*
  Implements odometry for a differential drive robot
@@ -35,8 +34,8 @@ class Odometry {
 
    public:
 
-      // Create odometry for a DDR with given wheel base and error constants
-      Odometry(double _wb, double _kl, double _kr) : wb(_wb), kl(_kl), kr(_kr) {
+      // Create odometry for a DDR with given wheel base
+      Odometry(double _wb) : wb(_wb) {
          reset();
       };
 
@@ -51,16 +50,14 @@ class Odometry {
 
       };
 
-      // Get position vector as (x, y, th) and its covariance matrix in odom reference frame
-      void getPosition(Vector3 & _pos, Matrix3x3 & _posCov) {
+      // Get position vector as (x, y, th)
+      void getPosition(Vector3 & _pos) {
           _pos = pos;
-          _posCov = posCov;
       };
 
-      // Get velocity vector as (vx, vy, vth) and its covariance matrix in robot reference frame
-      void getVelocity(Vector3 & _vel, Matrix3x3 & _velCov) {
+      // Get velocity vector as (vx, vy, vth)
+      void getVelocity(Vector3 & _vel) {
           _vel = vel;
-          _velCov = velCov;
       };
 
       // Reset position and covariance
@@ -71,17 +68,11 @@ class Odometry {
       // The robot wheel base
       double wb;
 
-      // The error constants
-      double kl, kr;
-
       // The last update time
       double lastUpdateTime;
 
       // The position and velocity vector
       Vector3 pos, vel;
-
-      // The position and velocity covariance matrix
-      Matrix3x3 posCov, velCov;
 
       // The history index and arrays
       char historyIndex;

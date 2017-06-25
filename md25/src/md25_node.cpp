@@ -52,9 +52,10 @@
  - wheel_diameter1: the wheel 1 diameter in m (default: 0.1);
  - wheel_diameter2: the wheel 2 diameter in m (default: 0.1);
  - wheel_base: the wheel base in m (default: 0.3);
- - cov_K1: the constant of covariance model for wheel 1;
- - cov_K2: the constant of covariance model for wheel 2;
- - yaw_speed_variance: the variance of yaw speed (default: 0.06)
+ - pos_covariance_diagonal: the diagonal of the position covariance matrix (a 6 element
+   vector of type double);
+ - vel_covariance_diagonal: the diagonal of the velocity covariance matrix (a 6 element
+   vector of type double);
  - publish_odom_transformation: true if odom frame -> base frame transformation must be
    published by this node, false otherwise (default: true)
  */
@@ -91,9 +92,8 @@ double speedSensitivity2;
 double wheelDiameter1;
 double wheelDiameter2;
 double wheelBase;
-double covK1;
-double covK2;
-double yawSpeedVariance;
+std::vector<double> posCovarianceDiagonal;
+std::vector<double> velCovarianceDiagonal;
 bool publishOdomTransformation;
 
 // The last encoder values
@@ -273,15 +273,13 @@ void updateOdometry() {
 
 	}
 
-    // Get position and its covariance
+    // Get position
     Vector3 pos;
-    Matrix3x3 posCov;
-    odometryPtr->getPosition(pos, posCov);
+    odometryPtr->getPosition(pos);
 
-	// Get linear and angular velocity
+    // Get velocity
     Vector3 vel;
-    Matrix3x3 velCov;
-    odometryPtr->getVelocity(vel, velCov);
+    odometryPtr->getVelocity(vel);
 
 	// Create odometry quaternion from th
     geometry_msgs::Quaternion odometryQuaternion = tf::createQuaternionMsgFromYaw(pos(2));
@@ -291,15 +289,6 @@ void updateOdometry() {
     odometryMessage.pose.pose.position.x = pos(0);
     odometryMessage.pose.pose.position.y = pos(1);
     odometryMessage.pose.pose.orientation = odometryQuaternion;
-    odometryMessage.pose.covariance[0] = posCov(0, 0);
-    odometryMessage.pose.covariance[1] = posCov(0, 1);
-    odometryMessage.pose.covariance[5] = posCov(0, 2);
-    odometryMessage.pose.covariance[6] = posCov(1, 0);
-    odometryMessage.pose.covariance[7] = posCov(1, 1);
-    odometryMessage.pose.covariance[11] = posCov(1, 2);
-    odometryMessage.pose.covariance[30] = posCov(2, 0);
-    odometryMessage.pose.covariance[31] = posCov(2, 1);
-    odometryMessage.pose.covariance[35] = posCov(2, 2);
     odometryMessage.twist.twist.linear.x = vel(0);
     odometryMessage.twist.twist.linear.y = vel(1);
     odometryMessage.twist.twist.angular.z = vel(2);
@@ -351,11 +340,28 @@ int main(int argc, char** argv) {
 	privateNodeHandle.param("speed_sensitivity2", speedSensitivity2, 12.4620);
 	privateNodeHandle.param("wheel_diameter1", wheelDiameter1, 0.1);
 	privateNodeHandle.param("wheel_diameter2", wheelDiameter2, 0.1);
-	privateNodeHandle.param("wheel_base", wheelBase, 0.3);
-	privateNodeHandle.param("cov_k1", covK1, 0.001);
-	privateNodeHandle.param("cov_k2", covK2, 0.001);
-	privateNodeHandle.param("yaw_speed_variance", yawSpeedVariance, 0.06);
+    privateNodeHandle.param("wheel_base", wheelBase, 0.3);
+    privateNodeHandle.getParam("pos_covariance_diagonal", posCovarianceDiagonal);
+    privateNodeHandle.getParam("vel_covariance_diagonal", velCovarianceDiagonal);
     privateNodeHandle.param("publish_odom_transformation", publishOdomTransformation, true);
+
+    if (posCovarianceDiagonal.size() != 6) {
+
+        // Log error
+        ROS_FATAL("pos_covariance_diagonal size must be 6, actual: %lu", posCovarianceDiagonal.size());
+
+        return -1;
+
+    }
+
+    if (velCovarianceDiagonal.size() != 6) {
+
+        // Log error
+        ROS_FATAL("vel_covariance_diagonal size must be 6, actual: %lu", velCovarianceDiagonal.size());
+
+        return -1;
+
+    }
 
 	// Log
 	ROS_INFO("broadcasting transformation %s -> %s", odomFrame.c_str(), baseFrame.c_str());
@@ -368,13 +374,10 @@ int main(int argc, char** argv) {
 	ROS_INFO("wheel diameter1: %g m", wheelDiameter1);
 	ROS_INFO("wheel diameter2: %g m", wheelDiameter2);
 	ROS_INFO("wheel base: %g m", wheelBase);
-	ROS_INFO("covariance constant 1: %g", covK1);
-	ROS_INFO("covariance constant 2: %g", covK2);
-	ROS_INFO("yaw speed variance: %g", yawSpeedVariance);
     ROS_INFO("publish odom transformation: %d", publishOdomTransformation);
 
 	// Create odometry
-    Odometry odometry(wheelBase, covK1, covK2);
+    Odometry odometry(wheelBase);
 	odometryPtr = &odometry;
 
 	// Create odometry message publisher
@@ -389,7 +392,18 @@ int main(int argc, char** argv) {
 	odometryMessage.header.frame_id = odomFrame;
 	odometryMessage.child_frame_id = baseFrame;
 	odometryMessage.pose.pose.position.z = 0.0;
-	odometryMessage.twist.covariance[35] = pow(yawSpeedVariance, 2);
+    odometryMessage.pose.covariance[0] = posCovarianceDiagonal[0];
+    odometryMessage.pose.covariance[7] = posCovarianceDiagonal[1];
+    odometryMessage.pose.covariance[14] = posCovarianceDiagonal[2];
+    odometryMessage.pose.covariance[21] = posCovarianceDiagonal[3];
+    odometryMessage.pose.covariance[28] = posCovarianceDiagonal[4];
+    odometryMessage.pose.covariance[35] = posCovarianceDiagonal[5];
+    odometryMessage.twist.covariance[0] = velCovarianceDiagonal[0];
+    odometryMessage.twist.covariance[7] = velCovarianceDiagonal[1];
+    odometryMessage.twist.covariance[14] = velCovarianceDiagonal[2];
+    odometryMessage.twist.covariance[21] = velCovarianceDiagonal[3];
+    odometryMessage.twist.covariance[28] = velCovarianceDiagonal[4];
+    odometryMessage.twist.covariance[35] = velCovarianceDiagonal[5];
 
     // The odometry transform broadcaster
     tf::TransformBroadcaster odometryTransformBroadcaster;

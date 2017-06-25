@@ -48,17 +48,11 @@ wheel_diameter2: 0.1
 # The wheel base in m
 wheel_base: 0.275
 
-# The constant of covariance model for wheel 1
-covK1: 0.001
+# The diagonal of the position covariance matrix (a 6 element vector of type double)
+pos_covariance_diagonal: [0.001, 0.001, 0, 0, 0, 0.001]
 
-# The constant of covariance model for wheel 2
-covK2: 0.001
-
-# The threshold to distinguish between straight or arc path
-cov_radius_threshold: 10.0
-
-# The variance of yaw speed
-yaw_speed_variance: 0.06
+# The diagonal of the velocity covariance matrix (a 6 element vector of type double)
+vel_covariance_diagonal: [0.001, 0, 0, 0, 0, 0.001]
 
 # True if odom frame -> base frame transformation must be
 # published by this node, false otherwise (default: true)
