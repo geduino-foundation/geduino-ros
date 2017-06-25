@@ -51,12 +51,6 @@
       <remap from="depth_registered/image_rect" to="depth_registered/image_rectified" />
     </node>
 
-    <!-- The depth image convert metric -->
-    <node machine="geduino1" pkg="nodelet" type="nodelet" name="depth_convert_metric" args="load depth_image_proc/convert_metric camera_nodelet_manager" respawn="true" output="log">
-      <remap from="image_raw"                to="depth_registered/image_rectified" />
-      <remap from="image"                    to="depth_registered/image_metric" />
-    </node>
-
     <!-- The image rectifier: from rgb image raw provide rgb rectified image -->
     <node machine="geduino1" pkg="nodelet" type="nodelet" name="rgb_rectify" args="load image_proc/rectify camera_nodelet_manager" respawn="true" output="log">
       <remap from="image_mono"               to="rgb/image_raw" />
