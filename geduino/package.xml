@@ -42,6 +42,7 @@
   <run_depend>system_monitor</run_depend>
   <run_depend>realsense_camera</run_depend>
   <run_depend>rgbd_launch</run_depend>
+  <run_depend>rtabmap_ros</run_depend>
   
   <export>
   </export>
