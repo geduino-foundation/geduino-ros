@@ -1,7 +1,7 @@
 <!--
- geduino_navigation_stack.launch
+ rtabmap_stack.launch
 
- Copyright (C) 2015 Alessandro Francescon
+ Copyright (C) 2017 Alessandro Francescon
  
  This program is free software: you can redistribute it and/or modify
  it under the terms of the GNU General Public License as published by
@@ -24,7 +24,7 @@
   <!-- The move base -->
   <include file="$(find geduino)/launch/move_base.launch" />
 
-  <!-- The gmapping -->
-  <include file="$(find geduino)/launch/gmapping.launch" />
+  <!-- The rtabmap -->
+  <include file="$(find geduino)/launch/rtabmap.launch" />
 
 </launch>

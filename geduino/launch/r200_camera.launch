@@ -18,10 +18,6 @@
 
 <launch>
 
-  <!-- Machines -->
-  <include file="$(find geduino)/launch/machines.launch">
-  </include>
-
   <group ns="camera">
 
     <!-- The nodelet manager -->

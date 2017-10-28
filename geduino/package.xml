@@ -43,6 +43,7 @@
   <run_depend>realsense_camera</run_depend>
   <run_depend>image_proc</run_depend>
   <run_depend>depth_image_proc</run_depend>
+  <run_depend>rtabmap_ros</run_depend>
   
   <export>
   </export>

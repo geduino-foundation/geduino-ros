@@ -18,10 +18,6 @@
 
 <launch>
 
-  <!-- Machines -->
-  <include file="$(find geduino)/launch/machines.launch">
-  </include>
-
   <!-- The gmapping node -->
   <node machine="geduino2" pkg="gmapping" type="slam_gmapping" name="gmapping" respawn="false" output="screen">
     <rosparam file="$(find geduino)/config/gmapping_params.yaml" command="load" />  

@@ -18,10 +18,6 @@
 
 <launch>
 
-  <!-- Machines -->
-  <include file="$(find geduino)/launch/machines.launch">
-  </include>
-
   <!-- The move base node -->
   <node machine="geduino2" pkg="move_base" type="move_base" name="move_base" respawn="false" output="screen">
     <rosparam file="$(find geduino)/config/move_base_params.yaml" command="load" />
