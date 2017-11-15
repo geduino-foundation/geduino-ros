@@ -1,0 +1,78 @@
+# rtabmap_params.yaml
+#
+# Copyright (C) 2015 Alessandro Francescon
+# 
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# The frame attached to mobile base (default: base_link)
+frame_id: base_link
+
+# The frame attached to map (default: map)
+map_frame_id: map
+
+# Subscribe to depth image (default: true)
+subscribe_depth: true
+
+# Subscribe to laser scan (default: true)
+subscribe_scan: true
+
+# Size of message queue for each syncronized topic (default: 10)
+queue_size: 50
+
+# Use approximate time synchronization of input messages. If false, note that the odometry
+# input must have also exactly the same timestamps than input images. (default: false)
+approx_sync: true
+
+RGBD:
+
+  # When a new node is added to the graph, the transformation of its neighbor link to the 
+  # previous node is refined using registration approach selected (Reg/Strategy). (default: false)
+  NeighborLinkRefining: true
+
+  # Minimum angular displacement to update the map. Rehearsal is done prior to this, so weights 
+  # are still updated. (default: 0.1)
+  AngularUpdate: 0.01
+
+  # Minimum linear displacement to update the map. Rehearsal is done prior to this, so weights 
+  # are still updated. (default: 0.1)
+  LinearUpdate: 0.01
+
+Reg:
+
+  # 0=Vis, 1=Icp, 2=VisIcp (default: 0)
+  Strategy: 1
+
+  # Force 3 degrees-of-freedom transform (3Dof: x,y and yaw). Parameters z, roll and pitch will be 
+  # set to 0. (default: false)
+  Force3DoF: true
+
+Vis:
+
+  # Minimum feature correspondences to compute/accept the transformation. (default: 20)
+  MinInliers: 5
+
+Rtabmap:
+
+  # Maximum time allowed for the detector (ms) (0 means infinity). (default: 0)
+  TimeThr: 700
+
+Mem:
+
+  # Rehearsal similarity (default: 0.6)
+  RehearsalSimilarity: 0.45
+
+Grid:
+
+  # Create occupancy grid from depth image(s), otherwise it is created from laser scan. (default: true)
+  FromDepth: false
+

@@ -40,7 +40,7 @@ mem_monitor:
 
 # NTP monitor param
 ntp_monitor:
-  reference_host: ntp.ubuntu.com
+  reference_host: geduino1
   offset_tolerance: 500.0
   error_offset_tolerance: 5000000.0
 

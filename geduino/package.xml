@@ -38,7 +38,6 @@
   <run_depend>robot_state_publisher</run_depend>
   <run_depend>zxing</run_depend>
   <run_depend>range_layer</run_depend>
-  <run_depend>gmapping</run_depend>
   <run_depend>system_monitor</run_depend>
   <run_depend>realsense_camera</run_depend>
   <run_depend>image_proc</run_depend>

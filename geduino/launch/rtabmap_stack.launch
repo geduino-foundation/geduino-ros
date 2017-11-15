@@ -22,9 +22,9 @@
   <include file="$(find geduino)/launch/base_configuration.launch" />
 
   <!-- The move base -->
-  <include file="$(find geduino)/launch/move_base.launch" />
+<!--  <include file="$(find geduino)/launch/move_base.launch" /> -->
 
-  <!-- The rtabmap -->
+   <!-- The rtabmap -->
   <include file="$(find geduino)/launch/rtabmap.launch" />
 
 </launch>
