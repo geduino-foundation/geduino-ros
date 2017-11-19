@@ -18,17 +18,21 @@
 
 <launch>
 
-	<!-- The Rtabmap node -->
-	<node machine="geduino1" name="rtabmap" pkg="rtabmap_ros" type="rtabmap" respawn="true" output="log" args="--delete_db_on_start">
+	<group ns="rtabmap">
 
-		<remap from="odom" to="/odom"/>
-		<remap from="scan" to="/scan"/>
-		<remap from="rgb/image" to="/camera/rgb/image_rectified"/>
-		<remap from="rgb/camera_info" to="/camera/rgb/camera_info"/>
-		<remap from="depth/image" to="/camera/depth_registered/image_rectified"/>
+		<!-- The Rtabmap node -->
+		<node machine="geduino1" name="rtabmap" pkg="rtabmap_ros" type="rtabmap" respawn="true" output="log" args="--delete_db_on_start">
 
-		<rosparam file="$(find geduino)/config/rtabmap_params.yaml" command="load" />
+			<remap from="odom" to="/odom"/>
+			<remap from="scan" to="/scan"/>
+			<remap from="rgb/image" to="/camera/rgb/image_rectified"/>
+			<remap from="rgb/camera_info" to="/camera/rgb/camera_info"/>
+			<remap from="depth/image" to="/camera/depth_registered/image_rectified"/>
 
-	</node>
+			<rosparam file="$(find geduino)/config/rtabmap_params.yaml" command="load" />
+
+		</node>
+
+	</group>
 
 </launch>
