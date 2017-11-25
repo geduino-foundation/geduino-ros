@@ -19,9 +19,11 @@
 
 #include <ros.h>
 #include <sensor_msgs/Range.h>
+#include <sensor_msgs/Imu.h>
 #include <sensor_msgs/Temperature.h>
 #include <std_msgs/Float32.h>
 #include <diagnostic_msgs/DiagnosticArray.h>
+#include <CurieIMU.h>
 #include "PING.h"
 #include "TMP36.h"
 #include "Battery.h"
@@ -52,13 +54,18 @@
 #define PING_MAX_RANGE                                3.00        // [m]
 #define PING_MOUNTING_GAP                             0.02        // [m]
 
+// The IMU ranges
+#define IMU_GYRO_RANGE                                125         // [degree/s]
+#define IMU_ACCELEROMETER_RANGE                       2           // [g]
+#define IMU_RATE                                      50          // [Hz]
+
 // The battery parameters
-#define BATTERY_PARAM_A_DEFAULT                       2.805
-#define BATTERY_PARAM_B_DEFAULT                       10.232
+#define BATTERY_PARAM_A_DEFAULT                       2.29
+#define BATTERY_PARAM_B_DEFAULT                       12.30
 
 // The battery threshold default levels
-#define BATTERY_WARNING_VOLTS_DEFAULT                 13.6        // [V]
-#define BATTERY_CRITICAL_VOLTS_DEFAULT                12.4        // [V]
+#define BATTERY_WARNING_VOLTS_DEFAULT                 14.8        // [V]
+#define BATTERY_CRITICAL_VOLTS_DEFAULT                14.0        // [V]
 
 // The MCU threshold default levels
 #define MCU_WARNING_LOAD_DEFAULT                      10          // [%]
@@ -66,6 +73,9 @@
 
 // The range publisher default frequency
 #define RANGE_PUBLISHER_FREQUENCY_DEFAULT             10          // [Hz]
+
+// The imu publisher default frequency
+#define IMU_PUBLISHER_FREQUENCY                       30          // [Hz]
 
 // The battery state publisher default frequency
 #define BATTERY_STATE_PUBLISHER_FREQUENCY_DEFAULT     1           // [Hz]
@@ -95,6 +105,9 @@ Led greenLed(GREEN_LED_PIN);
 // The range publisher rate
 Rate rangePublisherRate(RANGE_PUBLISHER_FREQUENCY_DEFAULT);
 
+// The IMU publisher rate
+Rate imuPublisherRate(IMU_PUBLISHER_FREQUENCY);
+
 // The battery state publisher rate
 Rate batteryStatePublisherRate(BATTERY_STATE_PUBLISHER_FREQUENCY_DEFAULT);
 
@@ -115,6 +128,10 @@ ros::Publisher centerRangeMessagePublisher("center_range", & centerRangeMessage)
 sensor_msgs::Range rightRangeMessage;
 ros::Publisher rightRangeMessagePublisher("right_range", & rightRangeMessage);
 
+// The IMU message and its publisher
+sensor_msgs::Imu imuMessage;
+ros::Publisher imuMessagePublisher("imu", & imuMessage);
+
 // The temperature message and its publisher
 sensor_msgs::Temperature temperatureMessage;
 ros::Publisher temperatureMessagePublisher("temperature", & temperatureMessage);
@@ -125,12 +142,13 @@ ros::Publisher batteryStateMessagePublisher("battery_state", & batteryStateMessa
 
 // The diagnostics message and its publisher
 diagnostic_msgs::DiagnosticArray diagnosticsMessage;
-diagnostic_msgs::DiagnosticStatus diagnosticStatusArray[5];
+diagnostic_msgs::DiagnosticStatus diagnosticStatusArray[6];
 diagnostic_msgs::KeyValue leftPingValues[2];
 diagnostic_msgs::KeyValue centerPingValues[2];
 diagnostic_msgs::KeyValue rightPingValues[2];
+diagnostic_msgs::KeyValue imuValues[1];
 diagnostic_msgs::KeyValue batteryValues[1];
-diagnostic_msgs::KeyValue samx8Values[7];
+diagnostic_msgs::KeyValue mcuValues[9];
 ros::Publisher diagnosticsMessagePublisher("diagnostics", & diagnosticsMessage);
 
 // The battery threshold levels
@@ -141,24 +159,50 @@ float batteryCriticalVolts = BATTERY_CRITICAL_VOLTS_DEFAULT;
 int mcuWarningLoad = MCU_WARNING_LOAD_DEFAULT;
 int mcuCriticalLoad = MCU_CRITICAL_LOAD_DEFAULT;
 
+// Get ROS connected status
+bool connected = false;
+
 /****************************************************************************************
  * Setup
  */
 
 void setup() {
-greenLed.ledBlinkFastFor(1000);
-  // Turn on red led 
-  greenLed.ledOff();
+
+  // Init leds
+  greenLed.init();
+  redLed.init();
+
+  // Turn on leds
+  greenLed.ledOn();
   redLed.ledOn();
+
+  // Just delay
+  delay(1000);
+
+  // Turn off leds 
+  greenLed.ledOff();
+  redLed.ledOff();
+
+  // Start IMU
+  CurieIMU.begin();
+
+  // Setup IMU
+  CurieIMU.setGyroRange(IMU_GYRO_RANGE);
+  CurieIMU.setAccelerometerRange(IMU_ACCELEROMETER_RANGE);
+  CurieIMU.setGyroRate(IMU_RATE);
+  CurieIMU.setAccelerometerRate(IMU_RATE);
+  
+  // Calibrate IMU
+  CurieIMU.autoCalibrateGyroOffset();
+  CurieIMU.autoCalibrateAccelerometerOffset(X_AXIS, 0);
+  CurieIMU.autoCalibrateAccelerometerOffset(Y_AXIS, 0);
+  CurieIMU.autoCalibrateAccelerometerOffset(Z_AXIS, 1);
   
   // Set baud rate
   nodeHandle.getHardware()->setBaud(ROS_SERIAL_BAUD_RATE);
   
   // Init node handle
   nodeHandle.initNode();
-  
-  // Debug
-  nodeHandle.logdebug("intializing messages...");
   
   // Init range messages
   leftRangeMessage.radiation_type = sensor_msgs::Range::ULTRASOUND;
@@ -176,6 +220,16 @@ greenLed.ledBlinkFastFor(1000);
   rightRangeMessage.field_of_view = PING_FIELD_OF_VIEW;
   rightRangeMessage.min_range = PING_MIN_RANGE;
   rightRangeMessage.max_range = PING_MAX_RANGE;
+
+  // Init IMU message
+  imuMessage.header.frame_id = "imu_link";
+  imuMessage.orientation_covariance[0] = -1;
+  imuMessage.angular_velocity_covariance[0] = 0.0000009;
+  imuMessage.angular_velocity_covariance[4] = 0.0000009;
+  imuMessage.angular_velocity_covariance[8] = 0.0000009;
+  imuMessage.linear_acceleration_covariance[0] = 0.000038;
+  imuMessage.linear_acceleration_covariance[4] = 0.000038;
+  imuMessage.linear_acceleration_covariance[8] = 0.000038;
   
   // Init temperature message
   temperatureMessage.header.frame_id = "base_temperature";
@@ -183,7 +237,7 @@ greenLed.ledBlinkFastFor(1000);
   
   // Init diagnostics message
   diagnosticsMessage.header.frame_id = "";
-  diagnosticsMessage.status_length = 5;
+  diagnosticsMessage.status_length = 6;
   diagnosticsMessage.status = diagnosticStatusArray;
   
   // The left ping diagnostic status
@@ -215,39 +269,52 @@ greenLed.ledBlinkFastFor(1000);
   diagnosticsMessage.status[2].values[0].value = "N/A";
   diagnosticsMessage.status[2].values[1].key = "Measurement";
   diagnosticsMessage.status[2].values[1].value = "N/A";
+
+  // The IMU diagnostic status
+  diagnosticsMessage.status[3].name = "IMU";
+  diagnosticsMessage.status[3].hardware_id = "imu";
+  diagnosticsMessage.status[3].values_length = 1;
+  diagnosticsMessage.status[3].values = imuValues;
+  diagnosticsMessage.status[3].values[0].key = "Temperature";
+  diagnosticsMessage.status[3].values[0].value = "N/A";
  
   // The battery diagnostic status
-  diagnosticsMessage.status[3].name = "Battery";
-  diagnosticsMessage.status[3].hardware_id = "battery";
-  diagnosticsMessage.status[3].values_length = 1;
-  diagnosticsMessage.status[3].values = batteryValues;
-  diagnosticsMessage.status[3].values[0].key = "Volts";
-  diagnosticsMessage.status[3].values[0].value = "N/A";
+  diagnosticsMessage.status[4].name = "Battery";
+  diagnosticsMessage.status[4].hardware_id = "battery";
+  diagnosticsMessage.status[4].values_length = 1;
+  diagnosticsMessage.status[4].values = batteryValues;
+  diagnosticsMessage.status[4].values[0].key = "Volts";
+  diagnosticsMessage.status[4].values[0].value = "N/A";
 
   // The MCU diagnostic status
-  diagnosticsMessage.status[4].name = "MCU";
-  diagnosticsMessage.status[4].hardware_id = "mcu";
-  diagnosticsMessage.status[4].values_length = 7;
-  diagnosticsMessage.status[4].values = samx8Values;
-  diagnosticsMessage.status[4].values[0].key = "Load";
-  diagnosticsMessage.status[4].values[0].value = "N/A";
-  diagnosticsMessage.status[4].values[1].key = "Range average delay";
-  diagnosticsMessage.status[4].values[1].value = "N/A";
-  diagnosticsMessage.status[4].values[2].key = "Range main duration";
-  diagnosticsMessage.status[4].values[2].value = "N/A";
-  diagnosticsMessage.status[4].values[3].key = "Battery state average delay";
-  diagnosticsMessage.status[4].values[3].value = "N/A";
-  diagnosticsMessage.status[4].values[4].key = "Battery state main duration";
-  diagnosticsMessage.status[4].values[4].value = "N/A";
-  diagnosticsMessage.status[4].values[5].key = "Diagnostics average delay";
-  diagnosticsMessage.status[4].values[5].value = "N/A";
-  diagnosticsMessage.status[4].values[6].key = "Diagnostics main duration";
-  diagnosticsMessage.status[4].values[6].value = "N/A";
+  diagnosticsMessage.status[5].name = "MCU";
+  diagnosticsMessage.status[5].hardware_id = "mcu";
+  diagnosticsMessage.status[5].values_length = 9;
+  diagnosticsMessage.status[5].values = mcuValues;
+  diagnosticsMessage.status[5].values[0].key = "Load";
+  diagnosticsMessage.status[5].values[0].value = "N/A";
+  diagnosticsMessage.status[5].values[1].key = "Range average delay";
+  diagnosticsMessage.status[5].values[1].value = "N/A";
+  diagnosticsMessage.status[5].values[2].key = "Range main duration";
+  diagnosticsMessage.status[5].values[2].value = "N/A";
+  diagnosticsMessage.status[5].values[3].key = "IMU average delay";
+  diagnosticsMessage.status[5].values[3].value = "N/A";
+  diagnosticsMessage.status[5].values[4].key = "IMU main duration";
+  diagnosticsMessage.status[5].values[4].value = "N/A";
+  diagnosticsMessage.status[5].values[5].key = "Battery state average delay";
+  diagnosticsMessage.status[5].values[5].value = "N/A";
+  diagnosticsMessage.status[5].values[6].key = "Battery state main duration";
+  diagnosticsMessage.status[5].values[6].value = "N/A";
+  diagnosticsMessage.status[5].values[7].key = "Diagnostics average delay";
+  diagnosticsMessage.status[5].values[7].value = "N/A";
+  diagnosticsMessage.status[5].values[8].key = "Diagnostics main duration";
+  diagnosticsMessage.status[5].values[8].value = "N/A";
   
   // Advertise node handle for publishers
   nodeHandle.advertise(leftRangeMessagePublisher);
   nodeHandle.advertise(centerRangeMessagePublisher);
   nodeHandle.advertise(rightRangeMessagePublisher);
+  nodeHandle.advertise(imuMessagePublisher);
   nodeHandle.advertise(temperatureMessagePublisher);
   nodeHandle.advertise(batteryStateMessagePublisher);
   nodeHandle.advertise(diagnosticsMessagePublisher);
@@ -259,35 +326,41 @@ greenLed.ledBlinkFastFor(1000);
  */
 
 void loop() {
-  
-  while (!nodeHandle.connected()) {
+
+  // Get if actually connected
+  bool currentConnected = nodeHandle.connected();
+
+  if (!connected && currentConnected) {
+
+    // Update params
+    boolean result = updateParams();
+
+    if (result) {
+
+      // Turn on green led
+      greenLed.ledOn();
+      
+    }
+
+    // Set as connected if paramers uodate success
+    connected = result;
+    
+  } else if (!connected && !currentConnected) {
 
     // Blink green led to inform wating for connection
     greenLed.ledBlinkSlow();
+
+    // Just delay
+    delay(50);
     
-    // Spin once
-    nodeHandle.spinOnce();
+  } else if (connected && !currentConnected) {
 
-    // Check battery state
-    checkBatteryState();
-
-    if (nodeHandle.connected()) {
-
-      // Update params
-      updateParams();
-
-      // Log
-      nodeHandle.loginfo("Starting loop...");
-      
-    }
+    // Set connected to false
+    connected = false;
     
   }
-
-  // Turn off red led and turn on green led
-  redLed.ledOff();
-  greenLed.ledOn();
   
-  if (rangePublisherRate.ellapsed()) {
+  if (connected && rangePublisherRate.ellapsed()) {
        
     // Start duration
     rangePublisherRate.start();
@@ -302,8 +375,24 @@ void loop() {
     mainLoop.cycleUsed();
   
   }
+
+  if (connected && imuPublisherRate.ellapsed()) {
+       
+    // Start duration
+    imuPublisherRate.start();
+    
+    // Publish IMU
+    publishIMU();
+    
+    // End duration
+    imuPublisherRate.end();
+    
+    // Used cycle
+    mainLoop.cycleUsed();
   
-  if (batteryStatePublisherRate.ellapsed()) {
+  }
+  
+  if (connected && batteryStatePublisherRate.ellapsed()) {
        
     // Start duration
     batteryStatePublisherRate.start();
@@ -319,7 +408,7 @@ void loop() {
   
   }
   
-  if (diagnosticsPublisherRate.ellapsed()) {
+  if (connected && diagnosticsPublisherRate.ellapsed()) {
        
     // Start duration
     diagnosticsPublisherRate.start();
@@ -334,10 +423,20 @@ void loop() {
     mainLoop.cycleUsed();
   
   }
+
+  // Check battery state
+  checkBatteryState();
   
   // Cycle performed
   mainLoop.cyclePerformed();
 
+  if (!connected) {
+
+    // Spin once
+    nodeHandle.spinOnce();
+  
+  }
+  
 }
 
 void publishRange() {
@@ -378,6 +477,42 @@ void publishRange() {
   // Spin once
   nodeHandle.spinOnce();
 
+}
+
+void publishIMU() {
+
+  int ax, ay, az;
+  int gx, gy, gz;
+
+  // Get ROS current time
+  ros::Time now = nodeHandle.now();
+
+  // Read IMU raw data
+  CurieIMU.readMotionSensor(ax, ay, az, gx, gy, gz);
+
+  // Convert raw data to g and degree/s
+  float linear_acceleration_x = (ax / 32768.0) * IMU_ACCELEROMETER_RANGE;
+  float linear_acceleration_y = (ay / 32768.0) * IMU_ACCELEROMETER_RANGE;
+  float linear_acceleration_z = (az / 32768.0) * IMU_ACCELEROMETER_RANGE;
+  float angular_velocity_x = (gx / 32768.0) * IMU_GYRO_RANGE;
+  float angular_velocity_y = (gy / 32768.0) * IMU_GYRO_RANGE;
+  float angular_velocity_z = (gz / 32768.0) * IMU_GYRO_RANGE;
+
+  // Update IMU message
+  imuMessage.header.stamp = now;
+  imuMessage.linear_acceleration.x = linear_acceleration_x * 9.81;
+  imuMessage.linear_acceleration.y = linear_acceleration_y * 9.81;
+  imuMessage.linear_acceleration.z = linear_acceleration_z * 9.81;
+  imuMessage.angular_velocity.x = angular_velocity_x / 57.3;
+  imuMessage.angular_velocity.y = angular_velocity_y / 57.3;
+  imuMessage.angular_velocity.z = angular_velocity_z / 57.3;
+
+  // Publish IMU message
+  imuMessagePublisher.publish(& imuMessage);
+  
+  // Spin once
+  nodeHandle.spinOnce();
+  
 }
 
 void publishBatteryState() {
@@ -490,27 +625,36 @@ void publishDiagnostics() {
   
   }
 
+  // Get IMU temperature
+  int imuTemperature = CurieIMU.readTemperature();
+  String imuTemperatureString = String(String(imuTemperature / 512.0 + 23, 1) + " C");
+
+  // Set IMU diagnostic
+  diagnosticsMessage.status[3].level = diagnostic_msgs::DiagnosticStatus::OK;
+  diagnosticsMessage.status[3].message = "OK";
+  diagnosticsMessage.status[3].values[0].value = imuTemperatureString.c_str();
+
   // Get battery volts
   float volts;
   battery.getVolts(& volts);
 
   // Set battery diagnostic values
   String voltsString = String(String(volts, 1) + " V");
-  diagnosticsMessage.status[3].values[0].value = voltsString.c_str();
+  diagnosticsMessage.status[4].values[0].value = voltsString.c_str();
 
   // Set battery diagnostic level and message
   if (volts > batteryWarningVolts) {
     
-    diagnosticsMessage.status[3].level = diagnostic_msgs::DiagnosticStatus::OK;
-    diagnosticsMessage.status[3].message = "OK";
+    diagnosticsMessage.status[4].level = diagnostic_msgs::DiagnosticStatus::OK;
+    diagnosticsMessage.status[4].message = "OK";
 
     // Turn off red led
     redLed.ledOff();
 
   } else if (volts > batteryCriticalVolts) {
     
-    diagnosticsMessage.status[3].level = diagnostic_msgs::DiagnosticStatus::WARN;
-    diagnosticsMessage.status[3].message = "Voltage under warning level, charge battery";
+    diagnosticsMessage.status[4].level = diagnostic_msgs::DiagnosticStatus::WARN;
+    diagnosticsMessage.status[4].message = "Voltage under warning level, charge battery";
 
     // Turn on red led
     redLed.ledOn();
@@ -520,8 +664,8 @@ void publishDiagnostics() {
 
   } else {
     
-    diagnosticsMessage.status[3].level = diagnostic_msgs::DiagnosticStatus::ERROR;
-    diagnosticsMessage.status[3].message = "Voltage under critical level, power off immediatly to avoid battery damage";
+    diagnosticsMessage.status[4].level = diagnostic_msgs::DiagnosticStatus::ERROR;
+    diagnosticsMessage.status[4].message = "Voltage under critical level, power off immediatly to avoid battery damage";
 
     // Turn on red led
     redLed.ledOn();
@@ -532,46 +676,55 @@ void publishDiagnostics() {
   }
 
   // Get MCU load, delays and duration
-  float load, rangeDelay, rangeDuration, batteryStateDelay, batteryStateDuration, diagnosticsDelay, diagnosticsDuration;
+  float load, rangeDelay, rangeDuration, imuDelay, imuDuration, batteryStateDelay, batteryStateDuration, diagnosticsDelay, diagnosticsDuration;
   mainLoop.getUsedCounter().getAverage(& load);
   rangePublisherRate.getDelayCounter().getAverage(& rangeDelay);
   rangePublisherRate.getDurationCounter().getAverage(& rangeDuration);
+  imuPublisherRate.getDelayCounter().getAverage(& imuDelay);
+  imuPublisherRate.getDurationCounter().getAverage(& imuDuration);
   batteryStatePublisherRate.getDelayCounter().getAverage(& batteryStateDelay);
   batteryStatePublisherRate.getDurationCounter().getAverage(& batteryStateDuration);
   diagnosticsPublisherRate.getDelayCounter().getAverage(& diagnosticsDelay);
   diagnosticsPublisherRate.getDurationCounter().getAverage(& diagnosticsDuration);
 
+  // Normalize load from 0 to 100
+  load = load * 100;
+
   // Set Arduino diagnostic values
   String loadString = String(String(load, 2) + " %").c_str();
-  diagnosticsMessage.status[4].values[0].value = loadString.c_str();
+  diagnosticsMessage.status[5].values[0].value = loadString.c_str();
   String rangeDelayString = String(String(rangeDelay, 2) + " millis");
-  diagnosticsMessage.status[4].values[1].value = rangeDelayString.c_str();
+  diagnosticsMessage.status[5].values[1].value = rangeDelayString.c_str();
   String rangeDurationString = String(String(rangeDuration, 2) + " millis");
-  diagnosticsMessage.status[4].values[2].value = rangeDurationString.c_str();
+  diagnosticsMessage.status[5].values[2].value = rangeDurationString.c_str();
+  String imuDelayString = String(String(imuDelay, 2) + " millis");
+  diagnosticsMessage.status[5].values[3].value = imuDelayString.c_str();
+  String imuDurationString = String(String(imuDuration, 2) + " millis");
+  diagnosticsMessage.status[5].values[4].value = imuDurationString.c_str();
   String batteryStateDelayString = String(String(batteryStateDelay, 2) + " millis");
-  diagnosticsMessage.status[4].values[3].value = batteryStateDelayString.c_str();
+  diagnosticsMessage.status[5].values[5].value = batteryStateDelayString.c_str();
   String batteryStateDurationString = String(String(batteryStateDuration, 2) + " millis");
-  diagnosticsMessage.status[4].values[4].value = batteryStateDurationString.c_str();
+  diagnosticsMessage.status[5].values[6].value = batteryStateDurationString.c_str();
   String diagnosticsDelayString = String(String(diagnosticsDelay, 2) + " millis");
-  diagnosticsMessage.status[4].values[5].value = diagnosticsDelayString.c_str();
+  diagnosticsMessage.status[5].values[7].value = diagnosticsDelayString.c_str();
   String diagnosticsDurationString = String(String(diagnosticsDuration, 2) + " millis");
-  diagnosticsMessage.status[4].values[6].value = diagnosticsDurationString.c_str();
+  diagnosticsMessage.status[5].values[8].value = diagnosticsDurationString.c_str();
   
   // Set MCU diagnostic level and message
   if (load < mcuWarningLoad) {
     
-    diagnosticsMessage.status[4].level = diagnostic_msgs::DiagnosticStatus::OK;
-    diagnosticsMessage.status[4].message = "OK";
+    diagnosticsMessage.status[5].level = diagnostic_msgs::DiagnosticStatus::OK;
+    diagnosticsMessage.status[5].message = "OK";
     
   } else if (load < mcuCriticalLoad) {
     
-    diagnosticsMessage.status[4].level = diagnostic_msgs::DiagnosticStatus::WARN;
-    diagnosticsMessage.status[4].message = "Load over warning level";
+    diagnosticsMessage.status[5].level = diagnostic_msgs::DiagnosticStatus::WARN;
+    diagnosticsMessage.status[5].message = "Load over warning level";
   
   } else {
     
-    diagnosticsMessage.status[4].level = diagnostic_msgs::DiagnosticStatus::ERROR;
-    diagnosticsMessage.status[4].message = "Load over critical level";
+    diagnosticsMessage.status[5].level = diagnostic_msgs::DiagnosticStatus::ERROR;
+    diagnosticsMessage.status[5].message = "Load over critical level";
   
   }
   
@@ -608,58 +761,78 @@ void checkBatteryState() {
   
 }
 
-void updateParams() {
+bool updateParams() {
+
+  float rangePublisherFrequency;
+  float batteryStatePublisherFrequency;
+  float diagnosticsPublisherFrequency;
+  float batteryParamA, batteryParamB;
+  
+  // Update params
+  bool result = getFloatParam("~batteryWarningVolts", & batteryWarningVolts) && 
+                getFloatParam("~batteryCriticalVolts", & batteryCriticalVolts) &&
+                getIntParam("~mcuWarningLoad", & mcuWarningLoad) &&
+                getIntParam("~mcuCriticalLoad", & mcuCriticalLoad) && 
+                getFloatParam("~rangePublisherFrequency", & rangePublisherFrequency) &&
+                getFloatParam("~batteryStatePublisherFrequency", & batteryStatePublisherFrequency) &&
+                getFloatParam("~diagnosticsPublisherFrequency", & diagnosticsPublisherFrequency) &&
+                getFloatParam("~batteryParamA", & batteryParamA) &&
+                getFloatParam("~batteryParamB", & batteryParamB);
+
+  if (result) {
+
+    // Set params
+    rangePublisherRate.setFrequency(rangePublisherFrequency);
+    batteryStatePublisherRate.setFrequency(batteryStatePublisherFrequency);
+    diagnosticsPublisherRate.setFrequency(diagnosticsPublisherFrequency);
+    battery.setParams(batteryParamA, batteryParamB);
+   
+    // Log
+    nodeHandle.loginfo("Parameters updated successfully");
+
+  } else {
+
+    // Log
+    nodeHandle.logwarn("Parameters update failed");
+    
+  }
+
+  return result;
+
+}
+
+bool getIntParam(const char * key, int * buffer) {
+
+  bool result = false;
+ 
+  // Get param
+  result = nodeHandle.getParam(key, buffer);
+
+  // Spin once
+  nodeHandle.spinOnce();
+
+  // Just wait
+  delay(10);
+
+  return result;
+  
+}
+
+bool getFloatParam(const char * key, float * buffer) {
 
   bool result = false;
 
-  while (!result) {
-  
-    result = nodeHandle.getParam("~batteryWarningVolts", & batteryWarningVolts);
-    result = result && nodeHandle.getParam("~batteryCriticalVolts", & batteryCriticalVolts);
-    
-    result = result && nodeHandle.getParam("~mcuWarningLoad", & mcuWarningLoad);
-    result = result && nodeHandle.getParam("~mcuCriticalLoad", & mcuCriticalLoad);
-  
-    float rangePublisherFrequency;
-    if (result && nodeHandle.getParam("~rangePublisherFrequency", & rangePublisherFrequency)) {
-      rangePublisherRate.setFrequency(rangePublisherFrequency);
-    } else {
-      result = false;
-    }
-  
-    float batteryStatePublisherFrequency;
-    if (result && nodeHandle.getParam("~batteryStatePublisherFrequency", & batteryStatePublisherFrequency)) {
-      batteryStatePublisherRate.setFrequency(batteryStatePublisherFrequency);
-    } else {
-      result = false;
-    }
-  
-    float diagnosticsPublisherFrequency;
-    if (result && nodeHandle.getParam("~diagnosticsPublisherFrequency", & diagnosticsPublisherFrequency)) {
-      diagnosticsPublisherRate.setFrequency(diagnosticsPublisherFrequency);
-    } else {
-      result = false;
-    }
-  
-    float batteryParamA, batteryParamB;
-    if (result && nodeHandle.getParam("~batteryParamA", & batteryParamA) &&
-        nodeHandle.getParam("~batteryParamB", & batteryParamB)) {
-      battery.setParams(batteryParamA, batteryParamB);
-    } else {
-      result = false;
-    }
-  
-    if (!result) {
-  
-      // Log
-      nodeHandle.logerror("Failed to get some parameters: retrying...");
-  
-    }
+  // Get param
+  result = nodeHandle.getParam(key, buffer);
 
-  }
-  
-  // Log
-  nodeHandle.loginfo("Parameter updated successfully");
-    
+  // Spin once
+  nodeHandle.spinOnce();
+
+  // Just wait
+  delay(10);
+
+  return result;
+
 }
+
 
