@@ -53,12 +53,12 @@
 #define PING_MOUNTING_GAP                             0.02        // [m]
 
 // The battery parameters
-#define BATTERY_PARAM_A_DEFAULT                       2.805
-#define BATTERY_PARAM_B_DEFAULT                       10.232
+#define BATTERY_PARAM_A_DEFAULT                       2.29
+#define BATTERY_PARAM_B_DEFAULT                       12.30
 
 // The battery threshold default levels
-#define BATTERY_WARNING_VOLTS_DEFAULT                 13.6        // [V]
-#define BATTERY_CRITICAL_VOLTS_DEFAULT                12.4        // [V]
+#define BATTERY_WARNING_VOLTS_DEFAULT                 14.8        // [V]
+#define BATTERY_CRITICAL_VOLTS_DEFAULT                14.0        // [V]
 
 // The MCU threshold default levels
 #define MCU_WARNING_LOAD_DEFAULT                      10          // [%]
@@ -141,24 +141,35 @@ float batteryCriticalVolts = BATTERY_CRITICAL_VOLTS_DEFAULT;
 int mcuWarningLoad = MCU_WARNING_LOAD_DEFAULT;
 int mcuCriticalLoad = MCU_CRITICAL_LOAD_DEFAULT;
 
+// Get ROS connected status
+bool connected = false;
+
 /****************************************************************************************
  * Setup
  */
 
 void setup() {
-greenLed.ledBlinkFastFor(1000);
-  // Turn on red led 
-  greenLed.ledOff();
+
+  // Init leds
+  greenLed.init();
+  redLed.init();
+
+  // Turn on leds
+  greenLed.ledOn();
   redLed.ledOn();
+
+  // Just delay
+  delay(1000);
+
+  // Turn off leds 
+  greenLed.ledOff();
+  redLed.ledOff();
   
   // Set baud rate
   nodeHandle.getHardware()->setBaud(ROS_SERIAL_BAUD_RATE);
   
   // Init node handle
   nodeHandle.initNode();
-  
-  // Debug
-  nodeHandle.logdebug("intializing messages...");
   
   // Init range messages
   leftRangeMessage.radiation_type = sensor_msgs::Range::ULTRASOUND;
@@ -259,35 +270,41 @@ greenLed.ledBlinkFastFor(1000);
  */
 
 void loop() {
-  
-  while (!nodeHandle.connected()) {
+
+  // Get if actually connected
+  bool currentConnected = nodeHandle.connected();
+
+  if (!connected && currentConnected) {
+
+    // Update params
+    boolean result = updateParams();
+
+    if (result) {
+
+      // Turn on green led
+      greenLed.ledOn();
+      
+    }
+
+    // Set as connected if paramers uodate success
+    connected = result;
+    
+  } else if (!connected && !currentConnected) {
 
     // Blink green led to inform wating for connection
     greenLed.ledBlinkSlow();
+
+    // Just delay
+    delay(250);
     
-    // Spin once
-    nodeHandle.spinOnce();
+  } else if (connected && !currentConnected) {
 
-    // Check battery state
-    checkBatteryState();
-
-    if (nodeHandle.connected()) {
-
-      // Update params
-      updateParams();
-
-      // Log
-      nodeHandle.loginfo("Starting loop...");
-      
-    }
+    // Set connected to false
+    connected = false;
     
   }
-
-  // Turn off red led and turn on green led
-  redLed.ledOff();
-  greenLed.ledOn();
   
-  if (rangePublisherRate.ellapsed()) {
+  if (connected && rangePublisherRate.ellapsed()) {
        
     // Start duration
     rangePublisherRate.start();
@@ -303,7 +320,7 @@ void loop() {
   
   }
   
-  if (batteryStatePublisherRate.ellapsed()) {
+  if (connected && batteryStatePublisherRate.ellapsed()) {
        
     // Start duration
     batteryStatePublisherRate.start();
@@ -319,7 +336,7 @@ void loop() {
   
   }
   
-  if (diagnosticsPublisherRate.ellapsed()) {
+  if (connected && diagnosticsPublisherRate.ellapsed()) {
        
     // Start duration
     diagnosticsPublisherRate.start();
@@ -334,10 +351,20 @@ void loop() {
     mainLoop.cycleUsed();
   
   }
+
+  // Check battery state
+  checkBatteryState();
   
   // Cycle performed
   mainLoop.cyclePerformed();
 
+  if (!connected) {
+
+    // Spin once
+    nodeHandle.spinOnce();
+  
+  }
+  
 }
 
 void publishRange() {
@@ -608,58 +635,78 @@ void checkBatteryState() {
   
 }
 
-void updateParams() {
+bool updateParams() {
+
+  float rangePublisherFrequency;
+  float batteryStatePublisherFrequency;
+  float diagnosticsPublisherFrequency;
+  float batteryParamA, batteryParamB;
+
+  // Update params
+  bool result = getFloatParam("~batteryWarningVolts", & batteryWarningVolts) && 
+                getFloatParam("~batteryCriticalVolts", & batteryCriticalVolts) &&
+                getIntParam("~mcuWarningLoad", & mcuWarningLoad) &&
+                getIntParam("~mcuCriticalLoad", & mcuCriticalLoad) && 
+                getFloatParam("~rangePublisherFrequency", & rangePublisherFrequency) &&
+                getFloatParam("~batteryStatePublisherFrequency", & batteryStatePublisherFrequency) &&
+                getFloatParam("~diagnosticsPublisherFrequency", & diagnosticsPublisherFrequency) &&
+                getFloatParam("~batteryParamA", & batteryParamA) &&
+                getFloatParam("~batteryParamB", & batteryParamB);
+
+  if (result) {
+
+    // Set params
+    rangePublisherRate.setFrequency(rangePublisherFrequency);
+    batteryStatePublisherRate.setFrequency(batteryStatePublisherFrequency);
+    diagnosticsPublisherRate.setFrequency(diagnosticsPublisherFrequency);
+    battery.setParams(batteryParamA, batteryParamB);
+
+    // Log
+    nodeHandle.loginfo("Parameters updated successfully");
+
+  } else {
+
+    // Log
+    nodeHandle.logwarn("Parameters update failed");
+    
+  }
+
+  return result;
+
+}
+
+bool getIntParam(const char * key, int * buffer) {
+
+  bool result = false;
+ 
+  // Get param
+  result = nodeHandle.getParam(key, buffer);
+
+  // Spin once
+  nodeHandle.spinOnce();
+
+  // Just wait
+  delay(10);
+
+  return result;
+  
+}
+
+bool getFloatParam(const char * key, float * buffer) {
 
   bool result = false;
 
-  while (!result) {
-  
-    result = nodeHandle.getParam("~batteryWarningVolts", & batteryWarningVolts);
-    result = result && nodeHandle.getParam("~batteryCriticalVolts", & batteryCriticalVolts);
-    
-    result = result && nodeHandle.getParam("~mcuWarningLoad", & mcuWarningLoad);
-    result = result && nodeHandle.getParam("~mcuCriticalLoad", & mcuCriticalLoad);
-  
-    float rangePublisherFrequency;
-    if (result && nodeHandle.getParam("~rangePublisherFrequency", & rangePublisherFrequency)) {
-      rangePublisherRate.setFrequency(rangePublisherFrequency);
-    } else {
-      result = false;
-    }
-  
-    float batteryStatePublisherFrequency;
-    if (result && nodeHandle.getParam("~batteryStatePublisherFrequency", & batteryStatePublisherFrequency)) {
-      batteryStatePublisherRate.setFrequency(batteryStatePublisherFrequency);
-    } else {
-      result = false;
-    }
-  
-    float diagnosticsPublisherFrequency;
-    if (result && nodeHandle.getParam("~diagnosticsPublisherFrequency", & diagnosticsPublisherFrequency)) {
-      diagnosticsPublisherRate.setFrequency(diagnosticsPublisherFrequency);
-    } else {
-      result = false;
-    }
-  
-    float batteryParamA, batteryParamB;
-    if (result && nodeHandle.getParam("~batteryParamA", & batteryParamA) &&
-        nodeHandle.getParam("~batteryParamB", & batteryParamB)) {
-      battery.setParams(batteryParamA, batteryParamB);
-    } else {
-      result = false;
-    }
-  
-    if (!result) {
-  
-      // Log
-      nodeHandle.logerror("Failed to get some parameters: retrying...");
-  
-    }
+  // Get param
+  result = nodeHandle.getParam(key, buffer);
 
-  }
-  
-  // Log
-  nodeHandle.loginfo("Parameter updated successfully");
-    
+  // Spin once
+  nodeHandle.spinOnce();
+
+  // Just wait
+  delay(10);
+
+  return result;
+
 }
+
 

@@ -31,7 +31,7 @@ void Rate::setFrequency(float frequency) {
   timeInterval = 1000 / frequency;
 
   // Get now
-  long now = millis();
+  unsigned long now = millis();
 
   // Schedule next
   scheduleNext(now);
@@ -40,7 +40,7 @@ void Rate::setFrequency(float frequency) {
 
 boolean Rate::ellapsed() {
 
-  long now = millis();
+  unsigned long now = millis();
 
   if (now >= nextTimeInterval) {
 
@@ -68,7 +68,7 @@ void Rate::start() {
 
 void Rate::end() {
   
-  long now = millis();
+  unsigned long now = millis();
   
   // Increase duration counters
   durationCounter.increase(now - durationStartTime);

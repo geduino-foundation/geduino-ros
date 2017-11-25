@@ -24,11 +24,9 @@ class Led {
 public:
 
     Led(const uint8_t _led_pin) : led_pin(_led_pin) {
-      
-      // Initialization
-      init();
-    
     }
+
+    void init();
 
     void ledOn();
 
@@ -49,8 +47,6 @@ public:
     uint32_t last_blink_millis;
 
     bool led_on_status;
-
-    void init();
 
     void ledBlink(const uint32_t & period);
 
