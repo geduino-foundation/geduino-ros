@@ -24,6 +24,7 @@
 #include <std_msgs/Float32.h>
 #include <diagnostic_msgs/DiagnosticArray.h>
 #include <CurieIMU.h>
+#include <MadgwickAHRS.h>
 #include "PING.h"
 #include "TMP36.h"
 #include "Battery.h"
@@ -36,7 +37,7 @@
  * Begin configuration
  */
 
-// The ROS serial baud rare
+// The ROS specification
 #define ROS_SERIAL_BAUD_RATE                          115200
 
 // Connected PINs
@@ -54,10 +55,12 @@
 #define PING_MAX_RANGE                                3.00        // [m]
 #define PING_MOUNTING_GAP                             0.02        // [m]
 
-// The IMU ranges
+// The IMU specification
 #define IMU_GYRO_RANGE                                125         // [degree/s]
 #define IMU_ACCELEROMETER_RANGE                       2           // [g]
 #define IMU_RATE                                      50          // [Hz]
+#define IMU_GYRO_ANGULAR_VELOCITY_COVARIANCE          0.0000009
+#define IMU_ACCELEROMETER_LINEAR_ACCELERATION_COVARIANCE 0.000038
 
 // The battery parameters
 #define BATTERY_PARAM_A_DEFAULT                       2.29
@@ -91,6 +94,9 @@
 PING leftPing(LEFT_PING_PIN, PING_MOUNTING_GAP);
 PING centralPing(CENTRAL_PING_PIN, PING_MOUNTING_GAP);
 PING rightPing(RIGHT_PING_PIN, PING_MOUNTING_GAP);
+
+// The IMU filter
+Madgwick imuFilter;
 
 // The battery voltage sensor
 Battery battery(BATTERY_VOLT_PIN, BATTERY_PARAM_A_DEFAULT, BATTERY_PARAM_B_DEFAULT);
@@ -223,13 +229,12 @@ void setup() {
 
   // Init IMU message
   imuMessage.header.frame_id = "imu_link";
-  imuMessage.orientation_covariance[0] = -1;
-  imuMessage.angular_velocity_covariance[0] = 0.0000009;
-  imuMessage.angular_velocity_covariance[4] = 0.0000009;
-  imuMessage.angular_velocity_covariance[8] = 0.0000009;
-  imuMessage.linear_acceleration_covariance[0] = 0.000038;
-  imuMessage.linear_acceleration_covariance[4] = 0.000038;
-  imuMessage.linear_acceleration_covariance[8] = 0.000038;
+  imuMessage.angular_velocity_covariance[0] = IMU_GYRO_ANGULAR_VELOCITY_COVARIANCE;
+  imuMessage.angular_velocity_covariance[4] = IMU_GYRO_ANGULAR_VELOCITY_COVARIANCE;
+  imuMessage.angular_velocity_covariance[8] = IMU_GYRO_ANGULAR_VELOCITY_COVARIANCE;
+  imuMessage.linear_acceleration_covariance[0] = IMU_ACCELEROMETER_LINEAR_ACCELERATION_COVARIANCE;
+  imuMessage.linear_acceleration_covariance[4] = IMU_ACCELEROMETER_LINEAR_ACCELERATION_COVARIANCE;
+  imuMessage.linear_acceleration_covariance[8] = IMU_ACCELEROMETER_LINEAR_ACCELERATION_COVARIANCE;
   
   // Init temperature message
   temperatureMessage.header.frame_id = "base_temperature";
@@ -498,8 +503,13 @@ void publishIMU() {
   float angular_velocity_y = (gy / 32768.0) * IMU_GYRO_RANGE;
   float angular_velocity_z = (gz / 32768.0) * IMU_GYRO_RANGE;
 
+  // Update IMU filter
+  imuFilter.updateIMU(angular_velocity_x, angular_velocity_y, angular_velocity_z,
+                      linear_acceleration_x, linear_acceleration_y, linear_acceleration_z, millis());
+
   // Update IMU message
   imuMessage.header.stamp = now;
+  imuFilter.getQuaternion(& imuMessage.orientation.w, & imuMessage.orientation.x, & imuMessage.orientation.y, & imuMessage.orientation.z);
   imuMessage.linear_acceleration.x = linear_acceleration_x * 9.81;
   imuMessage.linear_acceleration.y = linear_acceleration_y * 9.81;
   imuMessage.linear_acceleration.z = linear_acceleration_z * 9.81;
@@ -766,18 +776,20 @@ bool updateParams() {
   float rangePublisherFrequency;
   float batteryStatePublisherFrequency;
   float diagnosticsPublisherFrequency;
+  float imuOrientationCovarianceDiagonal[3];
   float batteryParamA, batteryParamB;
   
   // Update params
-  bool result = getFloatParam("~batteryWarningVolts", & batteryWarningVolts) && 
-                getFloatParam("~batteryCriticalVolts", & batteryCriticalVolts) &&
-                getIntParam("~mcuWarningLoad", & mcuWarningLoad) &&
-                getIntParam("~mcuCriticalLoad", & mcuCriticalLoad) && 
-                getFloatParam("~rangePublisherFrequency", & rangePublisherFrequency) &&
-                getFloatParam("~batteryStatePublisherFrequency", & batteryStatePublisherFrequency) &&
-                getFloatParam("~diagnosticsPublisherFrequency", & diagnosticsPublisherFrequency) &&
-                getFloatParam("~batteryParamA", & batteryParamA) &&
-                getFloatParam("~batteryParamB", & batteryParamB);
+  bool result = getFloatParam("~batteryWarningVolts", & batteryWarningVolts, 1) && 
+                getFloatParam("~batteryCriticalVolts", & batteryCriticalVolts, 1) &&
+                getIntParam("~mcuWarningLoad", & mcuWarningLoad, 1) &&
+                getIntParam("~mcuCriticalLoad", & mcuCriticalLoad, 1) && 
+                getFloatParam("~rangePublisherFrequency", & rangePublisherFrequency, 1) &&
+                getFloatParam("~batteryStatePublisherFrequency", & batteryStatePublisherFrequency, 1) &&
+                getFloatParam("~diagnosticsPublisherFrequency", & diagnosticsPublisherFrequency, 1) &&
+                getFloatParam("~imuOrientationCovarianceDiagonal", imuOrientationCovarianceDiagonal, 3) &&
+                getFloatParam("~batteryParamA", & batteryParamA, 1) &&
+                getFloatParam("~batteryParamB", & batteryParamB, 1);
 
   if (result) {
 
@@ -785,28 +797,23 @@ bool updateParams() {
     rangePublisherRate.setFrequency(rangePublisherFrequency);
     batteryStatePublisherRate.setFrequency(batteryStatePublisherFrequency);
     diagnosticsPublisherRate.setFrequency(diagnosticsPublisherFrequency);
+    imuMessage.orientation_covariance[0] = imuOrientationCovarianceDiagonal[0];
+    imuMessage.orientation_covariance[4] = imuOrientationCovarianceDiagonal[1];
+    imuMessage.orientation_covariance[8] = imuOrientationCovarianceDiagonal[2];
     battery.setParams(batteryParamA, batteryParamB);
-   
-    // Log
-    nodeHandle.loginfo("Parameters updated successfully");
 
-  } else {
-
-    // Log
-    nodeHandle.logwarn("Parameters update failed");
-    
   }
 
   return result;
 
 }
 
-bool getIntParam(const char * key, int * buffer) {
+bool getIntParam(const char * key, int * buffer, int length) {
 
   bool result = false;
- 
+  
   // Get param
-  result = nodeHandle.getParam(key, buffer);
+  result = nodeHandle.getParam(key, buffer, length);
 
   // Spin once
   nodeHandle.spinOnce();
@@ -818,12 +825,12 @@ bool getIntParam(const char * key, int * buffer) {
   
 }
 
-bool getFloatParam(const char * key, float * buffer) {
+bool getFloatParam(const char * key, float * buffer, int length) {
 
   bool result = false;
 
   // Get param
-  result = nodeHandle.getParam(key, buffer);
+  result = nodeHandle.getParam(key, buffer, length);
 
   // Spin once
   nodeHandle.spinOnce();
