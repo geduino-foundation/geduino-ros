@@ -228,7 +228,7 @@ void setup() {
   rightRangeMessage.max_range = PING_MAX_RANGE;
 
   // Init IMU message
-  imuMessage.header.frame_id = "imu_link";
+  imuMessage.header.frame_id = "base_imu";
   imuMessage.angular_velocity_covariance[0] = IMU_GYRO_ANGULAR_VELOCITY_COVARIANCE;
   imuMessage.angular_velocity_covariance[4] = IMU_GYRO_ANGULAR_VELOCITY_COVARIANCE;
   imuMessage.angular_velocity_covariance[8] = IMU_GYRO_ANGULAR_VELOCITY_COVARIANCE;
