@@ -33,6 +33,10 @@ queue_size: 50
 # input must have also exactly the same timestamps than input images. (default: false)
 approx_sync: true
 
+# Maximum depth of the clouds added to cloud map. Set 0.0 to maximum depth filtering. 
+# Used for cloud_map published topic (default: 3)
+cloud_max_depth: 3.0
+
 RGBD:
 
   # When a new node is added to the graph, the transformation of its neighbor link to the 
@@ -75,4 +79,3 @@ Grid:
 
   # Create occupancy grid from depth image(s), otherwise it is created from laser scan. (default: true)
   FromDepth: false
-

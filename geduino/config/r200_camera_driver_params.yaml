@@ -71,7 +71,7 @@ color_height: 480
 depth_fps: 30
 
 # Specify the depth camera width resolution (default: 480 (R200/ZR300), 640 (F200/SR300))
-depth_width: 480
+depth_width: 640
 
 # Specify the depth camera height resolution (default: 360 (R200/ZR300), 480 (F200/SR300))
-depth_height: 360
+depth_height: 480
