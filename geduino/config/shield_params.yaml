@@ -24,11 +24,11 @@ baud: 115200
 
 # Shield related params
 
-# The battery warning level threshold in Volts (default: 13.6)
-batteryWarningVolts: 13.6
+# The battery warning level threshold in Volts (default: 14.8)
+batteryWarningVolts: 14.8
 
-# The battery critical level threshold in Volts (default: 12.8)
-batteryCriticalVolts: 12.8
+# The battery critical level threshold in Volts (default: 14.0)
+batteryCriticalVolts: 14.0
 
 # The MCU wearning load in % (default: 10)
 mcuWarningLoad: 10
@@ -48,6 +48,9 @@ diagnosticsPublisherFrequency: 1.0
 # The battery params conversion from raw volts.
 # The conversion parameter are used to convert raw voltage to battery voltage with formula:
 #   Vbatt = Vraw * paramA + paramB.
-# (default: 2.805, 10.232)
+# (default: 2.29, 12.30)
 batteryParamA: 2.29
-batteryParamB: 12.15
+batteryParamB: 12.30
+
+# The diagonal of covariance matrix of IMU orientation (default: 0.5 0.5 0.5)
+imuOrientationCovarianceDiagonal: [0.5, 0.5, 0.5]

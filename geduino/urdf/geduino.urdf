@@ -60,6 +60,10 @@
   <link name="base_right_range">
   </link>
 
+  <!-- The base imu -->
+  <link name="base_imu">
+  </link>
+
   <!-- The camera link -->
   <link name="camera_link">
    
@@ -103,11 +107,18 @@
     <origin xyz="0.097 -0.097 0.055" rpy="0 0 -0.7853"/>
   </joint>
 
+  <!-- The base_link -> base_imu joint -->
+  <joint name="base_link_to_base_imu" type="fixed">
+    <parent link="base_link"/>
+    <child link="base_imu"/>
+    <origin xyz="-0.120 -0.050 0.060" rpy="0 0 0"/>
+  </joint>
+
   <!-- The base_link -> camera_link joint -->
   <joint name="base_link_to_camera_link" type="fixed">
     <parent link="base_link"/>
     <child link="camera_link"/>
-    <origin xyz="0.155 -0.045 0.13" rpy="0 0 0"/>
+    <origin xyz="0.135 -0.025 0.13" rpy="0 0 0"/>
   </joint>
 
 </robot>
