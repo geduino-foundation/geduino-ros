@@ -43,6 +43,12 @@
     <node machine="geduino2" name="mem_monitor" pkg="system_monitor" type="mem_monitor.py" output="log" respawn="true"/>
     <node machine="geduino2" name="net_monitor" pkg="system_monitor" type="net_monitor.py" output="log" respawn="true"/>      
   </group>
+
+  <!-- The Diagnostic Aggregator node -->
+  <node machine="geduino2" pkg="diagnostic_aggregator" type="aggregator_node" name="diagnostic_aggregator" output="screen" respawn="true">
+    <rosparam command="load" file="$(find geduino)/config/diagnostic_aggregator_params.yaml" />
+  </node>
+
   
   <!-- The RPLidar node -->
   <node machine="geduino2" pkg="rplidar" type="rplidar_node" name="rplidar" respawn="true" output="log">
