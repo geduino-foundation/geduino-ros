@@ -41,7 +41,12 @@ include_directories(
 )
 
 add_executable(md25_node src/md25_node.cpp src/odometry.cpp src/rolling_window.cpp src/md25.cpp)
+add_executable(md25_console src/md25_console.cpp src/md25.cpp)
 
 target_link_libraries(md25_node
+  ${catkin_LIBRARIES}
+)
+
+target_link_libraries(md25_console
   ${catkin_LIBRARIES}
 )
