@@ -1,3 +1,21 @@
+/*
+ md25_console.cpp
+
+ Copyright (C) 2018 Alessandro Francescon
+
+ This program is free software: you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation, either version 3 of the License.
+
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+
+ You should have received a copy of the GNU General Public License
+ along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
 #include <algorithm>
 #include <iostream>
 
@@ -47,11 +65,19 @@ int main(int argc, char * argv[]) {
         timeout = std::atoi(_timeout);
     }
 
+    // Help command
+    if (cmdOptionExists(argv, argv + argc, "-h")) {
+
+        // Print usage
+        std::cout << "usage: " << argv[0] << " [-p <port>][-b <baudrate>][-t <timeout>][getversion][getspeeds][getencoders][setspeed1 <0..255>][setspeed2 <0..255>][setmode <0..255>][setacceleration <0..255>][disableregulator][enableregulator][disabletimeout][enabletimeout]" << std::endl;
+
+    }
+
     // Create MD25
     MD25 md25(port, baudrate, timeout);
 
     // Log
-    std::cout << "Cooneccting to port " << port << " with baudrate " << baudrate << " and timeout " << timeout << " ..." << std::endl;
+    std::cout << "Conneccting to port " << port << " with baudrate " << baudrate << " and timeout " << timeout << " ..." << std::endl;
 
     uint8_t result;
 
@@ -80,7 +106,7 @@ int main(int argc, char * argv[]) {
 
         }
 
-        if (cmdOptionExists(argv, argv + argc, "getspeed")) {
+        if (cmdOptionExists(argv, argv + argc, "getspeeds")) {
 
             uint8_t speed1, speed2;
 
@@ -234,6 +260,8 @@ int main(int argc, char * argv[]) {
         }
 
 
+        // Log
+        std::cout << "Closing connection..." << std::endl;
 
         // Dispose md25
         md25.dispose();
