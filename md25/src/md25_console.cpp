@@ -67,7 +67,7 @@ int main(int argc, char * argv[]) {
             if (md25.getVersion(& version) == MD25_RESPONSE_OK) {
 
                 // Log
-                std::cout << "Version: " << version << std::endl;
+                std::cout << "Version: " << unsigned(version) << std::endl;
 
             } else {
 
@@ -88,7 +88,7 @@ int main(int argc, char * argv[]) {
                     md25.getSpeed2(& speed2) == MD25_RESPONSE_OK) {
 
                 // Log
-                std::cout << "Speed1: " << speed1 << ", speed2: " << speed2 << std::endl;
+                std::cout << "Speed1: " << unsigned(speed1) << ", speed2: " << unsigned(speed2) << std::endl;
 
             } else {
 
@@ -108,7 +108,7 @@ int main(int argc, char * argv[]) {
             if (md25.getEncoders(& encoder1, & encoder2) == MD25_RESPONSE_OK) {
 
                 // Log
-                std::cout << "Encoder1: " << encoder1 << ", encoder2: " << encoder2 << std::endl;
+                std::cout << "Encoder1: " << unsigned(encoder1) << ", encoder2: " << unsigned(encoder2) << std::endl;
 
             } else {
 
