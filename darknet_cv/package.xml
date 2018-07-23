@@ -1,0 +1,51 @@
+<?xml version="1.0"?>
+
+<!--
+ darknet_cv/package.xml
+
+ Copyright (C) 2018 Alessandro Francescon
+ 
+ This program is free software: you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation, either version 3 of the License.
+ 
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+ 
+ You should have received a copy of the GNU General Public License
+ along with this program.  If not, see <http://www.gnu.org/licenses/>.
+-->
+
+<package>
+
+  <name>darknet_cv</name>
+  <version>1.0.0</version>
+  <description>Darknet based nodes</description>
+  <license>GPL</license>
+
+  <url type="blog">http://www.geduino.org</url>
+
+  <author email="alessandro.francescon@gmail.com">Alessandro Francescon</author>
+  <maintainer email="alessandro.francescon@gmail.com">Alessandro Francescon</maintainer>
+
+  <buildtool_depend>catkin</buildtool_depend>
+  <build_depend>roscpp</build_depend>
+  <build_depend>darknet</build_depend>
+  <build_depend>cv_bridge</build_depend>
+  <build_depend>image_transport</build_depend>
+  <build_depend>std_msgs</build_depend>
+  <build_depend>sensor_msgs</build_depend>
+  <build_depend>message_generation</build_depend>
+  <run_depend>roscpp</run_depend>
+  <run_depend>darknet</run_depend>
+  <run_depend>cv_bridge</run_depend>
+  <run_depend>image_transport</run_depend>
+  <run_depend>std_msgs</run_depend>
+  <run_depend>message_runtime</run_depend>
+
+  <export>
+  </export>
+
+</package>
