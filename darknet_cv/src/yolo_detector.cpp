@@ -196,17 +196,6 @@ void YoloDetector::imageCallback(const sensor_msgs::ImageConstPtr & imageConstPt
         }
 
 
-        // TEST - BEGIN
-        for (int i = 0; i < boxesCount; i++) {
-            for (int j = 0; j < detections[i].classes; j++) {
-                if (detections[i].prob[j] > 0) {
-        std::cout << "Found: " << labels[j] << " = " << detections[i].prob[j] << "  " << detections[i].bbox.x << "," << detections[i].bbox.y  << std::endl;
-                }
-            }
-        }
-        // TEST - END
-
-
     } catch (cv_bridge::Exception & ex) {
 
         // Log
