@@ -20,7 +20,6 @@
 #include "cv_conversion.h"
 
 #include <cv_bridge/cv_bridge.h>
-#include <image_transport/transport_hints.h>
 
 YoloDetector::YoloDetector(ros::NodeHandle & _nodeHandle, ros::NodeHandle & _privateNodeHandle) :
     nodeHandle(_nodeHandle), privateNodeHandle(_privateNodeHandle), imageTransport(nodeHandle) {
@@ -99,7 +98,7 @@ int YoloDetector::init() {
     ROS_INFO("network setup completed");
 
     // Create image subscriber (set compressed transport level as default)
-    imageSubscriber = imageTransport.subscribe("image", 1, & YoloDetector::imageCallback, this, image_transport::TransportHints("compressed"));
+    imageSubscriber = imageTransport.subscribe("image", 1, & YoloDetector::imageCallback, this);
 
     // Create detection array publisher
     detectionArrayPublisher = nodeHandle.advertise<darknet_cv::DetectionArray>("detections", 5);
