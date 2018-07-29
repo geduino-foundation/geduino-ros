@@ -495,6 +495,14 @@ void publishIMU() {
   // Read IMU raw data
   CurieIMU.readMotionSensor(ax, ay, az, gx, gy, gz);
 
+  // Apply accelerometer and gyro offset
+  ax -= CurieIMU.getAccelerometerOffset(X_AXIS);
+  ay -= CurieIMU.getAccelerometerOffset(Y_AXIS);
+  az -= CurieIMU.getAccelerometerOffset(Z_AXIS);
+  gx -= CurieIMU.getGyroOffset(X_AXIS);
+  gy -= CurieIMU.getGyroOffset(Y_AXIS);
+  gz -= CurieIMU.getGyroOffset(Z_AXIS);
+  
   // Convert raw data to g and degree/s
   float linear_acceleration_x = (ax / 32768.0) * IMU_ACCELEROMETER_RANGE;
   float linear_acceleration_y = (ay / 32768.0) * IMU_ACCELEROMETER_RANGE;
