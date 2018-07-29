@@ -22,8 +22,21 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   std_msgs
   diagnostic_msgs
+  sensor_msgs
   tf
   serial
+  message_generation
+)
+
+add_message_files(
+    FILES
+    Euler.msg
+    StampedEuler.msg
+)
+
+generate_messages(
+    DEPENDENCIES
+    std_msgs
 )
 
 find_package(cmake_modules REQUIRED)
@@ -32,6 +45,7 @@ find_package(Eigen REQUIRED)
 
 catkin_package(
   DEPENDS Eigen
+  CATKIN_DEPENDS message_runtime
 )
 
 include_directories(
@@ -42,11 +56,21 @@ include_directories(
 
 add_executable(md25_node src/md25_node.cpp src/odometry.cpp src/rolling_window.cpp src/md25.cpp)
 add_executable(md25_console src/md25_console.cpp src/md25.cpp)
+add_executable(complementary_filter_node src/complementary_filter_node.cpp)
+add_executable(odom_to_euler_node src/odom_to_euler_node.cpp)
 
 target_link_libraries(md25_node
   ${catkin_LIBRARIES}
 )
 
 target_link_libraries(md25_console
+  ${catkin_LIBRARIES}
+)
+
+target_link_libraries(complementary_filter_node
+  ${catkin_LIBRARIES}
+)
+
+target_link_libraries(odom_to_euler_node
   ${catkin_LIBRARIES}
 )
