@@ -351,19 +351,21 @@ int main(int argc, char** argv) {
 
     if (posCovarianceDiagonal.size() != 6) {
 
-        // Log error
-        ROS_FATAL("pos_covariance_diagonal size must be 6, actual: %lu", posCovarianceDiagonal.size());
+        // Log
+        ROS_WARN("pos_covariance_diagonal size must be 6, actual: %lu. Use zeroes.", posCovarianceDiagonal.size());
 
-        return -1;
+        // Assign a six sized vector fill with zeroes
+        posCovarianceDiagonal.assign(6, 0.0f);
 
     }
 
     if (velCovarianceDiagonal.size() != 6) {
 
-        // Log error
-        ROS_FATAL("vel_covariance_diagonal size must be 6, actual: %lu", velCovarianceDiagonal.size());
+        // Log
+        ROS_WARN("vel_covariance_diagonal size must be 6, actual: %lu. Use zeroes.", velCovarianceDiagonal.size());
 
-        return -1;
+        // Assign a six sized vector fill with zeroes
+        velCovarianceDiagonal.assign(6, 0.0f);
 
     }
 
