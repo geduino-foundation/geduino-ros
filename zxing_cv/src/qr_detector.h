@@ -45,8 +45,6 @@ class QRDetector {
 
         void publishDebugImage(const sensor_msgs::ImageConstPtr & imageConstPtr, const zxing::Ref<zxing::Result> & result);
 
-        void publishMarkers(const zxing_cv::QRCodeArray & qrCodeArrayMessage);
-
         ros::NodeHandle nodeHandle;
         ros::NodeHandle privateNodeHandle;
 
@@ -57,21 +55,10 @@ class QRDetector {
         int adaptiveThresholdBlockSize;
         int adaptiveThresholdThreshold;
 
-        std::vector<double> markerScale;
-        std::vector<double> markerPointColor;
-        std::vector<double> markerTextColor;
-
         image_transport::ImageTransport imageTransport;
         image_transport::CameraSubscriber imageSubscriber;
         ros::Publisher qrCodeArrayPublisher;
         image_transport::Publisher optimizedImagePublisher, debugImagePublisher;
-        ros::Publisher markerArrayPublisher;
-
-        std::vector<cv::Point3f> qrCodePoints;
-        bool ignorePointsInExcess;
-
-        cv::Mat rvec;
-        cv::Mat tvec;
 
 };
 

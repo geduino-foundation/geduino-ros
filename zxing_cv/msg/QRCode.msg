@@ -16,7 +16,3 @@
 
 # The QR Code content
 string content
-
-# The QR Code position
-geometry_msgs/Pose pose
-
