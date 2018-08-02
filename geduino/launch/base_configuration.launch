@@ -60,10 +60,9 @@
     <rosparam file="$(find geduino)/config/shield_params.yaml" command="load"/> 
   </node>
 
-  <!-- The MD25 -->
-  <node machine="geduino2" pkg="md25" type="md25_node" name="md25" respawn="true" output="log">
-    <rosparam file="$(find geduino)/config/md25_params.yaml" command="load" />
-  </node>
+  <!-- The odometry -->
+  <include file="$(find geduino)/launch/odometry.launch">
+  </include>
 
   <!-- The RealSense R200 camera -->
   <include file="$(find geduino)/launch/r200_camera.launch">

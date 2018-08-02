@@ -1,0 +1,29 @@
+# complementary_filter_params.yaml
+#
+# Copyright (C) 2018 Alessandro Francescon
+# 
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# The filter tau parameter (default: 0.075)
+filter_tau: 0.075
+
+# True if odom frame -> base frame transformation must be
+# published by this node, false otherwise (default: true)
+publish_odom_transformation: true
+
+# The diagonal of the position covariance matrix (a 6 element vector of type double)
+pos_covariance_diagonal: [0, 0, 0, 0, 0, 0]
+
+# The diagonal of the velocity covariance matrix (a 6 element vector of type double)
+vel_covariance_diagonal: [0, 0, 0, 0, 0, 0]
+
