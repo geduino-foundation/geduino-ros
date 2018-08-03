@@ -111,7 +111,7 @@ void callback(const nav_msgs::OdometryConstPtr & odometry, const sensor_msgs::Im
         filtered_orientation_z = filter_a * (filtered_orientation_z + transformedImu.angular_velocity.z * dt) + (1 - filter_a) * euler.yaw;
 
         // Filter angular velocity
-        filtered_angular_velocity_z = filter_a * transformedImu.angular_velocity.z + (1 - filter_a) * odometry->twist.twist.angular.z;
+        filtered_angular_velocity_z = filter_tau * transformedImu.angular_velocity.z + (1 - filter_tau) * odometry->twist.twist.angular.z;
 
     }
 
