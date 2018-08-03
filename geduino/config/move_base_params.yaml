@@ -15,4 +15,4 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 # The frequency at which this controller will be called in Hz
-controller_frequency: 5
+controller_frequency: 15
