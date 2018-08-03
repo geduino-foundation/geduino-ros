@@ -26,7 +26,7 @@ base_frame: base_link
 odom_frame: odom
 
 # The odometry update frequency in Hz
-odometry_frequency: 30
+odometry_frequency: 15
 
 # The diagnostics update frequency in Hz. It must be less or equals to odometryFrequency
 diagnostics_frequency: 1

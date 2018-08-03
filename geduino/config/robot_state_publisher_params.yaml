@@ -15,4 +15,4 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 # Publish frequency of state publisher, default: 50Hz. 
-publish_frequency: 10
+publish_frequency: 15
