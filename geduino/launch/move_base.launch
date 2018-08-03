@@ -19,7 +19,7 @@
 <launch>
 
   <!-- The move base node -->
-  <node machine="geduino2" pkg="move_base" type="move_base" name="move_base" respawn="false" output="screen">
+  <node machine="geduino2" pkg="move_base" type="move_base" name="move_base" respawn="false" output="log">
     <rosparam file="$(find geduino)/config/move_base_params.yaml" command="load" />
     <rosparam file="$(find geduino)/config/costmap_common_params.yaml" command="load" ns="global_costmap" />
     <rosparam file="$(find geduino)/config/costmap_common_params.yaml" command="load" ns="local_costmap" />
