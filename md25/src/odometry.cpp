@@ -20,41 +20,44 @@
 
 #define TWO_PI 6.28318530717959
 
-void Odometry::updatePosition(double dl, double dr) {
+void Odometry::updatePosition(double dl, double dr, double angularVelocityZ, double dt) {
 
-    // Calculate ds and dth
+    // Calculate ds, dth and th
     double ds = 0.5 * (dr + dl);
     double dth = (dr - dl) / wb;
+    double th = pos(2) + dth;
 
-    // Calculate middle theta
-    double mdth = pos(2) + 0.5 * dth;
-    double sinmdth = sin(mdth);
-    double cosmdth = cos(mdth);
+    // Compute odometry
+    computeOdometry(pos, ds, th);;
 
-    // Calculate dpos
-    Vector3 dpos(ds * cosmdth, ds * sinmdth, dth);
+    if (posFilterTau > 0 && dt > 0) {
 
-    // Update position
-    pos += dpos;
+        // Compute filter parameter for current cycle
+        double filterA = posFilterTau / (posFilterTau + dt);
 
-    // Make sure orientation is between [0, 2PI[
-    while (pos(2) >= TWO_PI) {
-       pos(2) -= TWO_PI;
-    }
-    while (pos(2) < 0) {
-        pos(2) += TWO_PI;
+        // Filter th
+        double filterTh = filterA * (filteredPos(2) + angularVelocityZ * dt) + (1 - filterA) * pos(2);
+
+        // Compute odometry
+        computeOdometry(filteredPos, ds, filterTh);
+
+    } else {
+
+        // Filter not applied: set filtered position as position
+        filteredPos = pos;
+
     }
 
 }
 
-void Odometry::updateVelocity(double dl, double dr, double time) {
+void Odometry::updateVelocity(double dl, double dr, double angularVelocityZ, double dt) {
     
-    if (lastUpdateTime > 0) {
+    if (dt > 0) {
 
         // Add values to rolling window
         drRollingWindow.add(dr);
         dlRollingWindow.add(dl);
-        dtRollingWindow.add(time - lastUpdateTime);
+        dtRollingWindow.add(dt);
 
         // Get sums
         double drSum;
@@ -79,9 +82,20 @@ void Odometry::updateVelocity(double dl, double dr, double time) {
         }
         
     }
-    
-    // Set last update time
-    lastUpdateTime = time;
+
+    if (velFilterTau > 0) {
+
+        // Filter velocity
+        filteredVel(0) = vel(0);
+        filteredVel(1) = vel(1);
+        filteredVel(2) = velFilterTau * angularVelocityZ + (1 - velFilterTau) * vel(2);
+
+    } else {
+
+        // Filter not applied: set filtered velocity as velocity
+        filteredVel = vel;
+
+    }
     
 }
 
@@ -92,11 +106,42 @@ void Odometry::reset() {
 
    // Reset position and velocity
    pos.fill(0);
+   filteredPos.fill(0);
    vel.fill(0);
+   filteredVel.fill(0);
 
    // Reset rolling window
    drRollingWindow.reset();
    dlRollingWindow.reset();
    dtRollingWindow.reset();
+
+}
+
+void Odometry::computeOdometry(Vector3 & _pos, double ds, double th) {
+
+    // Calculate middle theta
+    double mdth = 0.5 * (_pos(2) + th);
+    double sinmdth = sin(mdth);
+    double cosmdth = cos(mdth);
+
+    // Update position
+    _pos(0) += ds * cosmdth;
+    _pos(1) += ds * sinmdth;
+    _pos(2) = th;
+
+    // Make sure orientation is between [0, 2PI[
+    constrainPosition(_pos);
+
+}
+
+void Odometry::constrainPosition(Vector3 & _pos) {
+
+    // Make sure orientation is between [0, 2PI[
+    while (_pos(2) >= TWO_PI) {
+        _pos(2) -= TWO_PI;
+    }
+    while (_pos(2) < 0) {
+        _pos(2) += TWO_PI;
+    }
 
 }

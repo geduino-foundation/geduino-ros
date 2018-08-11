@@ -1,4 +1,4 @@
-/*
+﻿/*
  md25_node.cpp
 
  Copyright (C) 2015 Alessandro Francescon
@@ -19,6 +19,7 @@
 /**
  md25_node is a ROS node implementation for  MD25 boards. It publish odometry transformation 
  and topic to the navigation stack and subscribe cmd_vel to set whhels speed on MD25.
+ In order to refine odometry IMU data can be fused to improve reliability.
 
  Subscribes:
  - /cmd_vel (geometry_msgs/Twist): the velocity command.
@@ -60,11 +61,23 @@
    computation (default: 3);
  - publish_odom_transformation: true if odom frame -> base frame transformation must be
    published by this node, false otherwise (default: true)
+ - enable_complementary_filter: true to enable complementary filter to fuse odometry data
+   with IMU data, false otherwise (default: false)
+ - position_filter_tau: the position filter parameter to fuse encoders and IMU infos. Set it
+   to zero to disable filter (default: 0.075)
+ - velocity_filter_tau: the velocity filter parameter to fuse encoders and IMU infos. Set it
+   to zero to disable filter (default: 0.2)
+ - imu_cache_size: the IMU message cache size (default: 10)
  */
 
 #include <ros/ros.h>
 #include <nav_msgs/Odometry.h>
+#include <sensor_msgs/Imu.h>
+#include <geometry_msgs/Vector3Stamped.h>
+#include <message_filters/subscriber.h>
+#include <message_filters/cache.h>
 #include <tf/transform_broadcaster.h>
+#include <tf/transform_listener.h>
 #include <diagnostic_msgs/DiagnosticArray.h>
 #include <math.h>
 #include <md25.h>
@@ -98,6 +111,10 @@ std::vector<double> posCovarianceDiagonal;
 std::vector<double> velCovarianceDiagonal;
 int rollingWindowSize;
 bool publishOdomTransformation;
+bool enableComplementaryFilter;
+double positionFilterTau;
+double velocityFilterTau;
+int imuMessageCacheSize;
 
 // The last encoder values
 uint32_t lastEncoder1 = 0;
@@ -118,14 +135,14 @@ ros::Publisher * odometryMessagePublisherPtr;
 // The diagnostics message publisher pointer
 ros::Publisher * diagnosticsMessagePublisherPtr;
 
-// The odometry message
-nav_msgs::Odometry odometryMessage;
+// The pointer to imu message cache
+message_filters::Cache<sensor_msgs::Imu> * imuMessageCachePtr;
 
 // The pointer tp odometry transform broadcaster
 tf::TransformBroadcaster * odometryTransformBroadcasterPtr;
 
-// The odometry transformation
-geometry_msgs::TransformStamped odometryTransformation;
+// The pointer to transform listener
+tf::TransformListener * transformListenerPtr;
 
 void publishDiagnostics(uint8_t level, std::string message) {
 
@@ -197,7 +214,8 @@ void cmdVelCallback(const geometry_msgs::Twist::ConstPtr & cmdVelMessage) {
 	if (speed1 == 128 && speed2 == 128 && (cmdVelMessage->linear.x != 0 || cmdVelMessage->angular.z != 0)) {
 
 		// Log
-		ROS_WARN("Received velocities are too low for current MD25 configuration (%g, %g), check navigation stack setup for minimum speeds", cmdVelMessage->linear.x, cmdVelMessage->angular.z);
+        ROS_WARN("Received velocities are too low for current MD25 configuration (%g, %g), check navigation stack setup for minimum speeds",
+                 cmdVelMessage->linear.x, cmdVelMessage->angular.z);
 
 	}
 
@@ -251,58 +269,109 @@ void updateOdometry() {
 
 	}
 
+    // Get angular velocity in base frame
+    geometry_msgs::Vector3Stamped angularVelocityInBaseFrame;
+
+    if (enableComplementaryFilter) {
+
+        // Get imu message
+        sensor_msgs::ImuConstPtr imuMessagePtr = imuMessageCachePtr->getElemBeforeTime(now);
+
+        if (imuMessagePtr == NULL) {
+
+            // Log
+            ROS_ERROR_THROTTLE(1.0, "Imu message not received at %f", now.toSec());
+
+            return;
+
+        }
+
+        // Get angular velocity in IMU frame
+        geometry_msgs::Vector3Stamped angularVelocityInImuFrame;
+        angularVelocityInImuFrame.header = imuMessagePtr->header;
+        angularVelocityInImuFrame.vector = imuMessagePtr->angular_velocity;
+
+        std::string errorMsg;
+
+        if (transformListenerPtr->canTransform(baseFrame, imuMessagePtr->header.frame_id, now, & errorMsg)) {
+
+            // Transform angular velocity in base frame
+            transformListenerPtr->transformVector(baseFrame, angularVelocityInImuFrame, angularVelocityInBaseFrame);
+
+        } else {
+
+            // Log
+            ROS_ERROR_THROTTLE(1.0, "Cannot transform from %s -> %s at %f: %s", imuMessagePtr->header.frame_id.c_str(),
+                               baseFrame.c_str(), now.toSec(), errorMsg.c_str());
+
+            return;
+
+        }
+
+    }
+
 	// Calculate delta encoders
 	int32_t deltaEncoder1 = encoder1 - lastEncoder1;
-	int32_t deltaEncoder2 = encoder2 - lastEncoder2;
+    int32_t deltaEncoder2 = encoder2 - lastEncoder2;
 
-	// Skip position update if both encoders are unchanged
-	if (deltaEncoder1 != 0 || deltaEncoder2 != 0) {
+    // Calculate delta s for each wheel
+    double deltaS1 = deltaEncoder1 * encoderSensitivity1 * wheelDiameter1;
+    double deltaS2 = deltaEncoder2 * encoderSensitivity2 * wheelDiameter2;
 
-		// Calculate delta s for each wheel
-		double deltaS1 = deltaEncoder1 * encoderSensitivity1 * wheelDiameter1;
-		double deltaS2 = deltaEncoder2 * encoderSensitivity2 * wheelDiameter2;
+    // Update odometry
+    odometryPtr->update(deltaS1, deltaS2, angularVelocityInBaseFrame.vector.z, now.toSec());
 
-		// Update odometry
-		odometryPtr->update(deltaS1, deltaS2, now.toSec());
-
-		// Update encoders
-		lastEncoder1 = encoder1;
-		lastEncoder2 = encoder2;
-
-	} else {
-
-		// Update odometry time only
-		odometryPtr->update(0, 0, now.toSec());
-
-	}
+    // Update encoders
+    lastEncoder1 = encoder1;
+    lastEncoder2 = encoder2;
 
     // Get position
     Vector3 pos;
-    odometryPtr->getPosition(pos);
+    odometryPtr->getFilteredPosition(pos);
 
     // Get velocity
     Vector3 vel;
-    odometryPtr->getVelocity(vel);
+    odometryPtr->getFilteredVelocity(vel);
 
 	// Create odometry quaternion from th
     geometry_msgs::Quaternion odometryQuaternion = tf::createQuaternionMsgFromYaw(pos(2));
 
-	// Update odometry message
-	odometryMessage.header.stamp = now;
+    // Publish odometry message
+    nav_msgs::Odometry odometryMessage;
+    odometryMessage.header.stamp = now;
+    odometryMessage.header.frame_id = odomFrame;
+    odometryMessage.child_frame_id = baseFrame;
     odometryMessage.pose.pose.position.x = pos(0);
     odometryMessage.pose.pose.position.y = pos(1);
+    odometryMessage.pose.pose.position.z = 0.0;
     odometryMessage.pose.pose.orientation = odometryQuaternion;
     odometryMessage.twist.twist.linear.x = vel(0);
     odometryMessage.twist.twist.linear.y = vel(1);
     odometryMessage.twist.twist.angular.z = vel(2);
+    odometryMessage.pose.covariance[0] = posCovarianceDiagonal[0];
+    odometryMessage.pose.covariance[7] = posCovarianceDiagonal[1];
+    odometryMessage.pose.covariance[14] = posCovarianceDiagonal[2];
+    odometryMessage.pose.covariance[21] = posCovarianceDiagonal[3];
+    odometryMessage.pose.covariance[28] = posCovarianceDiagonal[4];
+    odometryMessage.pose.covariance[35] = posCovarianceDiagonal[5];
+    odometryMessage.twist.covariance[0] = velCovarianceDiagonal[0];
+    odometryMessage.twist.covariance[7] = velCovarianceDiagonal[1];
+    odometryMessage.twist.covariance[14] = velCovarianceDiagonal[2];
+    odometryMessage.twist.covariance[21] = velCovarianceDiagonal[3];
+    odometryMessage.twist.covariance[28] = velCovarianceDiagonal[4];
+    odometryMessage.twist.covariance[35] = velCovarianceDiagonal[5];
 
 	// Publish odometry message
 	odometryMessagePublisherPtr->publish(odometryMessage);
 
     if (publishOdomTransformation) {
 
-        // Update odometry transformation
+        // Send odometry transformation
+        geometry_msgs::TransformStamped odometryTransformation;
         odometryTransformation.header.stamp = now;
+        odometryTransformation.header.frame_id = odomFrame;
+        odometryTransformation.child_frame_id = baseFrame;
+        odometryTransformation.transform.translation.z = 0.0;
         odometryTransformation.transform.translation.x = pos(0);
         odometryTransformation.transform.translation.y = pos(1);
         odometryTransformation.transform.rotation = odometryQuaternion;
@@ -348,6 +417,10 @@ int main(int argc, char** argv) {
     privateNodeHandle.getParam("vel_covariance_diagonal", velCovarianceDiagonal);
     privateNodeHandle.param("rolling_window_size", rollingWindowSize, 3);
     privateNodeHandle.param("publish_odom_transformation", publishOdomTransformation, true);
+    privateNodeHandle.param("enable_complementary_filter", enableComplementaryFilter, false);
+    privateNodeHandle.param("position_filter_tau", positionFilterTau, 0.075);
+    privateNodeHandle.param("velocity_filter_tau", velocityFilterTau, 0.2);
+    privateNodeHandle.param("imu_message_cache_size", imuMessageCacheSize, 10);
 
     if (posCovarianceDiagonal.size() != 6) {
 
@@ -380,11 +453,16 @@ int main(int argc, char** argv) {
 	ROS_INFO("wheel diameter1: %g m", wheelDiameter1);
 	ROS_INFO("wheel diameter2: %g m", wheelDiameter2);
 	ROS_INFO("wheel base: %g m", wheelBase);
-    ROS_INFO("rolling window siZE: %d m", rollingWindowSize);
+    ROS_INFO("rolling window size: %d", rollingWindowSize);
     ROS_INFO("publish odom transformation: %d", publishOdomTransformation);
+    ROS_INFO("enable complementary filter: %d", enableComplementaryFilter);
+    ROS_INFO("position filter tau: %g", positionFilterTau);
+    ROS_INFO("velocity filter tau: %g", velocityFilterTau);
+    ROS_INFO("imu message cache size: %d", imuMessageCacheSize);
 
 	// Create odometry
-    Odometry odometry(wheelBase, rollingWindowSize);
+    Odometry odometry(wheelBase, rollingWindowSize, enableComplementaryFilter ? positionFilterTau : 0,
+                      enableComplementaryFilter ? velocityFilterTau : 0);
 	odometryPtr = &odometry;
 
 	// Create odometry message publisher
@@ -395,34 +473,25 @@ int main(int argc, char** argv) {
 	ros::Publisher diagnosticsMessagePublisher = nodeHandle.advertise<diagnostic_msgs::DiagnosticArray>("/diagnostics", 20, true);
 	diagnosticsMessagePublisherPtr = & diagnosticsMessagePublisher;
 
-	// Init odometry message
-	odometryMessage.header.frame_id = odomFrame;
-	odometryMessage.child_frame_id = baseFrame;
-	odometryMessage.pose.pose.position.z = 0.0;
-    odometryMessage.pose.covariance[0] = posCovarianceDiagonal[0];
-    odometryMessage.pose.covariance[7] = posCovarianceDiagonal[1];
-    odometryMessage.pose.covariance[14] = posCovarianceDiagonal[2];
-    odometryMessage.pose.covariance[21] = posCovarianceDiagonal[3];
-    odometryMessage.pose.covariance[28] = posCovarianceDiagonal[4];
-    odometryMessage.pose.covariance[35] = posCovarianceDiagonal[5];
-    odometryMessage.twist.covariance[0] = velCovarianceDiagonal[0];
-    odometryMessage.twist.covariance[7] = velCovarianceDiagonal[1];
-    odometryMessage.twist.covariance[14] = velCovarianceDiagonal[2];
-    odometryMessage.twist.covariance[21] = velCovarianceDiagonal[3];
-    odometryMessage.twist.covariance[28] = velCovarianceDiagonal[4];
-    odometryMessage.twist.covariance[35] = velCovarianceDiagonal[5];
-
     // The odometry transform broadcaster
     tf::TransformBroadcaster odometryTransformBroadcaster;
     odometryTransformBroadcasterPtr = & odometryTransformBroadcaster;
 
-    // Init odometry transformation
-    odometryTransformation.header.frame_id = odomFrame;
-    odometryTransformation.child_frame_id = baseFrame;
-    odometryTransformation.transform.translation.z = 0.0;
-
 	// Create cmd_vel message subscriber
-	ros::Subscriber cmdVelMessageSubscriber = nodeHandle.subscribe("/cmd_vel", 20, cmdVelCallback);
+    nodeHandle.subscribe("/cmd_vel", 20, cmdVelCallback);
+
+    if (enableComplementaryFilter) {
+
+        // The transform listener
+        tf::TransformListener transformListener(nodeHandle);
+        transformListenerPtr = & transformListener;
+
+        // Create imu message subscriber and cache
+        message_filters::Subscriber<sensor_msgs::Imu> imuMessageSubscriber(nodeHandle, "/imu", 1);
+        message_filters::Cache<sensor_msgs::Imu> imuMessageCache(imuMessageSubscriber, imuMessageCacheSize);
+        imuMessageCachePtr = & imuMessageCache;
+
+    }
 
 	// Log
 	ROS_INFO("Connecting to: %s port with baudrate: %d ...", port.c_str(), baudrate);

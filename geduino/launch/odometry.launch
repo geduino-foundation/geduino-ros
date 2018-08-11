@@ -26,23 +26,10 @@
       <remap from="/odom"               to="/odometry/odom" />
     </node>
 
-    <!-- The odometry complementary filter -->
-    <node machine="geduino2" pkg="md25" type="complementary_filter_node" name="complementary_filter" respawn="true" output="log">
-      <rosparam file="$(find geduino)/config/complementary_filter_params.yaml" command="load" />
-      <remap from="/odom"               to="/odometry/odom" />
-      <remap from="/odom_filtered"      to="/odometry/odom_filtered" />
-    </node>
-
     <!-- The odometry euler -->
     <node machine="geduino2" pkg="md25" type="odom_to_euler_node" name="odom_to_euler" respawn="true" output="log">
       <remap from="/odom"               to="/odometry/odom" />
       <remap from="/euler"              to="/odometry/euler" />
-    </node>
-
-    <!-- The filtered odometry euler -->
-    <node machine="geduino2" pkg="md25" type="odom_to_euler_node" name="filtered_odom_to_euler" respawn="true" output="log">
-      <remap from="/odom"               to="/odometry/odom_filtered" />
-      <remap from="/euler"              to="/odometry/euler_filtered" />
     </node>
 
   </group>

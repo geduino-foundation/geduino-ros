@@ -34,24 +34,39 @@ class Odometry {
    public:
 
       // Create odometry for a DDR with given wheel base
-      Odometry(double _wb, char _rollingWindowSize) :
+      Odometry(double _wb, char _rollingWindowSize, double _posFilterTau, double _velFilterTau) :
             wb(_wb),
             drRollingWindow(RollingWindow(_rollingWindowSize)),
             dlRollingWindow(RollingWindow(_rollingWindowSize)),
-            dtRollingWindow(RollingWindow(_rollingWindowSize)) {
+            dtRollingWindow(RollingWindow(_rollingWindowSize)),
+            posFilterTau(_posFilterTau),
+            velFilterTau(_velFilterTau) {
 
           reset();
 
       };
 
-      // Update position and covariance for given wheel path increments and time
-      void update(double dl, double dr, double time) {
+      // Update position and covariance for given wheel path increments and time filtered by IMU yaw velocity.
+      // If you not want to filter position set tau filter to 0 and angularVelocityZ will be ignored.
+      void update(double dl, double dr, double angularVelocityZ, double time) {
+
+          double dt = 0;
+
+          if (lastUpdateTime > 0) {
+
+              // Calculate dt
+              dt = time - lastUpdateTime;
+
+          }
 
           // Update position
-          updatePosition(dl, dr);
+          updatePosition(dl, dr, angularVelocityZ, dt);
 
           // Update velocity
-          updateVelocity(dl, dr, time);
+          updateVelocity(dl, dr, angularVelocityZ, dt);
+
+          // Set last update time
+          lastUpdateTime = time;
 
       };
 
@@ -60,9 +75,19 @@ class Odometry {
           _pos = pos;
       };
 
+      // Get filtered position vector as (x, y, th)
+      void getFilteredPosition(Vector3 & _filteredPos) {
+          _filteredPos = filteredPos;
+      };
+
       // Get velocity vector as (vx, vy, vth)
       void getVelocity(Vector3 & _vel) {
           _vel = vel;
+      };
+
+      // Get filtered velocity vector as (vx, vy, vth)
+      void getFilteredVelocity(Vector3 & _filteredVel) {
+          _filteredVel = filteredVel;
       };
 
       // Reset position and covariance
@@ -76,19 +101,27 @@ class Odometry {
       // The last update time
       double lastUpdateTime;
 
-      // The position and velocity vector
-      Vector3 pos, vel;
+      // The position and velocity vector (raw and filtered)
+      Vector3 pos, filteredPos, vel, filteredVel;
+
+      // The filter tau to be used for position and velocity
+      double posFilterTau, velFilterTau;
 
       // The rolling windows used to compute velocity
       RollingWindow drRollingWindow;
       RollingWindow dlRollingWindow;
       RollingWindow dtRollingWindow;
 
-      // Update position
-      void updatePosition(double dl, double dr);
+      // Update position: at first run dt will be 0, make sure implementation can halde this case
+      void updatePosition(double dl, double dr, double angularVelocityZ, double dt);
 
-      // Update velocity
-      void updateVelocity(double dl, double dr, double time);
+      // Update velocity: at first run dt will be 0, make sure implementation can halde this case
+      void updateVelocity(double dl, double dr, double angularVelocityZ, double dt);
+
+      void computeOdometry(Vector3 & _pos, double ds, double th);
+
+      // Constrain position orientation in [0, 2PI[ range
+      void constrainPosition(Vector3 & _pos);
 
 };
 

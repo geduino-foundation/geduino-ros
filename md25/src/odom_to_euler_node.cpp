@@ -16,13 +16,47 @@
  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+/**
+ odom_to_euler_node is a ROS node implementation to convert orientation from quaternion
+ to Euler representation.
+
+ Subscribes:
+ - /odom (nav_msgs/Odometry): the odometry.
+
+ Publish:
+ - /euler (md25/StampedEuler): the odometry orientation in Euler format.
+**/
+
 #include <ros/ros.h>
 #include <nav_msgs/Odometry.h>
+#include <tf/transform_datatypes.h>
 #include <md25/StampedEuler.h>
-#include <geometry_conversion.h>
 
 // The pointer to euler message publisher
 ros::Publisher * eulerMessagePublisherPtr;
+
+void toEuler(const geometry_msgs::Quaternion & quaternion, md25::Euler * euler) {
+
+    // Get quaternion
+    tf::Quaternion q(
+        quaternion.x,
+        quaternion.y,
+        quaternion.z,
+        quaternion.w);
+
+    // Put into matrix
+    tf::Matrix3x3 matrix(q);
+
+    // Get RPY
+    double roll, pitch, yaw;
+    matrix.getRPY(roll, pitch, yaw);
+
+    // Set to euler
+    euler->roll = roll;
+    euler->pitch = pitch;
+    euler->yaw = yaw;
+
+}
 
 void odomCallback(const nav_msgs::Odometry::ConstPtr & odomMessage) {
 

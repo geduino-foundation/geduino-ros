@@ -60,3 +60,16 @@ rolling_window_size: 3
 # True if odom frame -> base frame transformation must be
 # published by this node, false otherwise (default: true)
 publish_odom_transformation: false
+
+# True to enable complementary filter to fuse odometry data
+# with IMU data, false otherwise (default: false)
+enable_complementary_filter: true
+
+# The position filter parameter to fuse encoders and IMU infos (default: 0.075)
+position_filter_tau: 0.075
+
+# The velocity filter parameter to fuse encoders and IMU infos (default: 0.2)
+velocity_filter_tau: 0.2
+
+# The IMU message cache size (default: 10)
+imu_cache_size: 10
