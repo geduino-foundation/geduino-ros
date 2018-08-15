@@ -32,6 +32,7 @@
 
   <buildtool_depend>catkin</buildtool_depend>
   <run_depend>md25</run_depend>
+  <run_depend>md25_msgs</run_depend>
   <run_depend>rplidar</run_depend>
   <run_depend>rosserial_python</run_depend>
   <run_depend>tf</run_depend>

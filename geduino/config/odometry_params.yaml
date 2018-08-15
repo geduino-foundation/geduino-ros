@@ -1,0 +1,87 @@
+# odometry_params.yaml
+#
+# Copyright (C) 2018 Alessandro Francescon
+# 
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# The serial port, the baudrate and timeout (in millis)
+serial_port: /dev/ttyS5
+serial_baudrate: 38400
+serial_timeout: 250
+
+# Set the way the speed/turn values are used. The options being:
+# 0: the speed values are literal speeds in the range of 0 (full reverse), 128 (stop) and
+#	255 (full forward);
+# 1: the same as 0 except that the speed values are interpreted as signed values. The range
+# 	being -128 (full reverse), 0 (stop) and 127 (full forward);
+# 2: in this mode speed1 control both motors speed, and speed2 becomes the turn value.
+# 	Data is in the range of 0 (full reverse), 128 (stop) and 255 (full forward);
+# 3: the same as 2, except that the speed values are interpreted as signed values. The range
+# 	being -128 (full reverse), 0 (stop) and 127 (full forward).
+# (defailt: 0)
+md25_mode: 0
+
+# Set the acceleration rate. Accept a value between 1 (slow acceleration rate) to 10 (fast
+# acceleration rate), (default: 1)
+md25_acceleration: 10
+
+# Set timeout enabled (default: false)
+md25_enable_timeout: true
+
+# Set regulator enabled (default: true)
+md25_enable_regulator: true
+
+# The robot wheel base (in meters) (default: 0.275)
+wheel_base: 0.275
+
+# The encoders click for revolution (default: 360)
+click_per_revolution: 360
+
+# The wheel diameter (in meters) (default: 0.1)
+wheel_diameter: 0.1
+
+# The frame attached to robot base, i.e. broadcasted transformation child frame (default: base_link)
+base_frame: base_link
+
+# Odometry frame, i.e. broadcasted transformation frame (default: odom)
+odom_frame: odom
+
+# The encoders publish frequency in Hz (default: 10)
+encoders_publish_frequency: 15.0
+
+# The diagnostic publish frequency in Hz (default: 1)
+diagnostic_publish_frequency: 1.0
+
+# The diagonal of the position covariance matrix (a 6 element vector of type double)
+position_covariance_diagonal: [0.001, 0.001, 0, 0, 0, 0.001]
+
+# The diagonal of the velocity covariance matrix (a 6 element vector of type double)
+velocity_covariance_diagonal: [0.001, 0, 0, 0, 0, 0.001]
+
+# The size of rolling windows used to apply median filter in velocity computation (default: 3)
+rolling_window_size: 3
+
+# The controller linear and angular gains (default: 10.0)
+controller_linear_gain: 7.5
+controller_linear_derivative_gain: 0.25
+controller_angular_gain: 5.0
+controller_angular_derivative_gain: 0.0
+
+# The size of IMU data cache to be used to apply filter (default: 10)
+imu_cache_size: 10
+
+# Enabled complementary filter between encoders and IMU data (default: false)
+filter_enabled: true
+
+# The complementary filter tau parameter: greater value of tau make rely more on IMU (default: 0.075)
+filter_tau: 0.075

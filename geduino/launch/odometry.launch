@@ -20,16 +20,33 @@
 
   <group ns="odometry">
 
-    <!-- The MD25 -->
-    <node machine="geduino2" pkg="md25" type="md25_node" name="md25" respawn="true" output="log">
-      <rosparam file="$(find geduino)/config/md25_params.yaml" command="load" />
-      <remap from="/odom"               to="/odometry/odom" />
+    <!-- The nodelet manager -->
+    <node machine="geduino2" pkg="nodelet" type="nodelet" name="odometry_nodelet_manager" args="manager" respawn="true" output="log"/>
+
+    <!-- The MD25 driver -->
+    <node machine="geduino2" pkg="nodelet" type="nodelet" name="md25_driver" args="load md25/MD25DriverNodelet odometry_nodelet_manager" respawn="true" output="log">
+      <rosparam file="$(find geduino)/config/odometry_params.yaml" command="load" />
+    </node>
+
+    <!-- The MD25 odometry -->
+    <node machine="geduino2" pkg="nodelet" type="nodelet" name="md25_odometry" args="load md25/MD25OdometryNodelet odometry_nodelet_manager" respawn="true" output="log">
+      <rosparam file="$(find geduino)/config/odometry_params.yaml" command="load" />
+    </node>
+
+    <!-- The MD25 controller -->
+    <node machine="geduino2" pkg="nodelet" type="nodelet" name="md25_controller" args="load md25/MD25ControllerNodelet odometry_nodelet_manager" respawn="true" output="log">
+      <rosparam file="$(find geduino)/config/odometry_params.yaml" command="load" />
+      <remap from="cmd_vel" to="/cmd_vel" />
     </node>
 
     <!-- The odometry euler -->
     <node machine="geduino2" pkg="md25" type="odom_to_euler_node" name="odom_to_euler" respawn="true" output="log">
-      <remap from="/odom"               to="/odometry/odom" />
-      <remap from="/euler"              to="/odometry/euler" />
+    </node>
+
+    <!-- The filtered odometry euler -->
+    <node machine="geduino2" pkg="md25" type="odom_to_euler_node" name="odom_filtered_to_euler" respawn="true" output="log">
+        <remap from="odom" to="odom_filtered" />
+        <remap from="euler" to="euler_filtered" />
     </node>
 
   </group>
