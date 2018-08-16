@@ -71,11 +71,16 @@ velocity_covariance_diagonal: [0.001, 0, 0, 0, 0, 0.001]
 # The size of rolling windows used to apply median filter in velocity computation (default: 3)
 rolling_window_size: 3
 
-# The controller linear and angular gains (default: 10.0)
+# The controller linear and angular gains.
+# Those param are used by MD25Controller only (default: 10.0)
 controller_linear_gain: 7.5
 controller_linear_derivative_gain: 0.25
 controller_angular_gain: 5.0
 controller_angular_derivative_gain: 0.0
+
+# The controller frquency and speed increment per cycle (default: 5 and 5)
+controller_frequency: 5.0
+speed_increment_per_cycle: 2
 
 # The size of IMU data cache to be used to apply filter (default: 10)
 imu_cache_size: 10

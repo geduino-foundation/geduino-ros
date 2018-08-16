@@ -2,3 +2,8 @@
 # Append thos lines to your ~/.bash_aliases file
 alias geduino1off='ssh -t udoo@geduino1 "sudo poweroff"'
 alias geduino2off='ssh -t udoo@geduino2 "sudo poweroff"'
+
+# Convenient aliases to remotely start Geduino
+# Append thos lines to your ~/.bash_aliases file
+alias geduinorunbaseconfiguration = 'rsh ros@geduino1 ./env.sh roslaunch geduino base_configuration.launch'
+alias geduinorunfull = 'rsh ros@geduino1 ./env.sh roslaunch geduino bringup_full.launch'
