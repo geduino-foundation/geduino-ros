@@ -155,7 +155,7 @@ diagnostic_msgs::KeyValue rightPingValues[2];
 diagnostic_msgs::KeyValue imuValues[1];
 diagnostic_msgs::KeyValue batteryValues[1];
 diagnostic_msgs::KeyValue mcuValues[9];
-ros::Publisher diagnosticsMessagePublisher("diagnostics", & diagnosticsMessage);
+ros::Publisher diagnosticsMessagePublisher("/diagnostics", & diagnosticsMessage);
 
 // The battery threshold levels
 float batteryWarningVolts = BATTERY_WARNING_VOLTS_DEFAULT;
