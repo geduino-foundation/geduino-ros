@@ -31,7 +31,7 @@
     <!-- The MD25 odometry -->
     <node machine="geduino2" pkg="nodelet" type="nodelet" name="md25_odometry" args="load md25/MD25OdometryNodelet odometry_nodelet_manager" respawn="true" output="log">
       <rosparam file="$(find geduino)/config/odometry_params.yaml" command="load" />
-      <remap from="imu" to="/imu" />
+      <remap from="imu" to="/sensor/imu" />
     </node>
 
     <!-- The MD25 controller -->

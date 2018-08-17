@@ -49,16 +49,9 @@
     <rosparam command="load" file="$(find geduino)/config/diagnostic_aggregator_params.yaml" />
   </node>
 
-  
-  <!-- The RPLidar node -->
-  <node machine="geduino2" pkg="rplidar" type="rplidar_node" name="rplidar" respawn="true" output="log">
-    <rosparam file="$(find geduino)/config/rplidar_params.yaml" command="load"/> 
-  </node>
-
-  <!-- The Shield node -->
-  <node machine="geduino2" pkg="rosserial_python" type="serial_node.py" name="shield" respawn="true" output="log">
-    <rosparam file="$(find geduino)/config/shield_params.yaml" command="load"/> 
-  </node>
+  <!-- The sensory -->
+  <include file="$(find geduino)/launch/sensor.launch">
+  </include>
 
   <!-- The odometry -->
   <include file="$(find geduino)/launch/odometry.launch">
