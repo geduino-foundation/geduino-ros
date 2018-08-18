@@ -43,6 +43,7 @@
   <run_depend>depth_image_proc</run_depend>
   <run_depend>rtabmap_ros</run_depend>
   <run_depend>diagnostic_aggregator</run_depend>
+  <run_depend>teleop_web</run_depend>
   
   <export>
   </export>

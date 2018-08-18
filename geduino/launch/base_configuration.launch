@@ -61,4 +61,9 @@
   <include file="$(find geduino)/launch/r200_camera.launch">
   </include>
 
+  <!-- The web teleoperator -->
+  <node machine="geduino1" pkg="teleop_web" type="teleop_web_node.sh" args="$(find teleop_web)" name="teleop_web" respawn="true" output="log">
+  </node>
+
+
 </launch>
