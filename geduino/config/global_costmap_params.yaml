@@ -29,7 +29,7 @@ global_costmap:
 
   # Inflation layer
   inflation_layer:
-    inflation_radius: 0.25
+    inflation_radius: 0.15
     cost_scaling_factor: 50
 
   # The global frame for the costmap to operate in

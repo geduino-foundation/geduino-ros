@@ -24,7 +24,7 @@
 		<node machine="geduino1" name="rtabmap" pkg="rtabmap_ros" type="rtabmap" respawn="true" output="log" args="--delete_db_on_start">
 
 			<remap from="odom" to="/odometry/odom"/>
-			<remap from="scan" to="/scan"/>
+                        <remap from="scan" to="/sensor/scan"/>
 			<remap from="rgb/image" to="/camera/rgb/image_rectified"/>
 			<remap from="rgb/camera_info" to="/camera/rgb/camera_info"/>
 			<remap from="depth/image" to="/camera/depth_registered/image_rectified"/>
