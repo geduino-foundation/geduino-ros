@@ -1,0 +1,27 @@
+# teleop_web_params.yaml
+#
+# Copyright (C) 2018 Alessandro Francescon
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# The linear speed for teleop in [m/s] (default: 0.1)
+linear_speed: 0.1
+
+# The angular speed for teleop in [rad/s] (default: 0.52)
+angular_speed: 0.52
+
+# The occupancy level under which a map cell is get as free in [%] (default: 50)
+free_threshold: 50
+
+# The map frame id used to publish goal (default: map)
+map_frame_id: map

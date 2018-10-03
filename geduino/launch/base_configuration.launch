@@ -61,9 +61,16 @@
   <include file="$(find geduino)/launch/r200_camera.launch">
   </include>
 
-  <!-- The web teleoperator -->
-  <node machine="geduino1" pkg="teleop_web" type="teleop_web_node.sh" args="$(find teleop_web)" name="teleop_web" respawn="true" output="log">
+  <!-- The Robot Pose Publisher node -->
+  <node machine="geduino1" pkg="robot_pose_publisher" type="robot_pose_publisher" name="pose_publisher" respawn="true" output="log">
+    <rosparam command="load" file="$(find geduino)/config/robot_pose_publisher_params.yaml" />
   </node>
 
+  <!-- The Web Teleoperator -->
+  <node machine="geduino1" pkg="teleop_web" type="teleop_web.js" name="teleop_web" respawn="true" output="log">
+    <rosparam command="load" file="$(find geduino)/config/teleop_web_params.yaml" />
+    <remap from="map" to="/rtabmap/proj_map" />
+    <remap from="goal" to="/move_base_simple/goal" />
+  </node>
 
 </launch>
