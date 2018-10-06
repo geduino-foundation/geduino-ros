@@ -20,4 +20,5 @@ adaptive_threshold_block_size: 201
 # The adaptive threshold (default: 20)
 adaptive_threshold_threshold: 20
 
+# The transport used to subcribe image (default: raw)
 image_transport: compressed
