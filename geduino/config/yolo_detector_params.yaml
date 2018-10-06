@@ -1,0 +1,36 @@
+# yolo_detector_params.yaml
+#
+# Copyright (C) 2018 Alessandro Francescon
+# 
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# Yolo configuration file. The node will look for given filaneme in ~/.ros/darknet.
+# (default: yolov3-tiny.cfg)
+config_file: yolov3-tiny.cfg
+
+# Yolo weights file. The node will look for given filaneme in ~/.ros/darknet.
+# (default: yolov3-tiny.weights)
+weights_file: yolov3-tiny.weights
+
+# Yolo names file. The node will look for given filaneme in ~/.ros/darknet.
+# (default: coco.names)
+names_file: coco.names
+
+# The detector threshold (default: 0.5)
+threshold: 0.5
+
+# The detector hier threshold (default: 0.5)
+hier_threshold: 0.5
+
+# The detector nms_threshold (default: 0.45)
+nms_threshold: 0.45

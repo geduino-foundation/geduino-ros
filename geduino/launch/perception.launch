@@ -1,0 +1,36 @@
+<!--
+ perception.launch
+ Copyright (C) 2018 Alessandro Francescon
+ This program is free software: you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation, either version 3 of the License.
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+ You should have received a copy of the GNU General Public License
+ along with this program.  If not, see <http://www.gnu.org/licenses/>.
+-->
+
+<launch>
+
+  <group ns="perception">
+
+    <!-- The QR detector -->
+    <node machine="geduino2" pkg="zxing_cv" type="qr_detector_node" name="qr_detector" respawn="true" output="log">
+      <rosparam file="$(find geduino)/config/qr_detector_params.yaml" command="load" />
+      <remap from="/camera/image" to="/camera/rgb/image_rectified"/>
+      <remap from="image_debug" to="qr_detector/image_debug"/>
+      <remap from="image_optimized" to="qr_detector/image_optimized"/>
+    </node>
+
+    <!-- The Yolo detector -->
+    <node machine="geduino2" pkg="darknet_cv" type="yolo_detector_node" name="yolo_detector" respawn="true" output="log">
+      <rosparam file="$(find geduino)/config/yolo_detector_params.yaml" command="load" />
+      <remap from="image" to="/camera/rgb/image_rectified"/>
+      <remap from="image_debug" to="yolo_detector/image_debug"/>
+    </node>
+
+  </group>
+
+</launch>
