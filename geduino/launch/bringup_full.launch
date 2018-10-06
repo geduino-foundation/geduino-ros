@@ -24,7 +24,10 @@
   <!-- The move base -->
   <include file="$(find geduino)/launch/move_base.launch" />
 
-   <!-- The rtabmap -->
+  <!-- The rtabmap -->
   <include file="$(find geduino)/launch/rtabmap.launch" />
+
+  <!-- The perception -->
+  <include file="$(find geduino)/launch/perception.launch" />
 
 </launch>
