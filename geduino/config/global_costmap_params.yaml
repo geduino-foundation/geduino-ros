@@ -23,7 +23,7 @@ global_costmap:
 
   # Static layer
   static_layer:
-    map_topic: /rtabmap/proj_map
+    map_topic: /rtabmap/grid_map
     unknown_cost_value: -1
     lethal_cost_threshold: 100
 
