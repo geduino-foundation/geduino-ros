@@ -34,6 +34,3 @@ hier_threshold: 0.5
 
 # The detector nms_threshold (default: 0.45)
 nms_threshold: 0.45
-
-# The transport used to subcribe image (default: raw)
-image_transport: compressed
