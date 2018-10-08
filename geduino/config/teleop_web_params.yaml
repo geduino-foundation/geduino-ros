@@ -18,7 +18,7 @@
 linear_speed: 0.1
 
 # The angular speed for teleop in [rad/s] (default: 0.52)
-angular_speed: 0.52
+angular_speed: 0.38
 
 # The occupancy level under which a map cell is get as free in [%] (default: 50)
 free_threshold: 50

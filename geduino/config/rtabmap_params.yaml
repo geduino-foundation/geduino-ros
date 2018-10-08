@@ -37,6 +37,9 @@ approx_sync: true
 # Used for cloud_map published topic (default: 3)
 cloud_max_depth: 3.0
 
+# Filter the floor at the specified height (m). Used for cloud_map published topic. (default: 0)
+cloud_floor_culling_height: 0.01
+
 RGBD:
 
   # When a new node is added to the graph, the transformation of its neighbor link to the 
@@ -51,6 +54,14 @@ RGBD:
   # are still updated. (default: 0.1)
   LinearUpdate: 0.01
 
+  # Find local loop closures based on the robot position in the map. It is useful when the robot,
+  # for example, is coming back in the opposite direction. With camera facing back, global loop
+  # closures cannot be found. So using the position and previously added laser scans to the map,
+  # we find the transform using ICP. Be aware that on large-scale mapping, this method should be
+  # disabled because when the odometry is very erroneous, local ICP could give wrong results
+  # (false loop closures). (default: false) 
+  ProximityBySpace: true
+
 Reg:
 
   # 0=Vis, 1=Icp, 2=VisIcp (default: 0)
@@ -63,7 +74,7 @@ Reg:
 Vis:
 
   # Minimum feature correspondences to compute/accept the transformation. (default: 20)
-  MinInliers: 5
+  MinInliers: 10
 
 Rtabmap:
 
